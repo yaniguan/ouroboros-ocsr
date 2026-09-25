@@ -30,6 +30,7 @@ def main(argv=None) -> None:
         "C": "steerable",
         "C+": "steerable",
         "D": "equiv_attention",
+        "E": "baseline",  # canonicalizer adds ~1% FLOPs
     }
     eval_h = asm["eval_images"] / asm["eval_img_per_s"] / 3600
     per_group = defaultdict(lambda: [0, 0.0])

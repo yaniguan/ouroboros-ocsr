@@ -19,12 +19,15 @@ def run_id(arm: str, size: int, frac: float, seed: int) -> str:
     return f"{arm.replace('+', 'plus')}_n{size // 1000}k_f{frac:g}_s{seed}"
 
 
-def expand(sweep_path: str | Path) -> list[dict]:
+def expand(sweep_path: str | Path, with_optional: bool = False) -> list[dict]:
     sweep_path = Path(sweep_path)
     sw = yaml.safe_load(sweep_path.read_text())
     base = load_config(sweep_path.parent / sw["base"])
     runs = []
-    for arm, overrides in sw["arms"].items():
+    arms = dict(sw["arms"])
+    if with_optional:
+        arms.update(sw.get("optional_arms", {}))
+    for arm, overrides in arms.items():
         for key in overrides:
             if key.startswith("model.decoder") or key == "model":
                 raise ValueError(f"arm {arm} overrides {key}: the decoder must be identical")
@@ -69,12 +72,13 @@ def main(argv=None) -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sweep", default="configs/sweep.yaml")
     ap.add_argument("--out", default="configs/sweep")
+    ap.add_argument("--with-optional", action="store_true", help="also expand optional_arms (E)")
     a = ap.parse_args(argv)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     for old in out.glob("*.yaml"):
         old.unlink()
-    runs = expand(a.sweep)
+    runs = expand(a.sweep, a.with_optional)
     with open(out / "index.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["run_id", "arm", "size", "real_fraction", "seed", "steps", "config"])

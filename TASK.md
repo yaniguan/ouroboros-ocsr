@@ -82,7 +82,9 @@ or changed are tagged **(Am1-A … Am1-F)**.
   FLOP-matched in the main grid (equal compute per image, the practical constraint), param-matched
   as a single ablation (one size, f = 0, 3 seeds), because the param-matched C8 costs 12.4× the
   FLOPs (127 vs 10.3 GFLOPs per image).
-- Please reply: full or pruned grid, and FLOP- vs param-matched.
+- Arm E (learned canonicalization, optional, FLOP-matched): include it? (+33 runs full grid /
+  +18 pruned; ≈ +24 / +13 A100-h at baseline throughput.)
+- Please reply: full or pruned grid, FLOP- vs param-matched, and whether to include arm E.
 
 ## Phase 0 — Scaffold
 
@@ -322,7 +324,14 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
   extrapolation, +20%): arm D batch 32 → 9.2 GiB bf16 estimate, 17.9 GiB fp32 upper bound; max
   batch in 40 GB ≈ 137 (activations 0.44 GiB/sample fp32). Arm C (for reference): 4.4 / 8.2 GiB.
   → `benchmarks/encoders/memory_*.json`, 2026-09-25.
-- [ ] Arm E invariance < 1e-4 (if implemented).
+- [x] Arm E invariance < 1e-4 (if implemented). — `ouroboros/encoder/canonicalize.py`: C4-equivariant
+  orientation net (escnn, rotations only) → argmax → rotate back → baseline encoder; trained with a
+  canonicalization prior (CE towards the true orientation). 384 px, 4 rendered test images: max
+  rel. error of the encoder output under 90/180/270° = 0.0 / 0.0 / 0.0 (exact: the canonical image is
+  a pixel permutation); 17.83M params, 10.39 GFLOPs (+1.1%) → `benchmarks/encoders/canonicalization.json`;
+  `tests/test_canonicalize.py` 2/2 (logits cyclically shift, output invariant, prior loss trains the
+  orientation net). Added to `configs/sweep.yaml` as an OPTIONAL arm (expanded with
+  `make_sweep.py --with-optional`, +33 runs); decision in U5, 2026-09-25.
 - [ ] [colab] D (and E) in sweep.
 
 ## Phase 6 — Geometry / MACE (positioned as an error-propagation analysis, Am1-F)

@@ -188,22 +188,28 @@ class Trainer:
             generator=torch.Generator().manual_seed(12345),  # private: keeps global RNG untouched
         )
 
-    def augment(self, images: torch.Tensor) -> torch.Tensor:
-        """Arm B / C+: uniform random rotation in [0, 360) (angles depend only on seed, step)."""
+    def augment_with_angles(self, images: torch.Tensor):
+        """Arm B / C+: uniform random rotation in [0, 360) (angles depend only on seed, step).
+        Returns (images, angles) with angles None when augmentation is off."""
         if not self.cfg["train"].get("rotation_aug", False):
-            return images
+            return images, None
         g = torch.Generator().manual_seed(self.seed * 1_000_003 + self.step)
         angles = torch.rand(images.shape[0], generator=g) * 360.0
-        return rotate_batch(images, angles)
+        return rotate_batch(images, angles), angles
+
+    def augment(self, images: torch.Tensor) -> torch.Tensor:
+        return self.augment_with_angles(images)[0]
 
     def train_step(self, batch: dict) -> float:
         t = self.cfg["train"]
         self.model.train()
-        images = self.augment(batch["image"].to(self.dev, non_blocking=True))
+        images, angles = self.augment_with_angles(batch["image"].to(self.dev, non_blocking=True))
         ids = batch["ids"].to(self.dev, non_blocking=True)
         amp = t.get("amp", "bf16") == "bf16"
         with torch.autocast(self.dev.type, dtype=torch.bfloat16, enabled=amp):
             loss = self.model.loss(images, ids, t.get("label_smoothing", 0.0))
+            if hasattr(self.model.encoder, "prior_loss"):  # arm E: canonicalization prior
+                loss = loss + self.model.encoder.prior_loss(angles)
         self.opt.zero_grad(set_to_none=True)
         loss.backward()
         if t.get("grad_clip"):

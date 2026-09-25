@@ -39,7 +39,11 @@ def build_encoder(enc_cfg: dict, d_model: int, image_size: int) -> ImageEncoder:
         # lazily import optional encoders so that their registration runs
         import importlib
 
-        for mod in ("ouroboros.encoder.steerable", "ouroboros.encoder.equiv_attention"):
+        for mod in (
+            "ouroboros.encoder.steerable",
+            "ouroboros.encoder.equiv_attention",
+            "ouroboros.encoder.canonicalize",
+        ):
             try:
                 importlib.import_module(mod)
             except ModuleNotFoundError:
