@@ -1,0 +1,27 @@
+{
+ "encoder": {
+  "type": "steerable",
+  "N": 8,
+  "fields": [
+   7,
+   14,
+   27,
+   55
+  ]
+ },
+ "image_size": 384,
+ "batch": 32,
+ "seq_len": 75,
+ "params": 32383148,
+ "static_GiB": 0.48254650831222534,
+ "activations_batch1_fp32_GiB": 0.3597906120121479,
+ "activations_per_sample_fp32_GiB": 0.19278036057949066,
+ "activations_fp32_GiB": 6.335981789976358,
+ "estimate_bf16_GiB": 4.3806448839604855,
+ "upper_bound_fp32_GiB": 8.1822339579463,
+ "fits_40GB_bf16": true,
+ "max_batch_bf16_40GB": 316,
+ "peak_rss_GiB_local": 1.7122879028320312,
+ "method": "saved-tensor bytes at batch 1 and 2 on CPU (fp32), linear extrapolation; bf16 = fp32/2; +20% margin; 16 B/param static",
+ "date": "2026-09-25"
+}

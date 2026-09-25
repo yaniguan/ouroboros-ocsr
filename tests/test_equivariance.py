@@ -93,9 +93,11 @@ def test_not_reflection_invariant():
     x = torch.rand(2, 1, 128, 128)
     with torch.no_grad():
         t, tm = enc(x).tokens, enc(torch.flip(x, dims=(-1,))).tokens
-    # compare as sets: best match of each mirrored token to any original token
-    d = torch.cdist(tm[0], t[0]).min(dim=1).values.max()
-    assert float(d) / float(t.abs().max()) > 1e-2
+        tr = enc(torch.rot90(x, 1, dims=(-2, -1))).tokens
+    # the token mean is permutation invariant: equal for a rotation, different for a mirror
+    rot_diff, mirror_diff = rel_err(tr.mean(1), t.mean(1)), rel_err(tm.mean(1), t.mean(1))
+    assert rot_diff < TOL
+    assert mirror_diff > max(100 * rot_diff, 1e-5)  # far above numerical error
     assert "flip" not in type(enc.gspace).__name__.lower()
     assert enc.gspace.fibergroup.order() == 4
 
