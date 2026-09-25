@@ -30,7 +30,7 @@ from torch.utils.data import ConcatDataset, DataLoader
 from ouroboros.data.loader import ShardDataset, collate, rotate_batch
 from ouroboros.data.mixture import MixtureSampler
 from ouroboros.decode.tokenizer import SmilesTokenizer
-from ouroboros.model import OCSRModel, build_model, count_params
+from ouroboros.model import OCSRModel, build_model, count_params, load_model_state
 
 
 def _device(cfg: dict) -> torch.device:
@@ -156,7 +156,7 @@ class Trainer:
 
     def _resume(self) -> None:
         st = load_checkpoint(self.ckpt_path)
-        self.model.load_state_dict(st["model"])
+        load_model_state(self.model, st["model"])
         self.opt.load_state_dict(st["opt"])
         self.sched.load_state_dict(st["sched"])
         self.step = st["step"]

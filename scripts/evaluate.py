@@ -16,7 +16,7 @@ import torch
 from ouroboros.data.loader import ShardDataset
 from ouroboros.decode.tokenizer import SmilesTokenizer
 from ouroboros.eval.evaluate import run_eval, summarize
-from ouroboros.model import build_model
+from ouroboros.model import build_model, load_model_state
 from ouroboros.train.config import load_config
 
 
@@ -47,7 +47,7 @@ def main(argv=None) -> None:
     tok = SmilesTokenizer.load(cfg["data"]["vocab"])
     model = build_model(cfg, tok)
     st = torch.load(a.ckpt or run / "ckpt" / "last.pt", map_location="cpu", weights_only=False)
-    model.load_state_dict(st["model"])
+    load_model_state(model, st["model"])
     model.to(dev).eval()
     if hasattr(model.encoder, "export"):  # steerable: pure-PyTorch inference copy
         model.encoder = model.encoder.export().to(dev)

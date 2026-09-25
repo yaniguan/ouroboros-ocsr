@@ -108,3 +108,40 @@ def test_lr_schedule():
     assert lr_lambda(9, 10, 100) == pytest.approx(1.0)
     assert lr_lambda(100, 10, 100) == pytest.approx(0.0, abs=1e-9)
     assert lr_lambda(55, 10, 100) == pytest.approx(0.5)
+
+
+def test_steerable_resume_and_eval_mode_checkpoints(tiny_dataset, vocab, tmp_path):
+    """escnn caches filters only in eval mode; checkpoints from either mode must load."""
+    from ouroboros.model import build_model, load_model_state
+
+    root, _ = tiny_dataset
+    torch.set_num_threads(1)
+    enc = {
+        "type": "steerable",
+        "N": 4,
+        "fields": [2, 2, 2, 4],
+        "blocks": [1, 1, 1, 1],
+        "mixer_layers": 1,
+        "mixer_heads": 2,
+        "mixer_ff": 64,
+    }
+    cfg = tiny_cfg(root, vocab, steps=20, ckpt_every=10)
+    cfg["model"]["encoder"] = enc
+    full = tmp_path / "full"
+    Trainer(cfg, full).fit()
+    cut = tmp_path / "cut"
+    Trainer(cfg, cut).fit(stop_at=14)
+    tr = Trainer(cfg, cut)
+    assert tr.step == 10
+    tr.fit()
+    a, b = _losses(full), _losses(cut)
+    assert all(a[s] == b[s] for s in range(11, 21))
+    # an eval-mode state (with cached filters) also loads, and gives identical outputs
+    tr.model.eval()
+    sd = {k: v.clone() for k, v in tr.model.state_dict().items()}
+    fresh = build_model(cfg, tr.tok)
+    load_model_state(fresh, sd)
+    fresh.eval()
+    x = torch.rand(2, 1, 64, 64)
+    with torch.no_grad():
+        assert torch.allclose(fresh.encoder(x).tokens, tr.model.encoder(x).tokens, atol=1e-6)

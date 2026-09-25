@@ -86,5 +86,20 @@ def build_model(cfg: dict, tokenizer: SmilesTokenizer) -> OCSRModel:
     return OCSRModel(encoder, SmilesDecoder(dec), tokenizer)
 
 
+# escnn caches expanded filters as buffers only in eval mode (and a freshly built R2Conv holds a
+# zero placeholder). They are derived from the weights, so they are never part of the saved state.
+_ESCNN_CACHE_SUFFIXES = (".filter", ".expanded_bias")
+
+
+def load_model_state(model: nn.Module, state: dict) -> None:
+    """Load a checkpoint saved in either train or eval mode (escnn-safe, otherwise strict)."""
+    model.train()  # drops escnn's cached filters so that the key sets agree
+    state = {k: v for k, v in state.items() if not k.endswith(_ESCNN_CACHE_SUFFIXES)}
+    missing, unexpected = model.load_state_dict(state, strict=False)
+    missing = [k for k in missing if not k.endswith(_ESCNN_CACHE_SUFFIXES)]
+    if missing or unexpected:
+        raise RuntimeError(f"state_dict mismatch: missing={missing} unexpected={unexpected}")
+
+
 def count_params(module: nn.Module) -> int:
     return sum(p.numel() for p in module.parameters())
