@@ -1,0 +1,162 @@
+{
+ "n_pairs": 19,
+ "max_abs_dE_eV": 7.275957614183426e-12,
+ "pass": false,
+ "pairs": [
+  {
+   "smiles": "COc1ccc(NC(=O)[C@H](C)Sc2ccc(C)cc2)cn1",
+   "enantiomer": "COc1ccc(NC(=O)[C@@H](C)Sc2ccc(C)cc2)cn1",
+   "E": -34813.64183100013,
+   "E_mirror": -34813.64183100013,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "CC[C@@H](C)NC(=O)C1CCN(C(=O)c2ccc(NC(C)=O)cc2)CC1",
+   "enantiomer": "CC[C@H](C)NC(=O)C1CCN(C(=O)c2ccc(NC(C)=O)cc2)CC1",
+   "E": -30777.510464172585,
+   "E_mirror": -30777.51046417259,
+   "dE": 3.637978807091713e-12,
+   "converged": true
+  },
+  {
+   "smiles": "C[C@@H](C#N)Sc1nnc(COc2ccc(F)cc2)n1N",
+   "enantiomer": "C[C@H](C#N)Sc1nnc(COc2ccc(F)cc2)n1N",
+   "E": -35704.76961193971,
+   "E_mirror": -35704.76961193971,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "Cc1cc(Cl)ccc1O[C@@H](C)C(=O)NNC(=O)CNc1ccccc1",
+   "enantiomer": "Cc1cc(Cl)ccc1O[C@H](C)C(=O)NNC(=O)CNc1ccccc1",
+   "E": -42147.98306702269,
+   "E_mirror": -42147.98306702269,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "C[C@@H]1CCCC[C@@H]1N(C)C(=O)c1cnn2c(-c3ccccc3)ccnc12",
+   "enantiomer": "C[C@H]1CCCC[C@H]1N(C)C(=O)c1cnn2c(-c3ccccc3)ccnc12",
+   "E": -30195.983291217693,
+   "E_mirror": -30195.98329121769,
+   "dE": 3.637978807091713e-12,
+   "converged": true
+  },
+  {
+   "smiles": "CC[C@@H](NC(=O)N(C)Cc1cscn1)C(C)C",
+   "enantiomer": "CC[C@H](NC(=O)N(C)Cc1cscn1)C(C)C",
+   "E": -30154.9050563103,
+   "E_mirror": -30154.9050563103,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "CCn1cc(NC(=O)[C@H]2CCCCN2C(=O)OC(C)(C)C)cn1",
+   "enantiomer": "CCn1cc(NC(=O)[C@@H]2CCCCN2C(=O)OC(C)(C)C)cn1",
+   "E": -29138.306949536924,
+   "E_mirror": -29138.306949536924,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "Cc1cccc(C(=O)N2CCN[C@@H](c3ccccc3)C2)c1",
+   "enantiomer": "Cc1cccc(C(=O)N2CCN[C@H](c3ccccc3)C2)c1",
+   "E": -24036.339314874585,
+   "E_mirror": -24036.339314874585,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "CC[C@@H](C)Sc1nnc(-c2ccccc2O)n1N",
+   "enantiomer": "CC[C@H](C)Sc1nnc(-c2ccccc2O)n1N",
+   "E": -31562.12068910863,
+   "E_mirror": -31562.120689108637,
+   "dE": 7.275957614183426e-12,
+   "converged": true
+  },
+  {
+   "smiles": "COc1ccc([C@H](C)N(C)C(=O)NCC(C)(C)N2CCOCC2)cc1",
+   "enantiomer": "COc1ccc([C@@H](C)N(C)C(=O)NCC(C)(C)N2CCOCC2)cc1",
+   "E": -30840.76987456583,
+   "E_mirror": -30840.76987456583,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "CCOC(=O)[C@@H](C)NC(=O)[C@@H]1CC(=O)N(C2CCCC2)C1",
+   "enantiomer": "CCOC(=O)[C@H](C)NC(=O)[C@H]1CC(=O)N(C2CCCC2)C1",
+   "E": -27135.1781682256,
+   "E_mirror": -27135.1781682256,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "CCC[C@@H]1CN(C(=O)c2ccc(NC(=O)NC(C)C)cc2)CCO1",
+   "enantiomer": "CCC[C@H]1CN(C(=O)c2ccc(NC(=O)NC(C)C)cc2)CCO1",
+   "E": -29739.333058047763,
+   "E_mirror": -29739.333058047763,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "CC(C)N1C[C@@H](C(=O)NCCNC(=O)Cc2ccccc2)CC1=O",
+   "enantiomer": "CC(C)N1C[C@H](C(=O)NCCNC(=O)Cc2ccccc2)CC1=O",
+   "E": -29707.17787642993,
+   "E_mirror": -29707.177876429934,
+   "dE": 3.637978807091713e-12,
+   "converged": true
+  },
+  {
+   "smiles": "O=C(NCCc1nc(-c2ccccn2)no1)[C@H]1CCOC1",
+   "enantiomer": "O=C(NCCc1nc(-c2ccccn2)no1)[C@@H]1CCOC1",
+   "E": -26897.16622847792,
+   "E_mirror": -26897.16622847792,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "CCCNS(=O)(=O)c1ccc(NC(=O)[C@H]2C[C@@H]3C=C[C@H]2C3)cc1",
+   "enantiomer": "CCCNS(=O)(=O)c1ccc(NC(=O)[C@@H]2C[C@H]3C=C[C@@H]2C3)cc1",
+   "E": -37963.96200864298,
+   "E_mirror": -37963.96200864298,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "C[C@H](C(=O)OCC#Cc1ccccc1)c1ccc2c(c1)OCCO2",
+   "enantiomer": "C[C@@H](C(=O)OCC#Cc1ccccc1)c1ccc2c(c1)OCCO2",
+   "E": -29239.892779321566,
+   "E_mirror": -29239.892779321566,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "O=C(c1cccc(N2CCCC2=O)c1)N1CC(=O)N(C2CCCCC2)C[C@@H](OCc2ccccn2)C1",
+   "enantiomer": "O=C(c1cccc(N2CCCC2=O)c1)N1CC(=O)N(C2CCCCC2)C[C@H](OCc2ccccn2)C1",
+   "E": -43769.75548482276,
+   "E_mirror": -43769.75548482276,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "CCO[C@@H]1C[C@@H](NC(=O)NCc2ccc(C#N)cc2)C12CCC2",
+   "enantiomer": "CCO[C@H]1C[C@H](NC(=O)NCc2ccc(C#N)cc2)C12CCC2",
+   "E": -27623.277579291866,
+   "E_mirror": -27623.277579291866,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "C[C@@H](Cc1ccsc1)N(C)C(=O)Nc1c(F)cc(F)cc1F",
+   "enantiomer": "C[C@H](Cc1ccsc1)N(C)C(=O)Nc1c(F)cc(F)cc1F",
+   "E": -39833.86701564469,
+   "E_mirror": -39833.86701564469,
+   "dE": 0.0,
+   "converged": true
+  }
+ ],
+ "protocol": "mirror (x -> -x) of the same ETKDG conformer, identical LBFGS relaxation with MACE-OFF, fmax 0.05 eV/A",
+ "date": "2026-09-25",
+ "host": "vm"
+}
