@@ -460,6 +460,8 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
 
 ## Deviations
 
+- 2026-09-25 — The plan amendment was delivered a second time after a container restart; its content is identical to Am1, already merged above, so nothing was changed.
+
 - Added `scripts/` (notebook generators and data-generation CLIs) to the proposed repo layout.
 - Am1 (2026-09-25): research question reframed around the synthetic-to-real gap; Phase 4 sweep
   redefined (sizes {50k, 200k} × real fractions instead of {10k, 50k, 200k, 1M}); README now allows
