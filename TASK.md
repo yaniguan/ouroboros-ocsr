@@ -313,13 +313,37 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
 - [ ] [colab] D (and E) in sweep.
 
 ## Phase 6 — Geometry / MACE (positioned as an error-propagation analysis, Am1-F)
-- [ ] SMILES → N ETKDG conformers → MACE-OFF opt → lowest-energy conformer (energy, forces).
-- [ ] Embedding success ≥ 98% on 1,000 molecules; failures logged.
-- [ ] Stereo preservation ≥ 99% on 1,000 chiral molecules.
-- [ ] Convergence (fmax < 0.05 eV/Å) ≥ 95%; median time recorded.
-- [ ] Enantiomer pairs |ΔE| < 1e-3 eV (20 pairs).
-- [ ] Error categorization unit tests 100%.
-- [ ] Error-propagation script tested on a small set.
+- [x] SMILES → N ETKDG conformers → MACE-OFF opt → lowest-energy conformer (energy, forces). —
+  `ouroboros/geometry/conformers.py::lowest_energy_conformer` (ETKDGv3, default N = 10, random-coords
+  retry; MACE-OFF23 via `mace_off`, ASE LBFGS, fmax 0.05 eV/Å, float64; returns energy, forces,
+  positions, convergence, stereo check), 2026-09-25.
+- [~] Embedding success ≥ 98% on 1,000 molecules; failures logged. — first run 997/1000 = 99.7%
+  (0.85 s/mol for 10 conformers); the 3 failures (logged in `benchmarks/geometry/embed.json`) were
+  bridged bicycles with impossible random stereo → data fix (Decisions log); re-measure queued on the
+  regenerated test set.
+- [~] Stereo preservation ≥ 99% on 1,000 chiral molecules. — first run 985/987 embedded stereo
+  molecules = 99.8% (all 10 conformers must carry the input stereo); re-measure queued with the data
+  fix and the corrected check (only stereo elements specified in the input are compared).
+- [~] Convergence (fmax < 0.05 eV/Å) ≥ 95%; median time recorded. — 40 test molecules × 3
+  conformers, MACE-OFF23 small, CPU: 39 embedded, 39/39 lowest-energy conformers and 100% of all
+  conformers converged; median 25.2 s/molecule (CPU) → `benchmarks/geometry/relax.json`. Re-run
+  queued for the corrected stereo-after-relaxation number (first run reported 72% because
+  unspecified centres were counted — a bug in the check, not in the geometry). 1,000-molecule run
+  on GPU is in `notebooks/03_geometry.ipynb` (U7).
+- [~] Enantiomer pairs |ΔE| < 1e-3 eV (20 pairs). — mirrored geometry + identical LBFGS relaxation:
+  19 pairs, max |ΔE| = 7.3e-12 eV (the 20th candidate was a non-embeddable bridged molecule); script
+  fixed to collect 20 embeddable pairs, re-run queued.
+- [x] Error categorization unit tests 100%. — `tests/test_geometry.py`: 19 hand-constructed
+  prediction/truth pairs (correct incl. reordered / salt, enantiomer incl. both-centre inversion and
+  E/Z-kept, diastereomer incl. dropped stereo, E/Z swap and ring cis/trans, meso/achiral, isomeric
+  and non-isomeric constitutional, invalid) 19/19 pass. One of my own hand labels was wrong
+  (`OC(=O)[C@@H](C)N` is the enantiomer, verified with RDKit) and was corrected, 2026-09-25.
+- [~] Error-propagation script tested on a small set. — `scripts/error_propagation.py` on 8
+  hand-made pairs (`tests/fixtures/propagation_pairs.tsv`): categories correct 1 / enantiomer 2 /
+  diastereomer 2 / constitutional 2 / invalid 1, non-isomer pair reported as NaN. It exposed that
+  independent conformer searches give enantiomers a spurious |ΔE| up to 0.076 eV (3 conformers) →
+  enantiomer energies now come from the mirrored truth geometry and `--noise-seeds` reports the
+  conformer-search noise floor; re-run queued.
 - [ ] [colab] Energy-error distribution per category on best arm's predictions.
 
 ### Am1-F — README / related work
