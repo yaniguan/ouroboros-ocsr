@@ -1,0 +1,53 @@
+{
+ "conformer_search_noise_eV": {
+  "n": 7,
+  "median": 0.00016021434294088976,
+  "max": 0.001592858049662027
+ },
+ "n_pairs": 8,
+ "model": "MACE-OFF23 small",
+ "n_conf": 3,
+ "seconds": 102.04722833633423,
+ "categories": {
+  "correct": {
+   "n": 1,
+   "n_isomer_pairs_with_energy": 1,
+   "median_abs_dE_eV": 0.0,
+   "mean_abs_dE_eV": 0.0,
+   "max_abs_dE_eV": 0.0,
+   "embedding_failures": 0
+  },
+  "enantiomer": {
+   "n": 2,
+   "n_isomer_pairs_with_energy": 2,
+   "median_abs_dE_eV": 0.0,
+   "mean_abs_dE_eV": 0.0,
+   "max_abs_dE_eV": 0.0,
+   "embedding_failures": 0
+  },
+  "diastereomer": {
+   "n": 2,
+   "n_isomer_pairs_with_energy": 2,
+   "median_abs_dE_eV": 0.1136707938580912,
+   "mean_abs_dE_eV": 0.1136707938580912,
+   "max_abs_dE_eV": 0.13201001011111657,
+   "embedding_failures": 0
+  },
+  "constitutional": {
+   "n": 2,
+   "n_isomer_pairs_with_energy": 1,
+   "median_abs_dE_eV": 0.16007589613946038,
+   "mean_abs_dE_eV": 0.16007589613946038,
+   "max_abs_dE_eV": 0.16007589613946038,
+   "embedding_failures": 0
+  },
+  "invalid": {
+   "n": 1,
+   "n_isomer_pairs_with_energy": 0,
+   "median_abs_dE_eV": null,
+   "mean_abs_dE_eV": null,
+   "max_abs_dE_eV": null,
+   "embedding_failures": 0
+  }
+ }
+}

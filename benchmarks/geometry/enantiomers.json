@@ -1,7 +1,7 @@
 {
- "n_pairs": 19,
+ "n_pairs": 20,
  "max_abs_dE_eV": 7.275957614183426e-12,
- "pass": false,
+ "pass": true,
  "pairs": [
   {
    "smiles": "COc1ccc(NC(=O)[C@H](C)Sc2ccc(C)cc2)cn1",
@@ -56,6 +56,14 @@
    "enantiomer": "CCn1cc(NC(=O)[C@@H]2CCCCN2C(=O)OC(C)(C)C)cn1",
    "E": -29138.306949536924,
    "E_mirror": -29138.306949536924,
+   "dE": 0.0,
+   "converged": true
+  },
+  {
+   "smiles": "Cc1ccccc1C(=O)NCC(=O)NCC[C@@H]1C[C@H]2CC[C@@H]1C2",
+   "enantiomer": "Cc1ccccc1C(=O)NCC(=O)NCC[C@H]1C[C@@H]2CC[C@H]1C2",
+   "E": -27221.51507518767,
+   "E_mirror": -27221.51507518767,
    "dE": 0.0,
    "converged": true
   },
@@ -156,6 +164,7 @@
    "converged": true
   }
  ],
+ "skipped_not_embeddable": [],
  "protocol": "mirror (x -> -x) of the same ETKDG conformer, identical LBFGS relaxation with MACE-OFF, fmax 0.05 eV/A",
  "date": "2026-09-25",
  "host": "vm"

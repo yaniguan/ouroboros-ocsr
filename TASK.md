@@ -355,20 +355,22 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
   queued for the corrected stereo-after-relaxation number (first run reported 72% because
   unspecified centres were counted — a bug in the check, not in the geometry). 1,000-molecule run
   on GPU is in `notebooks/03_geometry.ipynb` (U7).
-- [~] Enantiomer pairs |ΔE| < 1e-3 eV (20 pairs). — mirrored geometry + identical LBFGS relaxation:
-  19 pairs, max |ΔE| = 7.3e-12 eV (the 20th candidate was a non-embeddable bridged molecule); script
-  fixed to collect 20 embeddable pairs, re-run queued.
+- [x] Enantiomer pairs |ΔE| < 1e-3 eV (20 pairs). — 20 chiral test molecules (regenerated data, none
+  skipped): ETKDG conformer and its mirror image relaxed identically (LBFGS, MACE-OFF23 small, fmax
+  0.05, float64), all 40 converged; max |ΔE| = 7.3e-12 eV → `benchmarks/geometry/enantiomers.json`,
+  2026-09-25.
 - [x] Error categorization unit tests 100%. — `tests/test_geometry.py`: 19 hand-constructed
   prediction/truth pairs (correct incl. reordered / salt, enantiomer incl. both-centre inversion and
   E/Z-kept, diastereomer incl. dropped stereo, E/Z swap and ring cis/trans, meso/achiral, isomeric
   and non-isomeric constitutional, invalid) 19/19 pass. One of my own hand labels was wrong
   (`OC(=O)[C@@H](C)N` is the enantiomer, verified with RDKit) and was corrected, 2026-09-25.
-- [~] Error-propagation script tested on a small set. — `scripts/error_propagation.py` on 8
-  hand-made pairs (`tests/fixtures/propagation_pairs.tsv`): categories correct 1 / enantiomer 2 /
-  diastereomer 2 / constitutional 2 / invalid 1, non-isomer pair reported as NaN. It exposed that
-  independent conformer searches give enantiomers a spurious |ΔE| up to 0.076 eV (3 conformers) →
-  enantiomer energies now come from the mirrored truth geometry and `--noise-seeds` reports the
-  conformer-search noise floor; re-run queued.
+- [x] Error-propagation script tested on a small set. — `scripts/error_propagation.py` on 8
+  hand-made pairs (`tests/fixtures/propagation_pairs.tsv`, 3 conformers, `--noise-seeds`):
+  correct 1 (ΔE 0), enantiomer 2 (ΔE exactly 0 via the mirrored truth geometry), diastereomer 2
+  (|ΔE| 0.095, 0.132 eV), constitutional 2 (isomer |ΔE| 0.160 eV; non-isomer reported NaN),
+  invalid 1; conformer-search noise floor (truth searched with 2 seeds) median 1.6e-4, max 1.6e-3 eV
+  → `benchmarks/geometry/propagation_fixture_*.json*`. The first version (independent searches for
+  enantiomers) gave a spurious 0.076 eV — fixed as described in the script docstring, 2026-09-25.
 - [ ] [colab] Energy-error distribution per category on best arm's predictions.
 
 ### Am1-F — README / related work

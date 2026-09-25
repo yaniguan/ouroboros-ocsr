@@ -8,7 +8,7 @@
  "stereo_n": 1000,
  "stereo_all_conformers_ok": 999,
  "stereo_rate": 0.999,
- "embed_sec_per_mol": 0.31060939443400276,
+ "embed_sec_per_mol": 0.30727841042200454,
  "date": "2026-09-25",
  "host": "vm"
 }
