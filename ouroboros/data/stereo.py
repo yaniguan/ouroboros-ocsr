@@ -11,6 +11,7 @@ from __future__ import annotations
 import random
 
 from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers, StereoEnumerationOptions
 
 
@@ -51,8 +52,16 @@ def assign_random_stereo(mol: Chem.Mol, rng: random.Random, tetrahedral: bool) -
     the configuration is controlled by ``rng`` only."""
     m = Chem.Mol(mol)
     Chem.RemoveStereochemistry(m)
+    # Random tags on bridged ring systems can describe geometrically impossible isomers (e.g. an
+    # inverted norbornane bridgehead): for molecules with bridgehead atoms, only accept isomers
+    # that RDKit can embed in 3D. Deterministic (RDKit seeds the embedding from the isomer).
+    bridged = rdMolDescriptors.CalcNumBridgeheadAtoms(m) > 0
     opts = StereoEnumerationOptions(
-        tryEmbedding=False, onlyUnassigned=True, maxIsomers=1, rand=rng.getrandbits(31), unique=True
+        tryEmbedding=bridged,
+        onlyUnassigned=True,
+        maxIsomers=1,
+        rand=rng.getrandbits(31),
+        unique=True,
     )
     isomers = list(EnumerateStereoisomers(m, options=opts))
     if not isomers:

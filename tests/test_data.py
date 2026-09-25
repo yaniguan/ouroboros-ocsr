@@ -194,3 +194,14 @@ def test_shards_store_clean_images_and_loader_degrades(tiny_dataset):
             break
     else:
         pytest.skip("no noisy sample in the tiny dataset")
+
+
+def test_random_stereo_on_bridged_rings_is_embeddable():
+    from ouroboros.geometry.conformers import embed
+
+    flat = Chem.MolFromSmiles("CC(=O)NCC1CC2CCC1C2")  # norbornane: bridgehead stereo is coupled
+    for seed in range(6):
+        m = assign_random_stereo(flat, random.Random(seed), tetrahedral=True)
+        assert defined_stereo(m)[0] == 3
+        mol, why = embed(Chem.MolToSmiles(m), n_conf=1, seed=0)
+        assert mol is not None, (Chem.MolToSmiles(m), why)

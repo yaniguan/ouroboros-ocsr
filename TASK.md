@@ -359,6 +359,10 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
   always assigned; tetrahedral stereo is assigned (randomly, seeded by the InChIKey) only for
   molecules drawn into the stereo bucket. Train order is interleaved so every prefix has the target
   stereo fraction (default 0.40) → 10k ⊂ 50k ⊂ 200k ⊂ 1M are nested prefixes of one manifest.
+- 2026-09-25 — Random stereo assignment only accepts 3D-embeddable isomers for molecules with
+  bridgehead atoms (`tryEmbedding` limited to them for speed). Found by the Phase 6 embedding
+  benchmark: all 3 ETKDG failures among 1,000 test molecules were bridged bicycles whose random
+  tags described impossible geometries. Manifests / local shards / Phase 1 checks are regenerated.
 - 2026-09-25 — Splits are assigned by a hash of the InChIKey connectivity block, so all
   stereoisomers of a constitution share a split (stricter than full-key disjointness).
 - 2026-09-25 — The molecule is drawn inside the inscribed circle of the canvas so any rotation
