@@ -38,6 +38,28 @@ or changed are tagged **(Am1-A … Am1-F)**.
   unparsable predictions count in exact match (as wrong, presumably), and how InChIKey identity is
   combined with exact match in the tables.
 
+### U4 — Generate the 1M dataset on Colab (Phase 1 [colab]; 200k = its first 200 shards)
+1. Open `notebooks/01_generate_data.ipynb` (branch `claude/vigilant-johnson-j4882f`). It needs no GPU;
+   any runtime with many vCPUs works (an A100 runtime has ~12).
+2. Run all. Expected: pool ≈ 5 min, composition ≈ 15 min (single-threaded), rendering 1M ≈ 20–30 min
+   on 12 vCPUs, copy to Drive ≈ 5–15 min. Output: `MyDrive/ouroboros/data/full/` ≈ 7 GB
+   (1M train ≈ 6.8 GB, 200k subset ≈ 1.4 GB, val+test ≈ 0.1 GB). Needs ~8 GB free on Drive.
+3. **Report back** the last cell's output: total and 200k-subset sizes, `pool.stats.json`,
+   `compose.json`, the three `render` lines (samples, drops, seconds) and the wall times.
+
+### U5 — Decisions needed on the experiment grid (Am1-E) — see "Compute estimate" in Phase 4
+- The full grid (4 arms × 6 placeholder real fractions × {50k, 200k} × 3 seeds = 132 runs) is
+  estimated at **150.9 A100-h** (assumed, not yet measured throughput), just over the 150 h limit.
+- **Proposed pruned grid (72 runs, ≈ 85 A100-h):** real fractions {0, 0.1, 0.5}, all 4 arms, both
+  sizes, 3 seeds. Why it still tests H1–H3: f = 0 is the synthetic-only condition for H1 (rendered
+  and rotated sets) and H2 (real sets); 0.1 and 0.5 bracket low and high real supervision for H3 and
+  sit next to the 9.5% / 50.2% points in arXiv:2608.09100's abstract (to be replaced by your exact
+  fractions, U2). Seeds stay at 3 so the CIs remain meaningful.
+- Steerable arm config: param-matched vs FLOP-matched (numbers in Phase 3). My recommendation:
+  FLOP-matched in the main grid (equal compute per image, the practical constraint), param-matched
+  as a single ablation (one size, f = 0, 3 seeds), because the param-matched C8 costs ≈ 12× the FLOPs.
+- Please reply: full or pruned grid, and FLOP- vs param-matched.
+
 ## Phase 0 — Scaffold
 
 - [x] `pip install -e .` succeeds in a fresh virtualenv; exact versions pinned in requirements.
@@ -117,7 +139,10 @@ cores (`data/full/pool.stats.json`).
 - [x] Baseline encoder + 6-layer Transformer decoder; 20M–60M params. — 43.17M total (encoder
   17.81M: ResNet-18-style CNN + abs. 2D pos-emb + 2-layer mixer; decoder 25.36M: 6 layers, d=512,
   8 heads, ff 2048, 133-token vocab, tied embeddings); encoder 10.3 GFLOPs @384 px, 2026-09-25.
-- [ ] Overfit: 256 samples → ≥ 99% exact match within 3,000 steps.
+- [x] Overfit: 256 samples → ≥ 99% exact match within 3,000 steps. — 256/256 = 100% at step 1,750
+  (13.3% @250, 55.9% @500, 83.2% @750, 91.0% @1250); settings: default architecture (43.1M) at
+  128 px, CPU, fp32, batch 32, AdamW lr 5e-4, warmup 100, cosine over 3,000, dropout 0, greedy
+  decoding, eval every 250 steps; 57 min → `benchmarks/train/overfit_baseline.json`, 2026-09-25.
 - [ ] Resume test: ≤ 1% mean relative loss difference over next 100 steps.
 - [x] Checkpoint save < 30 s. — default model @384 px with Adam state: 518 MB, save 0.56–1.78 s
   (3 saves), load 0.42 s, local disk → `benchmarks/train/checkpoint_time.json`, 2026-09-25.
@@ -190,8 +215,27 @@ cores (`data/full/pool.stats.json`).
   fractions × 2 sizes × 3 seeds, f = 1.0 kept at one size only since it uses no synthetic data);
   generator refuses arm overrides of the decoder and asserts one decoder config, 2026-09-25.
 - [ ] Every config passes a 50-step dry run.
-- [ ] Compute estimate (GPU-h per run and total) in TASK.md; if > 150 A100-h, propose a pruned grid
-  that still tests H1–H3 under Needs user.
+- [x] Compute estimate (GPU-h per run and total) in TASK.md; if > 150 A100-h, propose a pruned grid
+  that still tests H1–H3 under Needs user. — see "Compute estimate" below; full grid 150.9 A100-h
+  (> 150) → pruned grid proposed in U5, 2026-09-25.
+
+#### Compute estimate (2026-09-25; `scripts/estimate_compute.py`)
+Assumptions (NOT measured; `configs/compute_assumptions.yaml`): A100 bf16, 384 px, batch 64;
+training 600 img/s for the baseline, 400 img/s for the steerable C8 (FLOP-matched), 300 img/s for
+arm D; eval 58k greedy decodes at 1000 img/s; 0.05 h overhead per run. Steps: 20k (50k set),
+40k (200k set) → 1.28M / 2.56M samples seen.
+
+| arm | size | runs | GPU-h/run | GPU-h |
+|-----|------|------|-----------|-------|
+| A, B (each) | 50k | 18 | 0.66 | 11.9 |
+| A, B (each) | 200k | 15 | 1.25 | 18.8 |
+| C, C+ (each) | 50k | 18 | 0.95 | 17.2 |
+| C, C+ (each) | 200k | 15 | 1.84 | 27.7 |
+| **full grid** | | **132** | | **150.9** |
+| pruned grid (fractions {0, 0.1, 0.5}) | | 72 | | 84.8 |
+
+Arm D (Phase 5) would add ≈ 2.3 h per 200k run. The estimate will be redone with the img/s that the
+first Colab runs log (`img_per_s` in `log.jsonl`).
 
 ## Phase 5 — Equivariant attention (D) and canonicalization (E, optional)
 - [ ] Steerable stem + group-equivariant self-attention with rotated relative positions.

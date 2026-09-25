@@ -1,0 +1,72 @@
+{
+ "name": "baseline",
+ "n_samples": 256,
+ "overrides": [
+  "data.synthetic_root=data/full/shards",
+  "data.synthetic_max_samples=256",
+  "data.num_workers=0",
+  "train.batch_size=32",
+  "train.steps=3000",
+  "train.lr=5.0e-4",
+  "train.warmup=100",
+  "train.amp=none",
+  "train.log_every=50",
+  "train.ckpt_every=30000",
+  "data.image_size=128",
+  "model.decoder.dropout=0.0",
+  "model.encoder.dropout=0.0"
+ ],
+ "encoder": {
+  "type": "baseline",
+  "dropout": 0.0
+ },
+ "history": [
+  {
+   "step": 250,
+   "loss": 0.24147139489650726,
+   "exact": 0.1328125,
+   "sec": 637.42160987854
+  },
+  {
+   "step": 500,
+   "loss": 0.0667882189154625,
+   "exact": 0.55859375,
+   "sec": 1097.841224193573
+  },
+  {
+   "step": 750,
+   "loss": 0.03804115951061249,
+   "exact": 0.83203125,
+   "sec": 1557.9290127754211
+  },
+  {
+   "step": 1000,
+   "loss": 0.04013383761048317,
+   "exact": 0.859375,
+   "sec": 2019.729201078415
+  },
+  {
+   "step": 1250,
+   "loss": 0.011099958792328835,
+   "exact": 0.91015625,
+   "sec": 2480.5561990737915
+  },
+  {
+   "step": 1500,
+   "loss": 0.007929169572889805,
+   "exact": 0.921875,
+   "sec": 2948.680409193039
+  },
+  {
+   "step": 1750,
+   "loss": 5.820528167532757e-05,
+   "exact": 1.0,
+   "sec": 3415.6275441646576
+  }
+ ],
+ "steps_to_99": 1750,
+ "best_exact": 1.0,
+ "pass": true,
+ "device": "cpu",
+ "date": "2026-09-25"
+}
