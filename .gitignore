@@ -17,3 +17,8 @@ checkpoints/
 !tests/fixtures/**
 /data_cache/
 /data/
+/real_data/
+/real/
+*.idx.json
+*.tsv.gz
+*.part

@@ -56,6 +56,12 @@ def main(argv=None) -> None:
         help="render only the first N train rows (prefix of the nested manifest)",
     )
     ap.add_argument("--pool", default=None, help="reuse an existing pool.tsv.gz (default: OUT/)")
+    ap.add_argument(
+        "--exclude-keys",
+        default=None,
+        help="text file of InChIKeys (one per line) to keep out of every split, e.g. the "
+        "molecules of real eval sets (produced by scripts/check_leakage.py --dump-eval-keys)",
+    )
     ap.add_argument("--stages", nargs="+", default=["pool", "compose", "render"])
     args = ap.parse_args(argv)
 
@@ -70,7 +76,13 @@ def main(argv=None) -> None:
         print("pool:", build.prepare_pool(srcs, pool_path, args.workers, args.pool_limit))
 
     if "compose" in args.stages:
-        cfg = build.ComposeConfig(stereo_fraction=args.stereo_fraction, sizes=sizes, seed=args.seed)
+        excl = frozenset()
+        if args.exclude_keys:
+            lines = Path(args.exclude_keys).read_text().split()
+            excl = frozenset(k.strip()[:14] for k in lines if k.strip())
+        cfg = build.ComposeConfig(
+            stereo_fraction=args.stereo_fraction, sizes=sizes, seed=args.seed, exclude_key14=excl
+        )
         print("compose:", build.compose(build.read_pool(pool_path), cfg, out / "manifests"))
 
     if "render" in args.stages:

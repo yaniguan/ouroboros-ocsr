@@ -52,6 +52,16 @@ def list_shards(root: str | Path, split: str) -> list[Path]:
     return shards
 
 
+def sample_key14(meta: dict) -> str | None:
+    """InChIKey connectivity block of a sample (stored for synthetic data, computed for real)."""
+    if meta.get("key14"):
+        return meta["key14"]
+    from rdkit import Chem
+
+    mol = Chem.MolFromSmiles(meta["smiles"])
+    return Chem.MolToInchiKey(mol)[:14] if mol is not None else None
+
+
 class ShardDataset(Dataset):
     """Random-access dataset over tar shards. ``max_samples`` takes a prefix (nested sizes)."""
 
@@ -62,10 +72,19 @@ class ShardDataset(Dataset):
         tokenizer: SmilesTokenizer | None = None,
         max_samples: int | None = None,
         image_size: int | None = None,
+        exclude_key14: frozenset | set | None = None,
     ):
+        """``exclude_key14``: InChIKey connectivity blocks to skip at load time (leakage control
+        when shards were rendered before the real eval sets were known). The prefix of length
+        ``max_samples`` is taken AFTER exclusion."""
         self.entries: list[tuple[Path, dict]] = []
+        self._fh: dict[Path, io.BufferedReader] = {}
+        self.n_excluded = 0
         for shard in list_shards(root, split):
             for s in index_shard(shard):
+                if exclude_key14 and sample_key14(self._meta_of(shard, s)) in exclude_key14:
+                    self.n_excluded += 1
+                    continue
                 self.entries.append((shard, s))
                 if max_samples is not None and len(self.entries) >= max_samples:
                     break
@@ -73,7 +92,6 @@ class ShardDataset(Dataset):
                 break
         self.tokenizer = tokenizer
         self.image_size = image_size
-        self._fh: dict[Path, io.BufferedReader] = {}
 
     def __len__(self) -> int:
         return len(self.entries)
@@ -90,9 +108,11 @@ class ShardDataset(Dataset):
         d["_fh"] = {}
         return d
 
-    def meta(self, i: int) -> dict:
-        shard, s = self.entries[i]
+    def _meta_of(self, shard: Path, s: dict) -> dict:
         return json.loads(self._read(shard, s["json"]))
+
+    def meta(self, i: int) -> dict:
+        return self._meta_of(*self.entries[i])
 
     def __getitem__(self, i: int) -> dict:
         shard, s = self.entries[i]

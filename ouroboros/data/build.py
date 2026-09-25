@@ -131,6 +131,9 @@ class ComposeConfig:
     val_frac: float = 0.02
     test_frac: float = 0.02
     seed: int = 0
+    # InChIKey connectivity blocks (first 14 chars) that must never enter ANY split, e.g. the
+    # molecules of real-document eval sets (leakage control, Am1-A). Stereoisomers are excluded too.
+    exclude_key14: frozenset = frozenset()
 
 
 def split_of(key14: str, cfg: ComposeConfig) -> str:
@@ -187,7 +190,11 @@ def compose(pool: list[dict], cfg: ComposeConfig, out_dir: str | Path) -> dict:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     by_split: dict[str, list[dict]] = {s: [] for s in SPLITS}
+    n_excluded = 0
     for r in pool:
+        if r["key14"] in cfg.exclude_key14:
+            n_excluded += 1
+            continue
         by_split[split_of(r["key14"], cfg)].append(r)
     stats = {}
     for split in SPLITS:
@@ -206,9 +213,10 @@ def compose(pool: list[dict], cfg: ComposeConfig, out_dir: str | Path) -> dict:
             "available": len(by_split[split]),
             "stereo_fraction": sum(r["stereo"] for r in rows) / max(1, len(rows)),
         }
-    (out_dir / "compose.json").write_text(
-        json.dumps({"config": cfg.__dict__, "stats": stats}, indent=1)
-    )
+    stats["excluded_from_pool"] = n_excluded
+    conf = {k: v for k, v in cfg.__dict__.items() if k != "exclude_key14"}
+    conf["n_exclude_key14"] = len(cfg.exclude_key14)
+    (out_dir / "compose.json").write_text(json.dumps({"config": conf, "stats": stats}, indent=1))
     return stats
 
 
