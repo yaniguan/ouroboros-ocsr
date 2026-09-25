@@ -5,6 +5,7 @@
 00_colab_setup.ipynb     Phase 0 smoke run: Drive, clone, install, copy shards, pytest.
 01_generate_data.ipynb   Phase 1: build the 1M-train dataset (200k = its prefix) and store on Drive.
 02_train_eval.ipynb      Train one sweep config (resumable) and evaluate it; results on Drive.
+03_geometry.ipynb        MACE-OFF benchmarks on 1,000 molecules + energy-error propagation.
 """
 
 import json
@@ -199,6 +200,48 @@ def nb02() -> list:
     return cells
 
 
+def nb03() -> list:
+    cells = setup_cells(
+        "3D stage: MACE-OFF benchmarks and error propagation (Phase 6)",
+        "Runs the geometry benchmarks on 1,000 test molecules with MACE-OFF23 (GPU) and the "
+        "energy-error propagation for one evaluated run (predicted vs. true SMILES, by error "
+        "category). Needs `LOCAL_DATA/manifests/test.tsv` (copied from Drive) and a run whose "
+        "`eval/predictions.jsonl` exists on Drive.",
+    )
+    cells += [
+        code(
+            "!mkdir -p {LOCAL_DATA}/manifests && cp {DRIVE_ROOT}/data/full/manifests/test.tsv {LOCAL_DATA}/manifests/\n"
+            "MODEL = 'medium'  # MACE-OFF23 size (Academic Software License)\n"
+            "RUN_ID = 'C_n200k_f0_s0'  # the best arm's run (choose after aggregation)\n"
+            "N_RELAX = 200  # molecules for the convergence benchmark (10 conformers each)\n"
+            "PER_CATEGORY = 100  # error-propagation pairs per error category\n"
+            "OUT = f'{DRIVE_ROOT}/results/geometry'\n"
+            "os.makedirs(OUT, exist_ok=True)"
+        ),
+        code(
+            "t = time.time()\n"
+            "!python scripts/bench_geometry.py embed --manifest {LOCAL_DATA}/manifests/test.tsv --n 1000\n"
+            "!python scripts/bench_geometry.py enantio --manifest {LOCAL_DATA}/manifests/test.tsv --n 20 --model {MODEL}\n"
+            "!python scripts/bench_geometry.py relax --manifest {LOCAL_DATA}/manifests/test.tsv --n {N_RELAX} --n-conf 10 --model {MODEL}\n"
+            "!cp benchmarks/geometry/*.json {OUT}/\n"
+            "print(f'benchmarks: {(time.time() - t) / 3600:.2f} GPU-h')"
+        ),
+        code(
+            "t = time.time()\n"
+            "!python scripts/error_propagation.py --predictions {DRIVE_ROOT}/runs/{RUN_ID}/eval/predictions.jsonl "
+            "--set rendered_test --out {OUT}/{RUN_ID} --n-conf 10 --mmff-prescreen 3 --model {MODEL} "
+            "--skip-correct --per-category {PER_CATEGORY}\n"
+            "print(f'error propagation: {(time.time() - t) / 3600:.2f} GPU-h')"
+        ),
+        code(
+            "# ---- report back ----\n"
+            "!cat {OUT}/embed.json | head -20; cat {OUT}/relax.json; grep -E 'max_abs|pass' {OUT}/enantiomers.json\n"
+            "!cat {OUT}/{RUN_ID}/summary.json"
+        ),
+    ]
+    return cells
+
+
 def write(name: str, cells: list) -> None:
     nb = {
         "cells": cells,
@@ -222,3 +265,4 @@ if __name__ == "__main__":
     write("00_colab_setup.ipynb", nb00())
     write("01_generate_data.ipynb", nb01())
     write("02_train_eval.ipynb", nb02())
+    write("03_geometry.ipynb", nb03())

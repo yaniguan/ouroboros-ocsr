@@ -37,7 +37,17 @@ def load_pairs(a) -> list[dict]:
             return [{"pred": r["pred"], "ref": r["ref"]} for r in csv.DictReader(f, delimiter="\t")]
     rows = [json.loads(x) for x in Path(a.predictions).read_text().splitlines()]
     rows = [r for r in rows if r.get("angle", 0.0) == 0.0 and (a.set is None or r["set"] == a.set)]
-    return [{"pred": r["pred"], "ref": r["ref"]} for r in rows[: a.max_pairs]]
+    pairs = [{"pred": r["pred"], "ref": r["ref"]} for r in rows]
+    if a.per_category:  # balanced sample: first N pairs of every category (file order)
+        seen: dict[str, int] = defaultdict(int)
+        keep = []
+        for p in pairs:
+            c = categorize(p["pred"], p["ref"])
+            if seen[c] < a.per_category:
+                seen[c] += 1
+                keep.append(p)
+        pairs = keep
+    return pairs[: a.max_pairs]
 
 
 def main(argv=None) -> None:
@@ -50,6 +60,13 @@ def main(argv=None) -> None:
     ap.add_argument("--model", default="small")
     ap.add_argument("--max-pairs", type=int, default=None)
     ap.add_argument("--skip-correct", action="store_true", help="dE = 0 by definition")
+    ap.add_argument("--per-category", type=int, default=None, help="at most N pairs per category")
+    ap.add_argument(
+        "--mmff-prescreen",
+        type=int,
+        default=None,
+        help="MMFF-relax all conformers, send only the k lowest to MACE",
+    )
     a = ap.parse_args(argv)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -58,7 +75,9 @@ def main(argv=None) -> None:
 
     def energy(smi: str) -> dict:
         if smi not in cache:
-            g = lowest_energy_conformer(smi, n_conf=a.n_conf, seed=0, calc=calc)
+            g = lowest_energy_conformer(
+                smi, n_conf=a.n_conf, seed=0, calc=calc, mmff_prescreen=a.mmff_prescreen
+            )
             cache[smi] = {
                 "status": g.status,
                 "E": g.energy,
