@@ -11,7 +11,7 @@ from __future__ import annotations
 import random
 
 from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import AllChem, rdMolDescriptors
 from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers, StereoEnumerationOptions
 
 
@@ -46,27 +46,44 @@ def has_stereo(smiles_or_mol) -> bool:
     return mol is not None and sum(defined_stereo(mol)) > 0
 
 
+def _embeddable(mol: Chem.Mol, attempts: int = 5) -> bool:
+    """Quick 3D-feasibility check: can ETKDG (chirality enforced) embed it in a few attempts?"""
+    m = Chem.AddHs(mol)
+    params = AllChem.ETKDGv3()
+    params.randomSeed = 0xF00D
+    params.maxIterations = attempts
+    params.enforceChirality = True
+    return AllChem.EmbedMolecule(m, params) == 0
+
+
 def assign_random_stereo(mol: Chem.Mol, rng: random.Random, tetrahedral: bool) -> Chem.Mol:
     """Return a copy with all potential E/Z bonds (and, if ``tetrahedral``, all potential
     tetrahedral centers) set to a random configuration. Existing tags are discarded first so
-    the configuration is controlled by ``rng`` only."""
+    the configuration is controlled by ``rng`` only.
+
+    Random tags on bridged ring systems can describe geometrically impossible isomers (e.g. an
+    inverted norbornane bridgehead). For molecules with bridgehead atoms we draw up to 16 random
+    isomers and keep the first that passes a quick ETKDG embedding check (RDKit's own
+    ``tryEmbedding`` took ~25 s per bridged molecule — too slow at 1M scale). If none embeds, the
+    molecule is returned without stereo (the caller then does not use it as a stereo sample).
+    """
     m = Chem.Mol(mol)
     Chem.RemoveStereochemistry(m)
-    # Random tags on bridged ring systems can describe geometrically impossible isomers (e.g. an
-    # inverted norbornane bridgehead): for molecules with bridgehead atoms, only accept isomers
-    # that RDKit can embed in 3D. Deterministic (RDKit seeds the embedding from the isomer).
-    bridged = rdMolDescriptors.CalcNumBridgeheadAtoms(m) > 0
+    bridged = tetrahedral and rdMolDescriptors.CalcNumBridgeheadAtoms(m) > 0
     opts = StereoEnumerationOptions(
-        tryEmbedding=bridged,
+        tryEmbedding=False,
         onlyUnassigned=True,
-        maxIsomers=1,
+        maxIsomers=16 if bridged else 1,
         rand=rng.getrandbits(31),
         unique=True,
     )
-    isomers = list(EnumerateStereoisomers(m, options=opts))
-    if not isomers:
+    out = None
+    for iso in EnumerateStereoisomers(m, options=opts):
+        if not bridged or _embeddable(iso):
+            out = iso
+            break
+    if out is None:
         return m
-    out = isomers[0]
     if not tetrahedral:
         for atom in out.GetAtoms():
             atom.SetChiralTag(Chem.ChiralType.CHI_UNSPECIFIED)
