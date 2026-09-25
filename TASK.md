@@ -223,7 +223,9 @@ cores (`data/full/pool.stats.json`).
 
   Both include the identical 2-layer token mixer (≈6.3M). The sweep uses the FLOP-matched config
   pending U5, 2026-09-25.
-- [ ] Overfit test passes.
+- [x] Overfit test passes. — FLOP-matched C8 (32.4M total, encoder 7.0M), identical settings to the
+  baseline test: 256/256 = 100% at step 1,750 (2.7% @250, 53.5% @500, 73.0% @750, 77.3% @1000,
+  89.5% @1250, 93.4% @1500); 72 min → `benchmarks/train/overfit_steerable_c8.json`, 2026-09-25.
 - [x] `.export()` matches training model within 1e-4; speedup recorded. — FLOP-matched C8 @384 px
   on 4 rendered test images, eval mode: max rel. err 0.0e+00; CPU throughput
   5.23 (escnn train-mode) / 5.73 (escnn eval) /
