@@ -406,9 +406,13 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
   molecules drawn into the stereo bucket. Train order is interleaved so every prefix has the target
   stereo fraction (default 0.40) → 10k ⊂ 50k ⊂ 200k ⊂ 1M are nested prefixes of one manifest.
 - 2026-09-25 — Random stereo assignment only accepts 3D-embeddable isomers for molecules with
-  bridgehead atoms (`tryEmbedding` limited to them for speed). Found by the Phase 6 embedding
-  benchmark: all 3 ETKDG failures among 1,000 test molecules were bridged bicycles whose random
-  tags described impossible geometries. Manifests / local shards / Phase 1 checks are regenerated.
+  bridgehead atoms (2.3% of stereo-capable pool molecules): up to 16 random isomers, first one that
+  a quick ETKDG check (5 attempts, chirality enforced) can embed; none → no stereo for that molecule.
+  RDKit's `tryEmbedding` did the same but cost ~25 s per bridged molecule (≈190 CPU-h at 1M scale);
+  the quick check costs 0.35 s (9 ms per row on average). Found by the Phase 6 embedding benchmark:
+  all 3 ETKDG failures among 1,000 test molecules were bridged bicycles with impossible random tags.
+  Manifests / local shards / Phase 1 checks are regenerated. Composition now also prefetches stereo
+  assignments in parallel (`--workers`), with output byte-identical to the serial path (tested).
 - 2026-09-25 — Splits are assigned by a hash of the InChIKey connectivity block, so all
   stereoisomers of a constitution share a split (stricter than full-key disjointness).
 - 2026-09-25 — The molecule is drawn inside the inscribed circle of the canvas so any rotation
