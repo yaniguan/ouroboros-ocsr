@@ -191,7 +191,7 @@ def render(
     mirror: bool = False,
     seed: int = 0,
 ) -> Rendered:
-    """Render ``mol`` into a ``size x size`` grayscale image; molecule inside the inscribed circle."""
+    """Render ``mol`` to a ``size x size`` grayscale image, inside the inscribed circle."""
     drawn = depict(mol, style, mirror=mirror)
     inner = int(math.floor(size / math.sqrt(2)))
     inner -= inner % 2  # keep the paste offset integral and the layout symmetric

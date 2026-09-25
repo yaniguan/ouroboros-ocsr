@@ -49,13 +49,20 @@ def main(argv=None) -> None:
         metavar="N",
         help="render only the first N train samples (val/test N//10) of the recipe",
     )
+    ap.add_argument(
+        "--train-limit",
+        type=int,
+        default=None,
+        help="render only the first N train rows (prefix of the nested manifest)",
+    )
+    ap.add_argument("--pool", default=None, help="reuse an existing pool.tsv.gz (default: OUT/)")
     ap.add_argument("--stages", nargs="+", default=["pool", "compose", "render"])
     args = ap.parse_args(argv)
 
     out = Path(args.out)
     train_size = PRESETS[args.preset] if args.preset else args.train_size
     sizes = {"train": train_size, "val": args.val_size, "test": args.test_size}
-    pool_path = out / "pool.tsv.gz"
+    pool_path = Path(args.pool) if args.pool else out / "pool.tsv.gz"
     t_all = time.time()
 
     if "pool" in args.stages and not pool_path.exists():
@@ -71,6 +78,8 @@ def main(argv=None) -> None:
             rows = build.read_manifest(out / "manifests" / f"{split}.tsv")
             if args.dry_run is not None:
                 rows = rows[: args.dry_run if split == "train" else max(1, args.dry_run // 10)]
+            elif split == "train" and args.train_limit is not None:
+                rows = rows[: args.train_limit]
             st = build.render_shards(
                 rows,
                 split,

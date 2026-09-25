@@ -176,7 +176,9 @@ def rotate_images(images: torch.Tensor, angles_deg: torch.Tensor) -> torch.Tenso
         # theta reproduces torch.rot90(k=1) exactly at t = 90 deg (checked in tests), so both
         # branches share one rotation convention.
         theta = torch.tensor([[c, -s, 0.0], [s, c, 0.0]], dtype=images.dtype, device=images.device)
-        grid = torch.nn.functional.affine_grid(theta[None], [1, *images.shape[1:]], align_corners=False)
+        grid = torch.nn.functional.affine_grid(
+            theta[None], [1, *images.shape[1:]], align_corners=False
+        )
         out[k] = torch.nn.functional.grid_sample(
             images[k : k + 1], grid, mode="bilinear", padding_mode="zeros", align_corners=False
         )[0]

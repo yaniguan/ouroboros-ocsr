@@ -41,7 +41,10 @@ def standardize(mol: Chem.Mol) -> Chem.Mol:
     return mol
 
 
-def check(mol: Chem.Mol, cfg: FilterConfig = FilterConfig()) -> str | None:
+_DEFAULT = FilterConfig()
+
+
+def check(mol: Chem.Mol, cfg: FilterConfig = _DEFAULT) -> str | None:
     """Return None if ``mol`` passes all rules, else a short rejection reason."""
     if mol is None:
         return "unparsable"
@@ -64,7 +67,7 @@ def check(mol: Chem.Mol, cfg: FilterConfig = FilterConfig()) -> str | None:
     return None
 
 
-def filter_smiles(smiles: str, cfg: FilterConfig = FilterConfig()) -> tuple[Chem.Mol | None, str]:
+def filter_smiles(smiles: str, cfg: FilterConfig = _DEFAULT) -> tuple[Chem.Mol | None, str]:
     """Parse, (optionally) standardize and check. Returns ``(mol, "ok")`` or ``(None, reason)``."""
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
