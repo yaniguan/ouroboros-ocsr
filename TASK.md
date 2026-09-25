@@ -84,57 +84,90 @@ cores (`data/full/pool.stats.json`).
   4 processes, 2026-09-25.
 - [x] Loader throughput ≥ 500 img/s with 8 workers. — 605 img/s (8 workers on this 4-core VM, incl.
   load-time degradation, shuffled random access, batch 64) → `benchmarks/data/loader_speed.json`, 2026-09-25.
-- [~] 10k and 50k shards generated locally; 200k / 1M scripts tested on 1k dry run. — 50k train
-  (50 shards; 10k = first 10 shards) + 5k val + 10k test in `data/full/shards`, 443 MB, 0 drops,
-  train 144.6 s on 4 processes. Dry runs pending.
-- [ ] [colab] 200k and 1M shards on Drive; sizes and times reported. *(Am1-E grid uses only 50k and
+- [x] 10k and 50k shards generated locally; 200k / 1M scripts tested on 1k dry run. — 50k train
+  (50 shards; 10k = first 10 shards) + 5k val + 10k test in `data/full/shards`, 443 MB (train 341 MB,
+  ≈6.8 KB/img), 0 drops, train 144.6 s on 4 processes. Dry runs `--preset 200k/1m --dry-run 1000`:
+  compose + render 1000/100/100 OK, 0 drops (207 s / 877 s incl. composing the full manifest); the
+  dry-run 1M manifest is byte-identical to `data/full` and its first 200k rows equal the 200k
+  manifest (nested prefixes, deterministic), 2026-09-25.
+- [ ] [colab] 200k and 1M shards on Drive; sizes and times reported. → Needs user U4. *(Am1-E grid uses only 50k and
   200k; 1M is kept for the original data-efficiency curve unless you drop it.)*
 
 ### Am1-A — Real-data adapter
-- [ ] Adapter ingests a manifest (image path, SMILES, source/split fields) into the synthetic shard
-  format; interface documented.
-- [ ] 100% of real labels parse after Am1-C standardization; failures logged with reasons, never
-  silently dropped.
-- [ ] Leakage check: 0 InChIKey overlap between every real-document eval set and every training
-  set (synthetic + real); script prints counts and exits nonzero if any > 0.
-- [ ] Real data / images / derived shards never committed: `.gitignore` + pre-commit check;
-  `DATA.md` notes redistribution restrictions.
+- [x] Adapter ingests a manifest (image path, SMILES, source/split fields) into the synthetic shard
+  format; interface documented. — `ouroboros/data/real.py` (docstring + DATA.md),
+  `scripts/ingest_real.py`; `tests/test_real.py` (5 pass); stand-in set (600 cropped synthetic val
+  images, PNG/JPEG, varying sizes) ingested 600/600, 2026-09-25.
+- [~] 100% of real labels parse after Am1-C standardization; failures logged with reasons, never
+  silently dropped. — mechanism done and tested (every failed row → `ingest_failures.jsonl` with
+  reason, counted in `ingest_stats.json`; test covers unparsable/empty label and missing image);
+  the 100% measurement needs the real sets (U1).
+- [~] Leakage check: 0 InChIKey overlap between every real-document eval set and every training
+  set (synthetic + real); script prints counts and exits nonzero if any > 0. — `scripts/check_leakage.py`
+  (exit 1 on overlap, tested with a planted duplicate); `--dump-eval-keys` + `build_dataset.py
+  --exclude-keys` / `ShardDataset(exclude_key14=)` remove eval molecules (incl. stereoisomers) from
+  training. Stand-in run: 0 overlaps for all 4 pairs. Real-set measurement pending U1.
+- [x] Real data / images / derived shards never committed: `.gitignore` + pre-commit check;
+  `DATA.md` notes redistribution restrictions. — `scripts/check_no_data.py` installed as
+  `.git/hooks/pre-commit` (`scripts/install_git_hooks.sh`, also `.pre-commit-config.yaml`); a staged
+  `benchmarks/real_tmp/x.png` was refused ("Commit refused"), rules unit-tested, 2026-09-25.
 - [!] Real sets from the paper — waiting on U1.
 
 ## Phase 2 — Baseline model and training infrastructure
-- [ ] Baseline encoder + 6-layer Transformer decoder; 20M–60M params.
+- [x] Baseline encoder + 6-layer Transformer decoder; 20M–60M params. — 43.17M total (encoder
+  17.81M: ResNet-18-style CNN + abs. 2D pos-emb + 2-layer mixer; decoder 25.36M: 6 layers, d=512,
+  8 heads, ff 2048, 133-token vocab, tied embeddings); encoder 10.3 GFLOPs @384 px, 2026-09-25.
 - [ ] Overfit: 256 samples → ≥ 99% exact match within 3,000 steps.
 - [ ] Resume test: ≤ 1% mean relative loss difference over next 100 steps.
-- [ ] Checkpoint save < 30 s.
-- [ ] Metric unit tests 100% pass (stereo-aware exact match, InChI match, Tanimoto,
-  per-stereocenter accuracy, invalid-SMILES rate). *(Am1-C: standardization below applies.)*
-- [ ] Rotation-sweep eval (0–360°, 15°), on-grid vs off-grid, tested on dummy model.
-  *(Am1-D: must run on rendered AND real-document eval sets.)*
+- [x] Checkpoint save < 30 s. — default model @384 px with Adam state: 518 MB, save 0.56–1.78 s
+  (3 saves), load 0.42 s, local disk → `benchmarks/train/checkpoint_time.json`, 2026-09-25.
+- [x] Metric unit tests 100% pass (stereo-aware exact match, InChI match, Tanimoto,
+  per-stereocenter accuracy, invalid-SMILES rate). *(Am1-C: standardization below applies.)* —
+  `tests/test_metrics.py` 16/16 pass (salts, enantiomer, missing stereo, 1-of-2 centres, E/Z, ring
+  cis/trans, random SMILES orderings ×6 molecules, invalid/empty, tautomer InChIKey, aggregation,
+  bootstrap), 2026-09-25.
+- [x] Rotation-sweep eval (0–360°, 15°), on-grid vs off-grid, tested on dummy model.
+  *(Am1-D: must run on rendered AND real-document eval sets.)* — `ouroboros/eval/evaluate.py`,
+  `scripts/evaluate.py`; dummy exactly-C4-invariant model: exact 1.0 at the 4 pixel-exact angles, 0.0
+  at the 20 others, flags for C4/C8/C16 grids; `tests/test_rotation_sweep.py` 2/2, 2026-09-25.
 - [ ] [colab] Baseline on 200k: exact match ≥ 70%, invalid < 5%.
 
 ### Am1-B — Mixture sampler
-- [ ] Configurable real fraction per batch; measured fraction over 10,000 samples within ±1 pp;
-  identical sample order across two runs with the same seed.
-- [ ] Fraction 0 reproduces the synthetic-only sample order exactly (same seed).
+- [x] Configurable real fraction per batch; measured fraction over 10,000 samples within ±1 pp;
+  identical sample order across two runs with the same seed. — `ouroboros/data/mixture.py`; over
+  10,000 samples (batch 64): f=0→0.0000, 0.05→0.0499, 0.1→0.1000, 0.25→0.2502, 0.5→0.5000,
+  1.0→1.0000 (max |Δ| 0.02 pp); two runs identical for every f; every batch within one sample of
+  B·f; resume at arbitrary positions exact (`tests/test_mixture.py` 20/20), 2026-09-25.
+- [x] Fraction 0 reproduces the synthetic-only sample order exactly (same seed). — 3,000-sample
+  stream identical to `ResumableSampler` (test), 2026-09-25.
 - [!] Paper's fraction grid — waiting on U2 (placeholders `{0, 0.05, 0.1, 0.25, 0.5, 1.0}`).
 
 ### Am1-C — Scoring parity with arXiv:2608.09100
-- [ ] Standardization: RDKit parse + canonicalize; salts/solvates → neutral largest fragment;
+- [x] Standardization: RDKit parse + canonicalize; salts/solvates → neutral largest fragment;
   exact match under full stereochemistry; identity cross-check via stereo-preserving InChIKey;
   validity = fraction parseable by RDKit. Verification status per rule recorded in
-  `ouroboros/eval/standardize.py` docstring (see Decisions log).
+  `ouroboros/eval/standardize.py` docstring (see Decisions log). — implemented with
+  `rdMolStandardize.ChargeParent`; the RDKit call itself and two choices (empty output = invalid, no
+  tautomer canonicalization) are marked UNVERIFIED vs. the paper, 2026-09-25.
 - [!] pending parity — per-sample agreement with the paper's scoring code on ≥ 1,000 pairs (100%
   identical) needs U3. Every results table carries the footnote "scoring parity with
   arXiv:2608.09100 unverified" until this is done.
 
 ### Am1-D — Evaluation reporting
-- [ ] Rendered and real-document test sets reported as separate columns; aggregation raises an
-  error on any headline number averaged across rendered and real sets.
-- [ ] Rotation sweep runs on both rendered and real-document eval sets.
-- [ ] Per-set sample counts and bootstrap 95% CIs (≥ 1,000 resamples) for exact match; plots draw CIs.
+- [x] Rendered and real-document test sets reported as separate columns; aggregation raises an
+  error on any headline number averaged across rendered and real sets. — `ouroboros/eval/aggregate.py`
+  (`MixedKindsError` from `pool_sets` / `--average`), tested on synthetic logs, 2026-09-25.
+- [x] Rotation sweep runs on both rendered and real-document eval sets. — every `eval.sets` entry
+  (kind rendered|real) gets angle 0 in full + the 24-angle sweep on a fixed prefix
+  (`sweep_max_samples`, default 2000); tested with a rendered and a (pretend) real set, 2026-09-25.
+- [x] Per-set sample counts and bootstrap 95% CIs (≥ 1,000 resamples) for exact match; plots draw CIs.
+  — table cells show mean ± std over seeds, [95% CI from 1,000 paired item resamples], n; `results_table`
+  refuses n_boot < 1000; all plots draw CI bands, 2026-09-25.
 
 ## Phase 3 — Steerable CNN encoder
-- [ ] escnn C_N encoder (N ∈ {4, 8, 16}), regular reps, group pooling, invariant relative-position tokens.
+- [x] escnn C_N encoder (N ∈ {4, 8, 16}), regular reps, group pooling, invariant relative-position tokens.
+  — `ouroboros/encoder/steerable.py` (`rot2dOnR2`, no flips; stride-1 R2Conv + blur/2×2 pooling;
+  GroupPooling; distance-biased token mixer; `TokenHead` slot for arm D), 2026-09-25.
 - [ ] C4 equivariance < 1e-4; invariant token set equal up to permutation within 1e-4.
 - [ ] C8/C16 off-grid equivariance error recorded.
 - [ ] Param-matched (±10%) and FLOP-matched (±10%) configs; throughput recorded.
@@ -145,12 +178,17 @@ cores (`data/full/pool.stats.json`).
 ## Phase 4 — Experiment runner
 - [!] ~~Sweep configs A/B/C/C+ × {10k, 50k, 200k, 1M} × ≥ 3 seeds from one definition.~~
   Superseded by Am1-E (grid redefined), 2026-09-25.
-- [ ] Aggregation script (table + plots) tested on synthetic logs. *(Am1-D rules apply.)*
+- [x] Aggregation script (table + plots) tested on synthetic logs. *(Am1-D rules apply.)* —
+  `scripts/aggregate.py`: results.md/json, data-efficiency, real-fraction and rotation-sweep plots;
+  `tests/test_aggregate.py` 2/2 on 216 fake runs' logs, 2026-09-25.
 - [ ] [colab] Sweep executed.
 
 ### Am1-E — Experiment grid (replaces the Phase 4 sweep definition)
-- [ ] Grid = arms {A, B, C, C+} (D/E when Phase 5 lands) × real fraction (Am1-B) × size
-  {50k, 200k} × ≥ 3 seeds, generated from one sweep file.
+- [x] Grid = arms {A, B, C, C+} (D/E when Phase 5 lands) × real fraction (Am1-B) × size
+  {50k, 200k} × ≥ 3 seeds, generated from one sweep file. — `configs/sweep.yaml` →
+  `scripts/make_sweep.py` → 132 configs in `configs/sweep/` + `index.csv` (4 arms × 6 placeholder
+  fractions × 2 sizes × 3 seeds, f = 1.0 kept at one size only since it uses no synthetic data);
+  generator refuses arm overrides of the decoder and asserts one decoder config, 2026-09-25.
 - [ ] Every config passes a 50-step dry run.
 - [ ] Compute estimate (GPU-h per run and total) in TASK.md; if > 150 A100-h, propose a pruned grid
   that still tests H1–H3 under Needs user.
