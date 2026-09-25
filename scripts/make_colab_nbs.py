@@ -230,7 +230,7 @@ def nb03() -> list:
             "t = time.time()\n"
             "!python scripts/error_propagation.py --predictions {DRIVE_ROOT}/runs/{RUN_ID}/eval/predictions.jsonl "
             "--set rendered_test --out {OUT}/{RUN_ID} --n-conf 10 --mmff-prescreen 3 --model {MODEL} "
-            "--skip-correct --per-category {PER_CATEGORY}\n"
+            "--skip-correct --noise-seeds --per-category {PER_CATEGORY}\n"
             "print(f'error propagation: {(time.time() - t) / 3600:.2f} GPU-h')"
         ),
         code(

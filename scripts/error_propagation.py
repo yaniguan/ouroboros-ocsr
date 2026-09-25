@@ -27,7 +27,12 @@ from pathlib import Path
 import numpy as np
 
 from ouroboros.eval.standardize import standardize
-from ouroboros.geometry.conformers import lowest_energy_conformer, mace_calculator
+from ouroboros.geometry.conformers import (
+    lowest_energy_conformer,
+    mace_calculator,
+    mirror_positions,
+    relax,
+)
 from ouroboros.geometry.propagation import CATEGORIES, categorize, same_formula
 
 
@@ -62,6 +67,11 @@ def main(argv=None) -> None:
     ap.add_argument("--skip-correct", action="store_true", help="dE = 0 by definition")
     ap.add_argument("--per-category", type=int, default=None, help="at most N pairs per category")
     ap.add_argument(
+        "--noise-seeds",
+        action="store_true",
+        help="also search the truth's conformers with a second seed: conformer-search noise floor",
+    )
+    ap.add_argument(
         "--mmff-prescreen",
         type=int,
         default=None,
@@ -71,20 +81,31 @@ def main(argv=None) -> None:
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     calc = mace_calculator(a.model)
-    cache: dict[str, dict] = {}
+    cache: dict[tuple, dict] = {}
 
-    def energy(smi: str) -> dict:
-        if smi not in cache:
+    def energy(smi: str, seed: int = 0) -> dict:
+        if (smi, seed) not in cache:
             g = lowest_energy_conformer(
-                smi, n_conf=a.n_conf, seed=0, calc=calc, mmff_prescreen=a.mmff_prescreen
+                smi, n_conf=a.n_conf, seed=seed, calc=calc, mmff_prescreen=a.mmff_prescreen
             )
-            cache[smi] = {
+            cache[(smi, seed)] = {
                 "status": g.status,
                 "E": g.energy,
                 "converged": g.converged,
                 "sec": g.seconds,
+                "symbols": g.symbols,
+                "positions": g.positions,
             }
-        return cache[smi]
+        return cache[(smi, seed)]
+
+    def mirrored_energy(ref: dict) -> dict:
+        """Enantiomer energy with the conformer search taken out: relax the mirror image of the
+        truth's lowest-energy geometry exactly as the truth was relaxed."""
+        from ase import Atoms
+
+        atoms = Atoms(ref["symbols"], positions=mirror_positions(ref["positions"]))
+        r = relax(atoms, calc)
+        return {"status": "ok", "E": r.energy, "converged": r.converged}
 
     t0 = time.time()
     results = []
@@ -96,7 +117,16 @@ def main(argv=None) -> None:
                 ps, rs = standardize(p["pred"]).smiles, standardize(p["ref"]).smiles
                 rec["isomer"] = same_formula(ps, rs)
                 er = energy(rs)
-                ep = energy(ps) if ps != rs else er
+                if cat == "enantiomer" and er["status"] == "ok":
+                    ep = mirrored_energy(er)  # exact symmetry: isolates the stereo error
+                    rec["pred_energy_method"] = "mirrored truth geometry"
+                else:
+                    ep = energy(ps) if ps != rs else er
+                    rec["pred_energy_method"] = "independent conformer search"
+                if a.noise_seeds and er["status"] == "ok":
+                    e1 = energy(rs, seed=1)
+                    if e1["E"] is not None:
+                        rec["search_noise_dE"] = e1["E"] - er["E"]
                 rec.update(
                     E_ref=er["E"],
                     E_pred=ep["E"],
@@ -108,7 +138,13 @@ def main(argv=None) -> None:
                     rec["dE"] = ep["E"] - er["E"]
             results.append(rec)
             f.write(json.dumps(rec) + "\n")
+    noise = np.array([abs(r["search_noise_dE"]) for r in results if "search_noise_dE" in r])
     summary = {
+        "conformer_search_noise_eV": (
+            {"n": int(noise.size), "median": float(np.median(noise)), "max": float(noise.max())}
+            if noise.size
+            else None
+        ),
         "n_pairs": len(results),
         "model": f"MACE-OFF23 {a.model}",
         "n_conf": a.n_conf,
