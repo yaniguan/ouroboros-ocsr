@@ -258,7 +258,13 @@ cores (`data/full/pool.stats.json`).
   `scripts/make_sweep.py` → 132 configs in `configs/sweep/` + `index.csv` (4 arms × 6 placeholder
   fractions × 2 sizes × 3 seeds, f = 1.0 kept at one size only since it uses no synthetic data);
   generator refuses arm overrides of the decoder and asserts one decoder config, 2026-09-25.
-- [ ] Every config passes a 50-step dry run.
+- [x] Every config passes a 50-step dry run. — `scripts/dry_run_sweep.py`: 132/132 configs ran 50
+  steps (64 px, batch 4, fp32, CPU; architecture/optimizer/mixture/augmentation as configured;
+  f > 0 configs mixed the stand-in real shards, n_real = 400); one run per arm (A, B, C, C+) was
+  evaluated (angle 0 + 4-angle sweep on a rendered and a stand-in real set) and aggregated →
+  `benchmarks/sweep/dry_run.json`. The first pass exposed a real bug (steerable checkpoints did not
+  reload: escnn caches filters only in eval mode) → fixed with `load_model_state`, regression test
+  added, C/C+ re-run, 2026-09-25.
 - [x] Compute estimate (GPU-h per run and total) in TASK.md; if > 150 A100-h, propose a pruned grid
   that still tests H1–H3 under Needs user. — see "Compute estimate" below; full grid 150.9 A100-h
   (> 150) → pruned grid proposed in U5, 2026-09-25.

@@ -210,6 +210,11 @@ def _line(ax, arm, xs, ys, lo, hi):
     )
 
 
+def _safe(name: str) -> str:
+    """File-name-safe set name (':' is not allowed on every filesystem)."""
+    return name.replace(":", "-").replace("/", "-")
+
+
 def _fmt_size(x: float) -> str:
     return f"{x / 1e6:g}M" if x >= 1e6 else f"{x / 1e3:g}k"
 
@@ -270,7 +275,7 @@ def plot_curves(table_by_x: dict, x_key: str, xlabel: str, out: Path, logx: bool
         if table_by_x["footnote"]:
             fig.text(0.01, 0.005, table_by_x["footnote"], fontsize=7, color=INK2)
         fig.tight_layout(rect=(0, 0.04, 1, 0.88))
-        p = out / f"{x_key}_{s}.png"
+        p = out / f"{x_key}_{_safe(s)}.png"
         fig.savefig(p, dpi=150, facecolor=SURFACE)
         plt.close(fig)
         paths.append(p)
@@ -346,7 +351,7 @@ def plot_rotation(sweep: dict, out: Path) -> list[Path]:
         if sweep["footnote"]:
             fig.text(0.01, 0.005, sweep["footnote"], fontsize=7, color=INK2)
         fig.tight_layout(rect=(0, 0.04, 1, 0.86))
-        p = out / f"rotation_{s}_{size}_{frac:g}.png"
+        p = out / f"rotation_{_safe(s)}_{size}_{frac:g}.png"
         fig.savefig(p, dpi=150, facecolor=SURFACE)
         plt.close(fig)
         paths.append(p)

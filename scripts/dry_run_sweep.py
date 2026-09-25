@@ -39,11 +39,23 @@ def main(argv=None) -> None:
     ap.add_argument("--synthetic-root", default="data/full/shards")
     ap.add_argument("--real-root", default="data/standin_real/shards")
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--pattern", default="*.yaml", help="glob of configs to run")
+    ap.add_argument(
+        "--prior",
+        default=None,
+        help="JSONL of per-config records from an earlier "
+        "(interrupted) dry run to merge; those configs are skipped",
+    )
     a = ap.parse_args(argv)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    cfgs = sorted(Path(a.configs).glob("*.yaml"))[: a.limit]
     results, evaluated = [], set()
+    if a.prior:
+        results = [json.loads(x) for x in Path(a.prior).read_text().splitlines() if x.strip()]
+        results = [r for r in results if r.get("ok")]
+        evaluated = {r["arm"] for r in results if r.get("evaluated")}
+    done = {r["config"] for r in results}
+    cfgs = [p for p in sorted(Path(a.configs).glob(a.pattern)) if p.name not in done][: a.limit]
     for path in cfgs:
         raw = yaml.safe_load(path.read_text())
         frac = raw["data"]["real_fraction"]
