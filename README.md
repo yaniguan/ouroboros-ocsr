@@ -9,13 +9,43 @@ Optical Chemical Structure Recognition (OCSR) pipeline:
 
 ## Research question
 
-Does a rotation-equivariant vision encoder (steerable CNN over C_N and/or group-equivariant
-attention) outperform a standard encoder trained with rotation data augmentation, measured by
+> Does an architectural symmetry prior (SE(2)-equivariant vision encoder) narrow the
+> synthetic-to-real gap in OCSR, or — like augmentation-based substitutes — does it help only
+> under the rendered conditions it models? And how does it interact with real-data supervision?
 
-1. **sample efficiency** — exact-match accuracy vs. training-set size (10k, 50k, 200k, 1M), and
-2. **rotation robustness** — accuracy vs. input rotation angle (0–360°, on-grid vs. off-grid angles),
+Motivation: arXiv:2608.09100 found that synthetic scale, renderer diversity, degradation
+augmentation and a verifiable RL objective are lower-cost substitutes for real labeled depictions,
+but representative real supervision is what closes the gap on real documents, and that large
+real-document gains were obtained with a frozen vision encoder (locating the bottleneck in
+supervision rather than visual representation). Ouroboros changes only the vision encoder, so it
+tests a different kind of intervention — a built-in symmetry prior — against that finding.
 
-while still recognizing **chirality** correctly (stereo-aware exact match, per-stereocenter accuracy)?
+To our knowledge, the first systematic study of group-equivariant vision encoders for OCSR,
+evaluated against both augmentation and real-data supervision.
+
+### Pre-registered hypotheses (registered 2026-09-25, before any training result existed)
+
+These are not edited after results arrive; outcomes are reported in a separate results section.
+
+- **H1**: With synthetic-only training, equivariant encoders beat augmentation on rendered and
+  rotated test sets.
+- **H2**: With synthetic-only training, the equivariant advantage on real-document test sets is
+  smaller than on rendered sets, and may be zero.
+- **H3**: When real data is mixed in, the equivariant advantage on real documents either persists
+  (complementary) or vanishes (subsumed). Either outcome is reported.
+
+Every outcome, including a null result, is a valid result. Metrics, test sets and reporting rules
+are fixed in advance (below); they are not tuned after seeing results.
+
+### Measurements
+
+1. exact match (full stereochemistry) on **rendered** and **real-document** test sets, always
+   reported as separate columns with per-set counts and bootstrap 95% CIs — never averaged
+   together;
+2. rotation robustness — accuracy vs. input rotation angle (0–360°, 15° steps, on-grid vs.
+   off-grid angles) on both kinds of test set;
+3. stereo recognition — stereo-aware exact match and per-stereocenter accuracy;
+4. dependence on training-set size and on the fraction of real training data.
 
 Only the encoder changes between experimental arms; the SMILES decoder is identical.
 
@@ -27,6 +57,14 @@ Only the encoder changes between experimental arms; the SMILES decoder is identi
 | C+  | steerable CNN, C_N | yes |
 | D   | steerable stem + group-equivariant self-attention | no |
 | E (optional) | canonicalization network + standard encoder | no |
+
+Each arm is crossed with the fraction of real labeled depictions in the training mixture.
+
+## Geometry / MACE stage
+
+The 3D stage (ETKDG conformers → MACE-OFF relaxation) is an **error-propagation analysis**, not a
+novel pipeline: it measures how recognition errors (enantiomer, diastereomer, constitutional)
+propagate into downstream 3D energies, relative to the energy of the ground-truth molecule.
 
 ## Symmetry per stage
 
@@ -83,9 +121,24 @@ wheel is available. On Colab, `requirements-colab.txt` is used: it is `requireme
 
 ## Related work (TODO: write up and position against)
 
-- [ ] DECIMER (Rajan et al.) — transformer-based OCSR, image-to-SMILES
-- [ ] MolScribe (Qian et al., 2023) — atom/bond graph prediction with coordinates, handles stereo via drawing
-- [ ] MolNexTR (Chen et al., 2024) — CNN+ViT dual-stream encoder
-- [ ] MolSight — recent OCSR system (TODO: read paper; check its stereochemistry handling and benchmarks)
-- [ ] Steerable CNNs / escnn (Weiler & Cesa, 2019); group-equivariant attention (Romero et al.)
+Motivating prior work:
+- [ ] arXiv:2608.09100 — "Real Data Closes Synthetic-to-Real Gap in Optical Chemical Structure
+  Recognition": real labeled depictions, not synthetic scale/augmentation, close the gap on real
+  documents; gains with a frozen vision encoder.
+- [ ] VERDICT (Guan, 2026; arXiv:2608.22183) — companion paper on real-document OCSR.
+
+OCSR systems:
+- [ ] DECIMER (Rajan et al.) — transformer-based image-to-SMILES
+- [ ] MolScribe (Qian et al., 2023) — atom/bond graph prediction with coordinates
+- [ ] MolNexTR (Chen et al., 2024)
+- [ ] MolGrapher
+- [ ] MolSight
+- [ ] MolParser
+
+Adjacent tasks:
+- [ ] DeepMoLM — image + 3D-geometry grounding (adjacent but different task)
+- [ ] Auto3D — SMILES → 3D with a neural potential (adjacent to the geometry stage)
+
+Methods used here:
+- [ ] Steerable CNNs / escnn (Weiler & Cesa, 2019); group-equivariant self-attention (Romero et al.)
 - [ ] MACE / MACE-OFF (Batatia et al.; Kovács et al.)
