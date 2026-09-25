@@ -31,7 +31,13 @@ OUT = Path(__file__).resolve().parents[1] / "benchmarks" / "encoders"
 ENCODERS = {
     "baseline": {"type": "baseline"},
     "steerable": {"type": "steerable", "N": 8, "fields": [7, 14, 27, 55]},
-    "equiv_attention": {"type": "equiv_attention", "N": 8, "fields": [7, 14, 27, 55]},
+    "equiv_attention": {
+        "type": "equiv_attention",
+        "N": 8,
+        "fields": [7, 14, 27, 55],
+        "attn_dim": 160,
+        "attn_ff": 640,
+    },
 }
 
 

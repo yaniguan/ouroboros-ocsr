@@ -142,10 +142,10 @@ class EquivAttnConfig:
     blocks: list[int] = field(default_factory=lambda: [2, 2, 2, 2])
     stem_kernel: int = 7
     d_model: int = 512
-    attn_dim: int = 256
+    attn_dim: int = 160  # FLOP-matched: encoder 10.34 GFLOPs @384 (baseline 10.27)
     attn_layers: int = 2
     attn_heads: int = 8
-    attn_ff: int = 1024
+    attn_ff: int = 640
     dropout: float = 0.1
     image_size: int = 384
 

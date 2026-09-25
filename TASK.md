@@ -265,7 +265,7 @@ cores (`data/full/pool.stats.json`).
   evaluated (angle 0 + 4-angle sweep on a rendered and a stand-in real set) and aggregated →
   `benchmarks/sweep/dry_run.json`. The first pass exposed a real bug (steerable checkpoints did not
   reload: escnn caches filters only in eval mode) → fixed with `load_model_state`, regression test
-  added, C/C+ re-run, 2026-09-25.
+  added, C/C+ re-run. After arm D was added: 165/165 (D: 33/33, one D run evaluated), 2026-09-25.
 - [x] Compute estimate (GPU-h per run and total) in TASK.md; if > 150 A100-h, propose a pruned grid
   that still tests H1–H3 under Needs user. — see "Compute estimate" below; full grid 150.9 A100-h
   (> 150) → pruned grid proposed in U5, 2026-09-25.
@@ -389,6 +389,9 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
   Arm D (option b) keeps relative orientation. Flagged as an expected mechanism difference, not tuned.
 - 2026-09-25 — Arms C/C+ use the FLOP-matched C8 config (7-14-27-55 fields) by default; the
   param-matched one costs 12.4× the FLOPs (U5).
+- 2026-09-25 — Arm D is FLOP-matched too: with attention width 256 its encoder cost 12.57 GFLOPs
+  (+22%); attn_dim 160 / ff 640 gives 10.34 GFLOPs (+0.6%, 1.40M encoder params). Arm D's
+  overfit / equivariance / memory / dry-run evidence is re-measured for this final config.
 - 2026-09-25 — Overfit tests run with dropout 0 (the ~40% dropout overhead on CPU and memorisation
   is the point of the test); resume test keeps the default dropout 0.1 to test RNG restoration.
 - 2026-09-25 — Evaluation uses the last checkpoint (no early stopping or checkpoint selection on

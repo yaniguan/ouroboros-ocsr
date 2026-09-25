@@ -41,5 +41,10 @@
   }
  },
  "date": "2026-09-25",
- "note": "CPU throughput: 4-core dev VM, fp32, eval mode; GPU numbers come from Colab."
+ "note": "CPU throughput: 4-core dev VM, fp32, eval mode; GPU numbers come from Colab.",
+ "equiv_attention_C8": {
+  "params": 2416684,
+  "gflops": 12.56956416,
+  "img_per_s_cpu": 4.311321925050039
+ }
 }
