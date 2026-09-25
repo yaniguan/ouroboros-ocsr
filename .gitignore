@@ -15,5 +15,5 @@ checkpoints/
 *.ckpt
 *.pt
 !tests/fixtures/**
-data_cache/
-data/
+/data_cache/
+/data/
