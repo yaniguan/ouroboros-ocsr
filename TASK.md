@@ -59,9 +59,10 @@ or changed are tagged **(Am1-A … Am1-F)**.
    `eval/summary.json`). The rotation sweep is inside `eval/summary.json`.
 
 ### U5 — Decisions needed on the experiment grid (Am1-E) — see "Compute estimate" in Phase 4
-- The full grid (4 arms × 6 placeholder real fractions × {50k, 200k} × 3 seeds = 132 runs) is
-  estimated at **150.9 A100-h** (assumed, not yet measured throughput), just over the 150 h limit.
-- **Proposed pruned grid (72 runs, ≈ 85 A100-h):** real fractions {0, 0.1, 0.5}, all 4 arms, both
+- The full grid (5 arms A, B, C, C+, D × 6 placeholder real fractions × {50k, 200k} × 3 seeds,
+  f = 1.0 at one size = 165 runs) is estimated at **210 A100-h** (A–C+ alone: 150.9 h), over the
+  150 h limit. Throughput is assumed, not yet measured.
+- **Proposed pruned grid (90 runs, ≈ 118 A100-h):** real fractions {0, 0.1, 0.5}, all 5 arms, both
   sizes, 3 seeds. Why it still tests H1–H3: f = 0 is the synthetic-only condition for H1 (rendered
   and rotated sets) and H2 (real sets); 0.1 and 0.5 bracket low and high real supervision for H3 and
   sit next to the 9.5% / 50.2% points in arXiv:2608.09100's abstract (to be replaced by your exact
@@ -281,10 +282,13 @@ arm D; eval 58k greedy decodes at 1000 img/s; 0.05 h overhead per run. Steps: 20
 | A, B (each) | 200k | 15 | 1.25 | 18.8 |
 | C, C+ (each) | 50k | 18 | 0.95 | 17.2 |
 | C, C+ (each) | 200k | 15 | 1.84 | 27.7 |
-| **full grid** | | **132** | | **150.9** |
-| pruned grid (fractions {0, 0.1, 0.5}) | | 72 | | 84.8 |
+| **full grid, arms A–C+** | | **132** | | **150.9** |
+| pruned grid A–C+ (fractions {0, 0.1, 0.5}) | | 72 | | 84.8 |
+| D (each size: 50k / 200k) | 50k / 200k | 18 / 15 | 1.25 / 2.44 | 22.5 / 36.5 |
+| **full grid incl. D** | | **165** | | **210.0** |
+| **pruned grid incl. D** | | **90** | | **117.9** |
 
-Arm D (Phase 5) would add ≈ 2.3 h per 200k run. The estimate will be redone with the img/s that the
+Arm D was added to `configs/sweep.yaml` when Phase 5 landed (165 configs). The estimate will be redone with the img/s that the
 first Colab runs log (`img_per_s` in `log.jsonl`).
 
 ## Phase 5 — Equivariant attention (D) and canonicalization (E, optional)
