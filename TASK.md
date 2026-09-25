@@ -41,7 +41,7 @@ or changed are tagged **(Am1-A … Am1-F)**.
 ### U4 — Generate the 1M dataset on Colab (Phase 1 [colab]; 200k = its first 200 shards)
 1. Open `notebooks/01_generate_data.ipynb` (branch `claude/vigilant-johnson-j4882f`). It needs no GPU;
    any runtime with many vCPUs works (an A100 runtime has ~12).
-2. Run all. Expected: pool ≈ 5 min, composition ≈ 15 min (single-threaded), rendering 1M ≈ 20–30 min
+2. Run all. Expected: pool ≈ 5 min, composition ≈ 10–15 min (parallel), rendering 1M ≈ 20–30 min
    on 12 vCPUs, copy to Drive ≈ 5–15 min. Output: `MyDrive/ouroboros/data/full/` ≈ 7 GB
    (1M train ≈ 6.8 GB, 200k subset ≈ 1.4 GB, val+test ≈ 0.1 GB). Needs ~8 GB free on Drive.
 3. **Report back** the last cell's output: total and 200k-subset sizes, `pool.stats.json`,
@@ -124,6 +124,8 @@ cores (`data/full/pool.stats.json`).
   Re-verified after the bridged-ring data fix (regenerated manifests/shards): splits 0 overlap,
   labels 12,000/12,000, mirror 200/200, render 55.6 img/s, loader 586 img/s (8 workers), stereo
   fraction 0.400 at every prefix, 0 render drops; rebuild 1,152 s (compose 4 workers + render).
+  A serial (1-worker) 1M dry-run compose (2,737 s) produced a train manifest byte-identical to the
+  parallel one. Full test suite after all fixes: 129 passed.
 - [x] Mirror test: 200/200 mirrored renderings labeled as the enantiomer. — 200/200 (chiral, non-meso
   test molecules, random styles) → `benchmarks/data/mirror.json`, 2026-09-25.
 - [x] Style randomization (fonts, line width, bond length, label style, noise, blur, JPEG);
