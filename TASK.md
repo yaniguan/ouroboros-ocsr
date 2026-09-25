@@ -271,9 +271,22 @@ Arm D (Phase 5) would add ≈ 2.3 h per 200k run. The estimate will be redone wi
 first Colab runs log (`img_per_s` in `log.jsonl`).
 
 ## Phase 5 — Equivariant attention (D) and canonicalization (E, optional)
-- [ ] Steerable stem + group-equivariant self-attention with rotated relative positions.
-- [ ] Equivariance thresholds as Phase 3; overfit passes.
-- [ ] Memory estimate: batch ≥ 32 @ 384 px bf16 fits 40 GB.
+- [x] Steerable stem + group-equivariant self-attention with rotated relative positions. —
+  `ouroboros/encoder/equiv_attention.py`: tokens on the lifted grid (location × C_N rotation), bias
+  b(R_h⁻¹(y−x), h′−h), mean over h → invariant token set; registered as encoder `equiv_attention`
+  (FLOP-matched C8 trunk + 2 group-attention layers, d=256; 27.8M params total incl. decoder),
+  2026-09-25.
+- [~] Equivariance thresholds as Phase 3; overfit passes. — equivariance done: 384 px, C4: feature
+  max rel. err 9.0e-7, token set 8.4e-7; C8 at 90° multiples 1.2e-6 / 7.2e-7; C8 off-grid 45°:
+  feature 0.207, mean token 0.0035 (report only) → `benchmarks/encoders/equivariance_attention.json`;
+  unit tests `tests/test_equiv_attention.py` 5/5 (token-set invariance C4/C8, lifted-token
+  equivariance inside the attention, bias depends on relative pose only, not mirror-invariant,
+  export parity). Overfit test pending (CPU queue).
+- [x] Memory estimate: batch ≥ 32 @ 384 px bf16 fits 40 GB. — `scripts/memory_estimate.py`
+  (16 B/param static + saved-for-backward activations measured at batch 1 and 2 on CPU, linear
+  extrapolation, +20%): arm D batch 32 → 9.5 GiB bf16 estimate, 18.5 GiB fp32 upper bound; max
+  batch in 40 GB ≈ 132 (activations 0.46 GiB/sample fp32). Arm C (for reference): 4.4 / 8.2 GiB.
+  → `benchmarks/encoders/memory_*.json`, 2026-09-25.
 - [ ] Arm E invariance < 1e-4 (if implemented).
 - [ ] [colab] D (and E) in sweep.
 
