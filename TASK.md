@@ -143,7 +143,12 @@ cores (`data/full/pool.stats.json`).
   (13.3% @250, 55.9% @500, 83.2% @750, 91.0% @1250); settings: default architecture (43.1M) at
   128 px, CPU, fp32, batch 32, AdamW lr 5e-4, warmup 100, cosine over 3,000, dropout 0, greedy
   decoding, eval every 250 steps; 57 min → `benchmarks/train/overfit_baseline.json`, 2026-09-25.
-- [ ] Resume test: ≤ 1% mean relative loss difference over next 100 steps.
+- [x] Resume test: ≤ 1% mean relative loss difference over next 100 steps. — default architecture
+  (43.1M, dropout 0.1, rotation aug on, 2 loader workers) at 128 px, CPU: checkpoint at step 50,
+  run killed at 73, resumed at 50; losses of steps 51–150 identical to the uninterrupted run (mean
+  and max relative difference 0.0) → `benchmarks/train/resume_baseline.json`; restored: model,
+  optimizer, LR scheduler, python/numpy/torch RNG, sampler position, augmentation RNG; also
+  bit-exact in `tests/test_train.py`, 2026-09-25.
 - [x] Checkpoint save < 30 s. — default model @384 px with Adam state: 518 MB, save 0.56–1.78 s
   (3 saves), load 0.42 s, local disk → `benchmarks/train/checkpoint_time.json`, 2026-09-25.
 - [x] Metric unit tests 100% pass (stereo-aware exact match, InChI match, Tanimoto,

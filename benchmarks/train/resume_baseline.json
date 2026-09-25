@@ -1,0 +1,27 @@
+{
+ "name": "baseline",
+ "encoder": {
+  "type": "baseline"
+ },
+ "image_size": 128,
+ "checkpoint_step": 50,
+ "killed_at": 73,
+ "resumed_at": 50,
+ "compared_steps": [
+  51,
+  150
+ ],
+ "mean_rel_diff": 0.0,
+ "max_rel_diff": 0.0,
+ "pass": true,
+ "restored": [
+  "model",
+  "optimizer",
+  "lr scheduler",
+  "python/numpy/torch RNG",
+  "sampler position",
+  "augmentation RNG (seed, step)"
+ ],
+ "wall_sec": 274.928674697876,
+ "date": "2026-09-25"
+}
