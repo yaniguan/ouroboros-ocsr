@@ -105,10 +105,13 @@ def cmd_enantio(a, rows):
     calc = mace_calculator(a.model)
     chiral = [r["smiles"] for r in rows if "@" in r["smiles"]]
     chiral = [s for s in chiral if Chem.CanonSmiles(mirror_smiles(s)) != Chem.CanonSmiles(s)]
-    pairs = []
-    for s in chiral[: a.n]:
+    pairs, skipped = [], []
+    for s in chiral:
+        if len(pairs) >= a.n:
+            break
         mol, why = embed(s, 1, seed=0)
         if mol is None:
+            skipped.append({"smiles": s, "reason": why})
             continue
         atoms = to_atoms(mol, mol.GetConformers()[0].GetId())
         mirrored = atoms.copy()
@@ -133,6 +136,7 @@ def cmd_enantio(a, rows):
             "max_abs_dE_eV": float(dE.max()),
             "pass": bool(len(pairs) >= 20 and dE.max() < 1e-3),
             "pairs": pairs,
+            "skipped_not_embeddable": skipped,
             "protocol": "mirror (x -> -x) of the same ETKDG conformer, identical "
             "LBFGS relaxation with MACE-OFF, fmax 0.05 eV/A",
         },
