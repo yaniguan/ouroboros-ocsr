@@ -83,7 +83,7 @@ or changed are tagged **(Am1-A … Am1-F)**.
   as a single ablation (one size, f = 0, 3 seeds), because the param-matched C8 costs 12.4× the
   FLOPs (127 vs 10.3 GFLOPs per image).
 - Arm E (learned canonicalization, optional, FLOP-matched): include it? (+33 runs full grid /
-  +18 pruned; ≈ +24 / +13 A100-h at baseline throughput.)
+  +18 pruned: full 240.6 A100-h, pruned 135.1 A100-h with E, both at the assumed throughput.)
 - Please reply: full or pruned grid, FLOP- vs param-matched, and whether to include arm E.
 
 ## Phase 0 — Scaffold
