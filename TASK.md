@@ -47,6 +47,17 @@ or changed are tagged **(Am1-A … Am1-F)**.
 3. **Report back** the last cell's output: total and 200k-subset sizes, `pool.stats.json`,
    `compose.json`, the three `render` lines (samples, drops, seconds) and the wall times.
 
+### U6 — First Colab training runs (Phase 2 and Phase 3 [colab]; needs U4 done first)
+1. Open `notebooks/02_train_eval.ipynb`, A100 runtime. Set `RUN_ID = 'A_n200k_f0_s0'` (baseline,
+   synthetic-only, 200k, 40k steps). Run all. If the runtime disconnects, reconnect and run all again:
+   training resumes from `MyDrive/ouroboros/runs/<RUN_ID>/ckpt/last.pt`.
+2. Repeat with `RUN_ID = 'C_n200k_f0_s0'` (FLOP-matched C8 steerable encoder).
+3. Expected (assumed, not measured): ≈ 1.2 GPU-h for A, ≈ 1.8 GPU-h for C, plus ≈ 0.02 h eval.
+4. **Report back** for each run: the evaluation printout (exact, CI, invalid rate per set), the last
+   three lines of `log.jsonl`, the logged `img_per_s`, the `train … GPU-h` line, and the path of
+   `eval/predictions.jsonl` on Drive (I aggregate from it; share the `runs/` folder or paste the
+   `eval/summary.json`). The rotation sweep is inside `eval/summary.json`.
+
 ### U5 — Decisions needed on the experiment grid (Am1-E) — see "Compute estimate" in Phase 4
 - The full grid (4 arms × 6 placeholder real fractions × {50k, 200k} × 3 seeds = 132 runs) is
   estimated at **150.9 A100-h** (assumed, not yet measured throughput), just over the 150 h limit.
