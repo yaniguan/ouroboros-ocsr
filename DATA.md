@@ -55,3 +55,9 @@ training set (synthetic and real), prints the overlap table and exits nonzero on
 (by InChIKey connectivity block, i.e. including stereoisomers) from all synthetic splits before
 composition. Shards rendered earlier can instead be filtered at load time
 (`ShardDataset(..., exclude_key14=...)`).
+
+## Model weights
+
+MACE-OFF23 weights (downloaded by `mace-torch` from `ACEsuit/mace-off` on first use) are
+distributed under the Academic Software License (ASL, https://github.com/gabor1/ASL): academic,
+non-commercial use. They are cached in `~/.cache/mace/` and never committed.
