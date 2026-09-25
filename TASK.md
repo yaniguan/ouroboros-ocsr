@@ -335,6 +335,34 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
   complete stereochemistry convention; identity additionally checked via InChIKey; validity =
   fraction parseable by RDKit; salts/solvates reduced to the neutral largest fragment, mapped to a
   stereo-preserving InChIKey; real benchmarks ACS, CLEF-IP, USPTO. Everything else is unverified (U3).
+- 2026-09-25 — Shards store the CLEAN drawing plus its style; blur/noise/JPEG are applied at load
+  time with the stored per-sample seed (bit-identical to eager degradation, unit-tested). Noise made
+  PNGs 5× larger (55 vs 5 KB); now 1M train ≈ 6.8 GB instead of ≈ 28 GB.
+- 2026-09-25 — One fixed 133-token vocabulary (`configs/vocab.json`) for every arm: all 50 tokens of
+  the 1M synthetic manifest + common tokens of real documents (other elements, charges, isotopes).
+- 2026-09-25 — Baseline = ResNet-18-style CNN (stride 32 → 12×12 tokens at 384 px) + learned
+  absolute 2D positional embedding + 2-layer Transformer mixer; the steerable encoders use the same
+  stride-32 token grid and mixer size, so only the encoder family differs.
+- 2026-09-25 — Steerable trunk uses stride-1 R2Conv + fixed binomial blur + 2×2 average pooling on
+  even maps instead of strided convolutions: stride-2 sampling of an even-sized map is not rotation
+  symmetric, 2×2 windows are. Measured 90° errors ≈ 1e-6 at 384 px.
+- 2026-09-25 — Option (a) token head (group pooling + distance-only relative bias) cannot represent
+  global handedness from token geometry (distance matrices of mirror-image point sets are equal);
+  chirality must come from the per-location C_N-invariant (but not reflection-invariant) features.
+  Arm D (option b) keeps relative orientation. Flagged as an expected mechanism difference, not tuned.
+- 2026-09-25 — Arms C/C+ use the FLOP-matched C8 config (7-14-27-55 fields) by default; the
+  param-matched one costs 12.4× the FLOPs (U5).
+- 2026-09-25 — Overfit tests run with dropout 0 (the ~40% dropout overhead on CPU and memorisation
+  is the point of the test); resume test keeps the default dropout 0.1 to test RNG restoration.
+- 2026-09-25 — Evaluation uses the last checkpoint (no early stopping or checkpoint selection on
+  test data); the rotation sweep uses a fixed 2,000-sample prefix of each eval set per angle
+  (stored as `<set>:sweep`) while angle 0 is scored on the full set.
+- 2026-09-25 — Grid: real_fraction = 1.0 is trained at one synthetic size only (it uses no
+  synthetic data); 132 instead of 144 configs.
+- 2026-09-25 — A STAND-IN real dataset (600 cropped synthetic val images, `scripts/make_standin_real.py`)
+  exercises the real-data code paths locally; it is never reported as real-data evidence.
+- 2026-09-25 — MACE-OFF23 "small" locally (CPU), "medium" (mace default) recommended for Colab runs;
+  LBFGS, fmax 0.05 eV/Å, float64.
 
 ## Deviations
 
