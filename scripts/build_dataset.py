@@ -83,7 +83,8 @@ def main(argv=None) -> None:
         cfg = build.ComposeConfig(
             stereo_fraction=args.stereo_fraction, sizes=sizes, seed=args.seed, exclude_key14=excl
         )
-        print("compose:", build.compose(build.read_pool(pool_path), cfg, out / "manifests"))
+        manifests = out / "manifests"
+        print("compose:", build.compose(build.read_pool(pool_path), cfg, manifests, args.workers))
 
     if "render" in args.stages:
         for split in build.SPLITS:

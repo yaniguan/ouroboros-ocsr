@@ -145,7 +145,33 @@ def split_of(key14: str, cfg: ComposeConfig) -> str:
     return "train"
 
 
-def _compose_split(rows: list[dict], n: int, cfg: ComposeConfig, split: str) -> list[dict]:
+def _assign_row(r: dict) -> str:
+    """Stereo-assigned SMILES of a pool row; a pure function of the row (seeded by its key)."""
+    m = assign_random_stereo(
+        Chem.MolFromSmiles(r["flat"]), random.Random(_hash_int(r["key14"], "st")), True
+    )
+    return Chem.MolToSmiles(m)
+
+
+class _Assigner:
+    """Yields ``_assign_row`` results for ``rows`` in order; the first ``prefetch`` rows are
+    computed in parallel ahead of time (identical results to the serial path)."""
+
+    def __init__(self, rows: list[dict], pool, prefetch: int):
+        self.rows, self.i = rows, 0
+        self.it = pool.imap(_assign_row, rows[:prefetch], chunksize=64) if pool else None
+        self.prefetch = prefetch if pool else 0
+
+    def next(self) -> str:
+        r = self.rows[self.i]
+        out = next(self.it) if self.i < self.prefetch else _assign_row(r)
+        self.i += 1
+        return out
+
+
+def _compose_split(
+    rows: list[dict], n: int, cfg: ComposeConfig, split: str, workers: int = 1
+) -> list[dict]:
     """Pick ``n`` molecules; every prefix of the output has stereo fraction ~= target.
 
     Buckets: ``ez`` (has a potential E/Z bond: its drawing always depicts E or Z, so it can
@@ -156,6 +182,10 @@ def _compose_split(rows: list[dict], n: int, cfg: ComposeConfig, split: str) -> 
     ez = [r for r in order if r["n_db"] > 0]
     none = [r for r in order if r["n_db"] == 0 and r["n_tet"] == 0]
     tet = [r for r in order if r["n_db"] == 0 and r["n_tet"] > 0]
+    pool = Pool(workers) if workers > 1 else None
+    # stereo assignments for ez / tet rows, consumed in exactly the order the rows are popped
+    ez_assign = _Assigner(list(ez), pool, min(len(ez), n + n // 10))
+    tet_assign = _Assigner(list(tet), pool, min(len(tet), n + n // 10))
     for bucket in (ez, none, tet):
         bucket.reverse()  # pop() from the end == take in hash order
     rng = random.Random(f"{cfg.seed}-{split}")
@@ -168,10 +198,7 @@ def _compose_split(rows: list[dict], n: int, cfg: ComposeConfig, split: str) -> 
                 raise RuntimeError(f"{split}: ran out of stereo-capable molecules")
             use_ez = bool(ez) and (not tet or rng.random() < len(ez) / (len(ez) + len(tet)))
             r = (ez if use_ez else tet).pop()
-            m = assign_random_stereo(
-                Chem.MolFromSmiles(r["flat"]), random.Random(_hash_int(r["key14"], "st")), True
-            )
-            smi = Chem.MolToSmiles(m)
+            smi = (ez_assign if use_ez else tet_assign).next()
             if not has_stereo(smi):  # degenerate (e.g. para-stereo collapsed): skip
                 continue
         else:
@@ -179,14 +206,20 @@ def _compose_split(rows: list[dict], n: int, cfg: ComposeConfig, split: str) -> 
                 raise RuntimeError(f"{split}: ran out of non-stereo molecules")
             use_none = bool(none) and (not tet or rng.random() < len(none) / (len(none) + len(tet)))
             r = (none if use_none else tet).pop()
+            if not use_none:
+                tet_assign.i += 1  # keep the assigner aligned with the tet pops (result unused)
+                if tet_assign.i <= tet_assign.prefetch:
+                    next(tet_assign.it)
             smi = r["flat"]
         is_st = has_stereo(smi)
         n_stereo += is_st
         out.append({"key14": r["key14"], "smiles": smi, "stereo": int(is_st), "src": r["src"]})
+    if pool is not None:
+        pool.terminate()
     return out
 
 
-def compose(pool: list[dict], cfg: ComposeConfig, out_dir: str | Path) -> dict:
+def compose(pool: list[dict], cfg: ComposeConfig, out_dir: str | Path, workers: int = 1) -> dict:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     by_split: dict[str, list[dict]] = {s: [] for s in SPLITS}
@@ -201,7 +234,7 @@ def compose(pool: list[dict], cfg: ComposeConfig, out_dir: str | Path) -> dict:
         n = cfg.sizes.get(split, 0)
         if n <= 0:
             continue
-        rows = _compose_split(by_split[split], n, cfg, split)
+        rows = _compose_split(by_split[split], n, cfg, split, workers)
         path = out_dir / f"{split}.tsv"
         with open(path, "w", newline="") as f:
             w = csv.writer(f, delimiter="\t")

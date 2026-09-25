@@ -205,3 +205,18 @@ def test_random_stereo_on_bridged_rings_is_embeddable():
         assert defined_stereo(m)[0] == 3
         mol, why = embed(Chem.MolToSmiles(m), n_conf=1, seed=0)
         assert mol is not None, (Chem.MolToSmiles(m), why)
+
+
+def test_parallel_compose_is_identical(tiny_dataset, tmp_path):
+    root, _ = tiny_dataset
+    pool = build.read_pool(root / "pool.tsv.gz")
+    cfg = build.ComposeConfig(
+        stereo_fraction=0.4,
+        sizes={"train": 100, "val": 20, "test": 20},
+        val_frac=0.1,
+        test_frac=0.1,
+    )
+    build.compose(pool, cfg, tmp_path / "par", workers=2)
+    for split in build.SPLITS:
+        a = (root / "manifests" / f"{split}.tsv").read_text()
+        assert a == (tmp_path / "par" / f"{split}.tsv").read_text()
