@@ -23,6 +23,7 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset, Sampler
 
+from ouroboros.data.render import RenderStyle, postprocess
 from ouroboros.decode.tokenizer import SmilesTokenizer
 
 
@@ -117,10 +118,15 @@ class ShardDataset(Dataset):
     def __getitem__(self, i: int) -> dict:
         shard, s = self.entries[i]
         img = Image.open(io.BytesIO(self._read(shard, s["png"]))).convert("L")
+        meta = json.loads(self._read(shard, s["json"]))
+        post = meta.get("post")
+        if post and post.get("deferred"):  # synthetic: apply the sample's stored degradation
+            img = postprocess(
+                img, RenderStyle(**meta["style"]), np.random.default_rng(post["seed"])
+            )
         if self.image_size is not None and img.size[0] != self.image_size:
             img = img.resize((self.image_size, self.image_size), Image.BILINEAR)
         ink = 1.0 - torch.from_numpy(np.asarray(img, dtype=np.float32)) / 255.0
-        meta = json.loads(self._read(shard, s["json"]))
         out = {"image": ink[None], "smiles": meta["smiles"], "key": s["key"], "index": i}
         if self.tokenizer is not None:
             out["ids"] = torch.tensor(self.tokenizer.encode(meta["smiles"]), dtype=torch.long)
@@ -203,3 +209,15 @@ def rotate_images(images: torch.Tensor, angles_deg: torch.Tensor) -> torch.Tenso
             images[k : k + 1], grid, mode="bilinear", padding_mode="zeros", align_corners=False
         )[0]
     return out
+
+
+def rotate_batch(images: torch.Tensor, angles_deg: torch.Tensor) -> torch.Tensor:
+    """Vectorized bilinear rotation (same convention as ``rotate_images``), for augmentation."""
+    t = torch.deg2rad(angles_deg.to(images.device, torch.float32))
+    c, s = torch.cos(t), torch.sin(t)
+    z = torch.zeros_like(c)
+    theta = torch.stack([torch.stack([c, -s, z], -1), torch.stack([s, c, z], -1)], 1)
+    grid = torch.nn.functional.affine_grid(theta, list(images.shape), align_corners=False)
+    return torch.nn.functional.grid_sample(
+        images.float(), grid, mode="bilinear", padding_mode="zeros", align_corners=False
+    ).to(images.dtype)

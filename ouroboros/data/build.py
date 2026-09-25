@@ -240,7 +240,8 @@ def render_row(row: dict, split: str, size: int, seed: int) -> tuple[str, bytes,
         return "unparsable"
     style = sample_style(random.Random(_hash_int(key, f"style{seed}")))
     try:
-        r = render(mol, style, size=size, seed=_hash_int(key, f"noise{seed}") % 2**32)
+        post_seed = _hash_int(key, f"noise{seed}") % 2**32
+        r = render(mol, style, size=size, seed=post_seed, apply_postprocess=False)
     except Exception as e:  # noqa: BLE001
         return f"render_error:{type(e).__name__}"
     source = Chem.MolToSmiles(mol)
@@ -248,6 +249,8 @@ def render_row(row: dict, split: str, size: int, seed: int) -> tuple[str, bytes,
         return "label_mismatch"
     meta = {"smiles": r.label, "key14": row["key14"], "stereo": int(row["stereo"])}
     meta["style"] = style.to_dict()
+    # degradation (blur / noise / JPEG) is deferred to load time, deterministically seeded
+    meta["post"] = {"deferred": True, "seed": post_seed}
     return key, encode_png(r.image), meta
 
 

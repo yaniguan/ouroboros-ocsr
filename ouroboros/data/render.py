@@ -166,7 +166,8 @@ def _draw(drawn: Chem.Mol, style: RenderStyle, inner: int) -> Image.Image:
     return Image.open(io.BytesIO(d.GetDrawingText())).convert("L")
 
 
-def _postprocess(img: Image.Image, style: RenderStyle, rng: np.random.Generator) -> Image.Image:
+def postprocess(img: Image.Image, style: RenderStyle, rng: np.random.Generator) -> Image.Image:
+    """Blur -> additive noise / salt-and-pepper -> JPEG round-trip (each only if enabled)."""
     if style.blur > 0:
         img = img.filter(ImageFilter.GaussianBlur(style.blur))
     if style.noise_std > 0 or style.salt_pepper > 0:
@@ -190,6 +191,7 @@ def render(
     size: int = 384,
     mirror: bool = False,
     seed: int = 0,
+    apply_postprocess: bool = True,
 ) -> Rendered:
     """Render ``mol`` to a ``size x size`` grayscale image, inside the inscribed circle."""
     drawn = depict(mol, style, mirror=mirror)
@@ -198,7 +200,10 @@ def render(
     canvas = Image.new("L", (size, size), 255)
     off = (size - inner) // 2
     canvas.paste(_draw(drawn, style, inner), (off, off))
-    img = _postprocess(canvas, style, np.random.default_rng(seed))
+    # With apply_postprocess=False the clean drawing is returned; applying
+    # postprocess(img, style, np.random.default_rng(seed)) later gives a bit-identical result.
+    # Shards store clean drawings (5x smaller) and the loader applies the degradation.
+    img = postprocess(canvas, style, np.random.default_rng(seed)) if apply_postprocess else canvas
     return Rendered(image=img, label=label_of(drawn), molblock=Chem.MolToMolBlock(drawn))
 
 

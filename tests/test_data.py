@@ -101,29 +101,6 @@ def test_render_inside_inscribed_circle_and_random_styles():
 # ----------------------------------------------------------------------------- build
 
 
-@pytest.fixture(scope="module")
-def tiny_dataset(tmp_path_factory):
-    root = tmp_path_factory.mktemp("ds")
-    rng = random.Random(1)
-    smiles = []
-    frags = ["C", "CC", "O", "N", "Cl", "F", "C(C)O", "C=CC", "c1ccccc1", "C1CCCC1", "C(=O)N"]
-    while len(smiles) < 600:
-        smiles.append("CC" + "".join(rng.choice(frags) for _ in range(rng.randint(2, 6))))
-    build.prepare_pool([("synthetic", smiles)], root / "pool.tsv.gz", workers=2)
-    pool = build.read_pool(root / "pool.tsv.gz")
-    cfg = build.ComposeConfig(
-        stereo_fraction=0.4,
-        sizes={"train": 100, "val": 20, "test": 20},
-        val_frac=0.1,
-        test_frac=0.1,
-    )
-    stats = build.compose(pool, cfg, root / "manifests")
-    for split in build.SPLITS:
-        rows = build.read_manifest(root / "manifests" / f"{split}.tsv")
-        build.render_shards(rows, split, root / "shards", shard_size=40, size=64, workers=2)
-    return root, stats
-
-
 def test_compose_fraction_prefix_and_disjoint_splits(tiny_dataset):
     root, stats = tiny_dataset
     rows = build.read_manifest(root / "manifests" / "train.tsv")
@@ -184,3 +161,36 @@ def test_rotate_images_conventions():
     centre = ((xx + 0.5 - 8) ** 2 + (yy + 0.5 - 8) ** 2) < (4**2)
     assert (two[0, 0][centre] - exact[0, 0][centre]).abs().mean() < 0.25
     assert math.isclose(float(rotate_images(x, torch.tensor([360.0, 0.0])).sub(x).abs().max()), 0.0)
+
+
+def test_deferred_postprocess_is_bit_identical():
+    from ouroboros.data.render import postprocess
+
+    mol = Chem.MolFromSmiles("C/C=C/[C@@H](Cl)[C@H](O)c1ccccc1")
+    style = RenderStyle(blur=0.8, noise_std=0.05, salt_pepper=0.002, jpeg_quality=40)
+    eager = render(mol, style, size=128, seed=7).image
+    clean = render(mol, style, size=128, seed=7, apply_postprocess=False).image
+    late = postprocess(clean, style, np.random.default_rng(7))
+    assert np.array_equal(np.asarray(eager), np.asarray(late))
+    assert not np.array_equal(np.asarray(eager), np.asarray(clean))
+
+
+def test_shards_store_clean_images_and_loader_degrades(tiny_dataset):
+    import io
+    import json as _json
+
+    from PIL import Image
+
+    root, _ = tiny_dataset
+    ds = ShardDataset(root / "shards", "train")
+    for i in range(len(ds)):
+        meta = ds.meta(i)
+        if meta["style"]["noise_std"] > 0:
+            shard, s = ds.entries[i]
+            stored = np.asarray(Image.open(io.BytesIO(ds._read(shard, s["png"]))).convert("L"))
+            loaded = np.rint((1 - ds[i]["image"][0].numpy()) * 255).astype(np.uint8)
+            assert meta["post"]["deferred"] and _json.dumps(meta)
+            assert not np.array_equal(stored, loaded)  # noise added at load time
+            break
+    else:
+        pytest.skip("no noisy sample in the tiny dataset")

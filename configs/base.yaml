@@ -1,0 +1,35 @@
+# Shared defaults. Arms differ ONLY in model.encoder (and train.rotation_aug for B / C+);
+# model.decoder must stay identical across arms (hard constraint 4).
+seed: 0
+data:
+  synthetic_root: /content/data/full/shards   # local: data/full/shards
+  synthetic_max_samples: 200000
+  real_roots: []           # ingested real-data shard dirs (Am1-A), split "train"
+  real_fraction: 0.0       # Am1-B; grid values are PLACEHOLDERS until U2 is answered
+  exclude_keys: null       # InChIKeys of real eval sets (scripts/check_leakage.py --dump-eval-keys)
+  image_size: 384
+  vocab: configs/vocab.json
+  num_workers: 8
+model:
+  encoder:
+    type: baseline
+  decoder:
+    d_model: 512
+    n_layers: 6
+    n_heads: 8
+    d_ff: 2048
+    dropout: 0.1
+    max_len: 128
+train:
+  device: auto
+  batch_size: 64
+  steps: 50000
+  lr: 3.0e-4
+  warmup: 1000
+  weight_decay: 0.05
+  grad_clip: 1.0
+  amp: bf16
+  label_smoothing: 0.0
+  rotation_aug: false
+  log_every: 50
+  ckpt_every: 1000

@@ -1,0 +1,10 @@
+{
+ "workers": 8,
+ "n": 20032,
+ "img_per_s": 684.5255988263636,
+ "dataset_len": 50000,
+ "pass": true,
+ "date": "2026-09-25",
+ "host": "vm",
+ "cpus": 4
+}

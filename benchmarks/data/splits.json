@@ -1,0 +1,17 @@
+{
+ "sizes": {
+  "train": 1000000,
+  "val": 5000,
+  "test": 10000
+ },
+ "overlap_full_train_val": 0,
+ "overlap_connectivity_train_val": 0,
+ "overlap_full_train_test": 0,
+ "overlap_connectivity_train_test": 0,
+ "overlap_full_val_test": 0,
+ "overlap_connectivity_val_test": 0,
+ "pass": true,
+ "date": "2026-09-25",
+ "host": "vm",
+ "cpus": 4
+}
