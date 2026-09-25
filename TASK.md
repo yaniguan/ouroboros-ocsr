@@ -121,6 +121,9 @@ cores (`data/full/pool.stats.json`).
 - [x] Label integrity: 100% parse; canonical label == canonical source on 10k sample. — 12,000/12,000
   (10k train + 1k val + 1k test; 0 parse failures, 0 mismatches) → `benchmarks/data/labels.json`;
   additionally 0 render-time drops (label ≠ source) among all 65,000 rendered samples, 2026-09-25.
+  Re-verified after the bridged-ring data fix (regenerated manifests/shards): splits 0 overlap,
+  labels 12,000/12,000, mirror 200/200, render 55.6 img/s, loader 586 img/s (8 workers), stereo
+  fraction 0.400 at every prefix, 0 render drops; rebuild 1,152 s (compose 4 workers + render).
 - [x] Mirror test: 200/200 mirrored renderings labeled as the enantiomer. — 200/200 (chiral, non-meso
   test molecules, random styles) → `benchmarks/data/mirror.json`, 2026-09-25.
 - [x] Style randomization (fonts, line width, bond length, label style, noise, blur, JPEG);
