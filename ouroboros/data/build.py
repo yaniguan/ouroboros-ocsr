@@ -183,9 +183,13 @@ def _compose_split(
     none = [r for r in order if r["n_db"] == 0 and r["n_tet"] == 0]
     tet = [r for r in order if r["n_db"] == 0 and r["n_tet"] > 0]
     pool = Pool(workers) if workers > 1 else None
-    # stereo assignments for ez / tet rows, consumed in exactly the order the rows are popped
-    ez_assign = _Assigner(list(ez), pool, min(len(ez), n + n // 10))
-    tet_assign = _Assigner(list(tet), pool, min(len(tet), n + n // 10))
+    # Stereo assignments for ez / tet rows, consumed in exactly the order the rows are popped.
+    # Prefetch roughly the expected number of pops (+5% +1000); later pops fall back to serial.
+    f, E, T, Z = cfg.stereo_fraction, len(ez), len(tet), len(none)
+    exp_ez = f * n * E / max(1, E + T)
+    exp_tet = f * n * T / max(1, E + T) + (1 - f) * n * T / max(1, Z + T)
+    ez_assign = _Assigner(list(ez), pool, min(E, int(1.05 * exp_ez) + 1000))
+    tet_assign = _Assigner(list(tet), pool, min(T, int(1.05 * exp_tet) + 1000))
     for bucket in (ez, none, tet):
         bucket.reverse()  # pop() from the end == take in hash order
     rng = random.Random(f"{cfg.seed}-{split}")
