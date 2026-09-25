@@ -1,29 +1,14 @@
 {
  "n": 1000,
  "n_conf": 10,
- "success": 997,
- "success_rate": 0.997,
- "failure_reasons": {
-  "etkdg_failed": 3
- },
- "failures": [
-  {
-   "smiles": "Cc1ccccc1C(=O)NCC(=O)NCC[C@H]1C[C@H]2CC[C@H]1C2",
-   "reason": "etkdg_failed"
-  },
-  {
-   "smiles": "CC(=O)N1CCN(C(=O)[C@]23C[C@@H]4C[C@@H](CC[C@@H](C4)C2)C3)CC1",
-   "reason": "etkdg_failed"
-  },
-  {
-   "smiles": "CNc1ncnc2sc(C(=O)N3C[C@H]4CC[C@H]3C4)c(C)c12",
-   "reason": "etkdg_failed"
-  }
- ],
- "stereo_n": 987,
- "stereo_all_conformers_ok": 985,
- "stereo_rate": 0.9979736575481256,
- "embed_sec_per_mol": 0.8521765853069991,
+ "success": 1000,
+ "success_rate": 1.0,
+ "failure_reasons": {},
+ "failures": [],
+ "stereo_n": 1000,
+ "stereo_all_conformers_ok": 999,
+ "stereo_rate": 0.999,
+ "embed_sec_per_mol": 0.31060939443400276,
  "date": "2026-09-25",
  "host": "vm"
 }

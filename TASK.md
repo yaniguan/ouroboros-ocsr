@@ -342,13 +342,13 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
   `ouroboros/geometry/conformers.py::lowest_energy_conformer` (ETKDGv3, default N = 10, random-coords
   retry; MACE-OFF23 via `mace_off`, ASE LBFGS, fmax 0.05 eV/Å, float64; returns energy, forces,
   positions, convergence, stereo check), 2026-09-25.
-- [~] Embedding success ≥ 98% on 1,000 molecules; failures logged. — first run 997/1000 = 99.7%
-  (0.85 s/mol for 10 conformers); the 3 failures (logged in `benchmarks/geometry/embed.json`) were
-  bridged bicycles with impossible random stereo → data fix (Decisions log); re-measure queued on the
-  regenerated test set.
-- [~] Stereo preservation ≥ 99% on 1,000 chiral molecules. — first run 985/987 embedded stereo
-  molecules = 99.8% (all 10 conformers must carry the input stereo); re-measure queued with the data
-  fix and the corrected check (only stereo elements specified in the input are compared).
+- [x] Embedding success ≥ 98% on 1,000 molecules; failures logged. — regenerated test set, first
+  1,000 molecules, 10 ETKDGv3 conformers each: 1000/1000 = 100% (0.31 s/mol); failures would be
+  logged with reasons in `benchmarks/geometry/embed.json` (the first run, before the bridged-ring
+  data fix, had 997/1000 with 3 logged `etkdg_failed` bridged bicycles), 2026-09-25.
+- [x] Stereo preservation ≥ 99% on 1,000 chiral molecules. — 1,000 test molecules with ≥ 1 specified
+  stereo element: 999/1000 = 99.9% have the input stereo in ALL 10 conformers (only specified
+  elements compared via CIP labels) → `benchmarks/geometry/embed.json`, 2026-09-25.
 - [~] Convergence (fmax < 0.05 eV/Å) ≥ 95%; median time recorded. — 40 test molecules × 3
   conformers, MACE-OFF23 small, CPU: 39 embedded, 39/39 lowest-energy conformers and 100% of all
   conformers converged; median 25.2 s/molecule (CPU) → `benchmarks/geometry/relax.json`. Re-run
