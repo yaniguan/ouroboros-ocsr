@@ -58,6 +58,17 @@ or changed are tagged **(Am1-A … Am1-F)**.
    `eval/predictions.jsonl` on Drive (I aggregate from it; share the `runs/` folder or paste the
    `eval/summary.json`). The rotation sweep is inside `eval/summary.json`.
 
+### U7 — Sweep execution (Phase 4 / Phase 5 [colab]; after U4, U5 and ideally U1/U2)
+- Run `notebooks/02_train_eval.ipynb` once per `RUN_ID` of the chosen grid (`configs/sweep/index.csv`;
+  pruned grid = rows with real_fraction in {0, 0.1, 0.5}). Several runs can share one session by
+  re-running from the RUN_ID cell. Real-fraction > 0 runs need the ingested real training shards in
+  `MyDrive/ouroboros/real/train` (U1). Report back the `runs/` folder (or each `eval/predictions.jsonl`
+  + `config.yaml`); I run `scripts/aggregate.py`.
+
+### U8 — 3D stage on GPU (Phase 6 [colab]; after the sweep has a best arm)
+- `notebooks/03_geometry.ipynb`, A100, set `RUN_ID` to the best arm's run. Expected ≈ 2–4 GPU-h
+  (ASE relaxations are sequential). Report `results/geometry/*.json` and `<RUN_ID>/summary.json`.
+
 ### U5 — Decisions needed on the experiment grid (Am1-E) — see "Compute estimate" in Phase 4
 - The full grid (5 arms A, B, C, C+, D × 6 placeholder real fractions × {50k, 200k} × 3 seeds,
   f = 1.0 at one size = 165 runs) is estimated at **210 A100-h** (A–C+ alone: 150.9 h), over the
