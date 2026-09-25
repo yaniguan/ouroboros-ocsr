@@ -1,0 +1,18 @@
+# ONE sweep definition (Am1-E). scripts/make_sweep.py expands it into configs/sweep/*.yaml.
+# Arms differ only in model.encoder and train.rotation_aug; the decoder is shared (constraint 4)
+# and make_sweep.py refuses any arm override under model.decoder.
+base: base.yaml
+arms:
+  A:  {model.encoder: {type: baseline}, train.rotation_aug: false}
+  B:  {model.encoder: {type: baseline}, train.rotation_aug: true}
+  C:  {model.encoder: {type: steerable, N: 8, fields: [7, 14, 29, 58]}, train.rotation_aug: false}
+  C+: {model.encoder: {type: steerable, N: 8, fields: [7, 14, 29, 58]}, train.rotation_aug: true}
+sizes: [50000, 200000]            # synthetic training-set sizes (nested prefixes of one manifest)
+# PLACEHOLDERS until the fractions of arXiv:2608.09100's grid are known (TASK.md U2).
+real_fractions: [0.0, 0.05, 0.1, 0.25, 0.5, 1.0]
+real_fractions_are_placeholders: true
+seeds: [0, 1, 2]
+steps: {50000: 20000, 200000: 40000}
+# real_fraction = 1.0 trains on real data only, so the synthetic size is irrelevant: keep one size.
+dedupe_full_real: true
+real_roots: [/content/real/train]  # ingested real training shards (U1)

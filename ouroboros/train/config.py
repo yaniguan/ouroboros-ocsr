@@ -27,6 +27,17 @@ def set_dotted(cfg: dict, key: str, value: Any) -> None:
     d[parts[-1]] = value
 
 
+def _scalar(v: str) -> Any:
+    """YAML scalar, but also accept '5e-4'-style floats (YAML 1.1 reads them as strings)."""
+    out = yaml.safe_load(v)
+    if isinstance(out, str):
+        try:
+            return float(out)
+        except ValueError:
+            return out
+    return out
+
+
 def load_config(path: str | Path, overrides: list[str] | None = None) -> dict:
     """Load YAML; a top-level ``base:`` key (path relative to this file) is merged first.
 
@@ -39,5 +50,5 @@ def load_config(path: str | Path, overrides: list[str] | None = None) -> dict:
         cfg = deep_update(load_config(path.parent / base), cfg)
     for ov in overrides or []:
         k, v = ov.split("=", 1)
-        set_dotted(cfg, k, yaml.safe_load(v))
+        set_dotted(cfg, k, _scalar(v))
     return cfg

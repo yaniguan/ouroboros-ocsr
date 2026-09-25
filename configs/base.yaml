@@ -33,3 +33,10 @@ train:
   rotation_aug: false
   log_every: 50
   ckpt_every: 1000
+eval:
+  batch_size: 256
+  # every set is scored separately; kind must be "rendered" or "real" (never averaged together)
+  sets:
+    rendered_test: {root: /content/data/full/shards, split: test, kind: rendered, max_samples: null}
+  sweep_angles_step: 15          # rotation sweep 0..345
+  sweep_max_samples: 2000        # sweep runs on this fixed prefix of each set

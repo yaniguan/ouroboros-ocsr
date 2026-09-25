@@ -102,6 +102,8 @@ def results_table(runs: list[dict], angle: float = 0.0, n_boot: int = 1000) -> d
     set_kinds: dict[str, str] = {}
     for r in runs:
         for x in r["records"]:
+            if x["set"].endswith(":sweep"):  # rotation-sweep subsets are reported separately
+                continue
             prev = set_kinds.setdefault(x["set"], x["kind"])
             if prev != x["kind"]:
                 raise MixedKindsError(f"set {x['set']} appears as both {prev} and {x['kind']}")
@@ -287,6 +289,8 @@ def rotation_sweep(runs: list[dict], n_boot: int = 1000) -> dict:
         sets = sorted({(x["set"], x["kind"]) for r in rs for x in r["records"]})
         for s, kind in sets:
             angles = sorted({x["angle"] for r in rs for x in r["records"] if x["set"] == s})
+            if len(angles) < 2:  # not a sweep
+                continue
             pts = []
             for a in angles:
                 m, _ = _exact_matrix(rs, s, a)

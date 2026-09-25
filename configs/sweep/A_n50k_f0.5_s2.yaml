@@ -1,0 +1,51 @@
+seed: 2
+data:
+  synthetic_root: /content/data/full/shards
+  synthetic_max_samples: 50000
+  real_roots:
+  - /content/real/train
+  real_fraction: 0.5
+  exclude_keys: null
+  image_size: 384
+  vocab: configs/vocab.json
+  num_workers: 8
+model:
+  encoder:
+    type: baseline
+  decoder:
+    d_model: 512
+    n_layers: 6
+    n_heads: 8
+    d_ff: 2048
+    dropout: 0.1
+    max_len: 128
+train:
+  device: auto
+  batch_size: 64
+  steps: 20000
+  lr: 0.0003
+  warmup: 1000
+  weight_decay: 0.05
+  grad_clip: 1.0
+  amp: bf16
+  label_smoothing: 0.0
+  rotation_aug: false
+  log_every: 50
+  ckpt_every: 1000
+eval:
+  batch_size: 256
+  sets:
+    rendered_test:
+      root: /content/data/full/shards
+      split: test
+      kind: rendered
+      max_samples: null
+  sweep_angles_step: 15
+  sweep_max_samples: 2000
+meta:
+  run_id: A_n50k_f0.5_s2
+  arm: A
+  size: 50000
+  real_fraction: 0.5
+  seed: 2
+  real_fraction_is_placeholder: true

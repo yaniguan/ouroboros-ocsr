@@ -65,15 +65,28 @@ cores (`data/full/pool.stats.json`).
 - [x] Molecule filter: H C N O F P S Cl Br I only, 5–60 heavy atoms, neutral; unit-tested. —
   `ouroboros/data/filter.py`; `tests/test_data.py::test_filter_rules` (11 cases incl. both bounds,
   Si/B/Se, radical, quaternary N, isotope) + salt/neutralization test, all pass, 2026-09-25.
-- [~] Stereo composition ≥ 30% (configurable), measured within ±2 pp of target.
-- [ ] Splits: 0 InChIKey overlap train/val/test (script-verified).
-- [ ] Label integrity: 100% parse; canonical label == canonical source on 10k sample.
-- [ ] Mirror test: 200/200 mirrored renderings labeled as the enantiomer.
-- [ ] Style randomization (fonts, line width, bond length, label style, noise, blur, JPEG);
-  contact sheet `benchmarks/data/contact_sheet.png`.
-- [ ] Rendering throughput ≥ 20 img/s/process at 384 px.
-- [ ] Loader throughput ≥ 500 img/s with 8 workers.
-- [ ] 10k and 50k shards generated locally; 200k / 1M scripts tested on 1k dry run.
+- [x] Stereo composition ≥ 30% (configurable), measured within ±2 pp of target. — target 0.40
+  (`--stereo-fraction`); measured 0.400 for train prefixes 10k/50k/200k/1M, val 0.400, test 0.400
+  (recomputed from label SMILES for the 50k prefix: 0.400) → `benchmarks/data/stereo_fraction.json`, 2026-09-25.
+- [x] Splits: 0 InChIKey overlap train/val/test (script-verified). — `scripts/verify_data.py splits`:
+  1M/5k/10k, full-key and connectivity-block overlaps all 0 → `benchmarks/data/splits.json`, 2026-09-25.
+- [x] Label integrity: 100% parse; canonical label == canonical source on 10k sample. — 12,000/12,000
+  (10k train + 1k val + 1k test; 0 parse failures, 0 mismatches) → `benchmarks/data/labels.json`;
+  additionally 0 render-time drops (label ≠ source) among all 65,000 rendered samples, 2026-09-25.
+- [x] Mirror test: 200/200 mirrored renderings labeled as the enantiomer. — 200/200 (chiral, non-meso
+  test molecules, random styles) → `benchmarks/data/mirror.json`, 2026-09-25.
+- [x] Style randomization (fonts, line width, bond length, label style, noise, blur, JPEG);
+  contact sheet `benchmarks/data/contact_sheet.png`. — 64 samples cover 10 fonts, 4 palettes, line
+  width 1.1–4.0 px, bond length 18–39 px, 16 blurred / 23 noisy / 16 JPEG, 7 explicit-methyl, 3 comic
+  → `benchmarks/data/contact_sheet.json`, 2026-09-25.
+- [x] Rendering throughput ≥ 20 img/s/process at 384 px. — 55.8 img/s single process (style +
+  render + degradation + PNG) → `benchmarks/data/render_speed.json`; shard generation 346 img/s with
+  4 processes, 2026-09-25.
+- [x] Loader throughput ≥ 500 img/s with 8 workers. — 605 img/s (8 workers on this 4-core VM, incl.
+  load-time degradation, shuffled random access, batch 64) → `benchmarks/data/loader_speed.json`, 2026-09-25.
+- [~] 10k and 50k shards generated locally; 200k / 1M scripts tested on 1k dry run. — 50k train
+  (50 shards; 10k = first 10 shards) + 5k val + 10k test in `data/full/shards`, 443 MB, 0 drops,
+  train 144.6 s on 4 processes. Dry runs pending.
 - [ ] [colab] 200k and 1M shards on Drive; sizes and times reported. *(Am1-E grid uses only 50k and
   200k; 1M is kept for the original data-efficiency curve unless you drop it.)*
 
