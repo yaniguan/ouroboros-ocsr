@@ -7,21 +7,23 @@
    14,
    27,
    55
-  ]
+  ],
+  "attn_dim": 160,
+  "attn_ff": 640
  },
  "image_size": 384,
  "batch": 32,
  "seq_len": 75,
- "params": 27775532,
- "static_GiB": 0.4138876795768738,
- "activations_batch1_fp32_GiB": 0.7676457054913044,
- "activations_per_sample_fp32_GiB": 0.46048252284526825,
- "activations_fp32_GiB": 15.04260391369462,
- "estimate_bf16_GiB": 9.52222756370902,
- "upper_bound_fp32_GiB": 18.547789911925793,
+ "params": 26759852,
+ "static_GiB": 0.3987528681755066,
+ "activations_batch1_fp32_GiB": 0.7436299212276936,
+ "activations_per_sample_fp32_GiB": 0.4435395449399948,
+ "activations_fp32_GiB": 14.493355814367533,
+ "estimate_bf16_GiB": 9.174516930431126,
+ "upper_bound_fp32_GiB": 17.870530419051647,
  "fits_40GB_bf16": true,
- "max_batch_bf16_40GB": 132,
- "peak_rss_GiB_local": 2.2692832946777344,
+ "max_batch_bf16_40GB": 137,
+ "peak_rss_GiB_local": 2.2284088134765625,
  "method": "saved-tensor bytes at batch 1 and 2 on CPU (fp32), linear extrapolation; bf16 = fp32/2; +20% margin; 16 B/param static",
  "date": "2026-09-25"
 }

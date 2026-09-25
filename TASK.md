@@ -276,7 +276,8 @@ cores (`data/full/pool.stats.json`).
   evaluated (angle 0 + 4-angle sweep on a rendered and a stand-in real set) and aggregated →
   `benchmarks/sweep/dry_run.json`. The first pass exposed a real bug (steerable checkpoints did not
   reload: escnn caches filters only in eval mode) → fixed with `load_model_state`, regression test
-  added, C/C+ re-run. After arm D was added: 165/165 (D: 33/33, one D run evaluated), 2026-09-25.
+  added, C/C+ re-run. After arm D was added (final FLOP-matched config): 165/165 (D: 33/33, one D run
+  evaluated), 2026-09-25. Full test suite: 125 passed.
 - [x] Compute estimate (GPU-h per run and total) in TASK.md; if > 150 A100-h, propose a pruned grid
   that still tests H1–H3 under Needs user. — see "Compute estimate" below; full grid 150.9 A100-h
   (> 150) → pruned grid proposed in U5, 2026-09-25.
@@ -305,20 +306,21 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
 ## Phase 5 — Equivariant attention (D) and canonicalization (E, optional)
 - [x] Steerable stem + group-equivariant self-attention with rotated relative positions. —
   `ouroboros/encoder/equiv_attention.py`: tokens on the lifted grid (location × C_N rotation), bias
-  b(R_h⁻¹(y−x), h′−h), mean over h → invariant token set; registered as encoder `equiv_attention`
-  (FLOP-matched C8 trunk + 2 group-attention layers, d=256; 27.8M params total incl. decoder),
-  2026-09-25.
-- [x] Equivariance thresholds as Phase 3; overfit passes. — equivariance: 384 px, C4: feature
-  max rel. err 9.0e-7, token set 8.4e-7; C8 at 90° multiples 1.2e-6 / 7.2e-7; C8 off-grid 45°:
-  feature 0.207, mean token 0.0035 (report only) → `benchmarks/encoders/equivariance_attention.json`;
-  unit tests `tests/test_equiv_attention.py` 5/5 (token-set invariance C4/C8, lifted-token
-  equivariance inside the attention, bias depends on relative pose only, not mirror-invariant,
-  export parity). Overfit: same settings as Phase 2/3 — 256/256 = 100% at step 2,250 (1.6% @250, 56.6% @500, 77.0% @750, 82.8% @1000, 91.4% @1250, 88.7% @1500, 96.9% @1750, 97.7% @2000, 100.0% @2250);
-  → `benchmarks/train/overfit_equiv_attention_c8.json`, 2026-09-25.
+  b(R_h⁻¹(y−x), h′−h), mean over h → invariant token set; encoder `equiv_attention`, final config
+  FLOP-matched: C8 trunk 7-14-27-55 + 2 group-attention layers (d = 160, ff 640, 8 heads):
+  encoder 1.40M params, 10.33 GFLOPs @384 px (baseline 10.27, +0.6%), 2026-09-25.
+- [x] Equivariance thresholds as Phase 3; overfit passes. — 384 px, final config: C4 feature max
+  rel. err 1.0e-6, token set 5.5e-7 (90/180/270°); C8 at 90° multiples 1.3e-6 / 4.1e-7; C8 off-grid
+  45° (report only): feature 0.199, mean token 0.0019 → `benchmarks/encoders/equivariance_attention.json`;
+  unit tests `tests/test_equiv_attention.py` 5/5 (token-set invariance C4/C8, lifted-token equivariance
+  inside the attention, bias depends on relative pose only, not mirror-invariant, export parity).
+  Overfit, same settings as Phase 2/3: 256/256 = 100% at step 2,000 (2.3% @250, 58.6% @500, 72.7% @750, 72.7% @1000, 88.7% @1250, 92.6% @1500, 98.0% @1750, 100.0% @2000)
+  → `benchmarks/train/overfit_equiv_attention_c8.json`. (The earlier d = 256 variant also passed, at
+  step 2,250, before it was FLOP-matched.) 2026-09-25.
 - [x] Memory estimate: batch ≥ 32 @ 384 px bf16 fits 40 GB. — `scripts/memory_estimate.py`
   (16 B/param static + saved-for-backward activations measured at batch 1 and 2 on CPU, linear
-  extrapolation, +20%): arm D batch 32 → 9.5 GiB bf16 estimate, 18.5 GiB fp32 upper bound; max
-  batch in 40 GB ≈ 132 (activations 0.46 GiB/sample fp32). Arm C (for reference): 4.4 / 8.2 GiB.
+  extrapolation, +20%): arm D batch 32 → 9.2 GiB bf16 estimate, 17.9 GiB fp32 upper bound; max
+  batch in 40 GB ≈ 137 (activations 0.44 GiB/sample fp32). Arm C (for reference): 4.4 / 8.2 GiB.
   → `benchmarks/encoders/memory_*.json`, 2026-09-25.
 - [ ] Arm E invariance < 1e-4 (if implemented).
 - [ ] [colab] D (and E) in sweep.

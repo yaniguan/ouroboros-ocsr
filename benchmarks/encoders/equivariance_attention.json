@@ -11,16 +11,16 @@
    ],
    "grid90": {
     "90": {
-     "feature_rel_err": 8.646800893075124e-07,
-     "token_rel_err": 8.407976679336571e-07
+     "feature_rel_err": 1.0017436125053791e-06,
+     "token_rel_err": 4.6486886162711016e-07
     },
     "180": {
-     "feature_rel_err": 8.043538173296838e-07,
-     "token_rel_err": 7.006647138041444e-07
+     "feature_rel_err": 7.212556170088646e-07,
+     "token_rel_err": 5.469045731842925e-07
     },
     "270": {
-     "feature_rel_err": 9.048979450199113e-07,
-     "token_rel_err": 8.407976679336571e-07
+     "feature_rel_err": 8.81534560903674e-07,
+     "token_rel_err": 5.469045731842925e-07
     }
    },
    "offgrid": {}
@@ -34,34 +34,34 @@
    ],
    "grid90": {
     "90": {
-     "feature_rel_err": 1.1726856428140309e-06,
-     "token_rel_err": 7.187923642959504e-07
+     "feature_rel_err": 1.2844240018239361e-06,
+     "token_rel_err": 4.114920386655285e-07
     },
     "180": {
-     "feature_rel_err": 1.2195932868053205e-06,
-     "token_rel_err": 6.845641564723337e-07
+     "feature_rel_err": 1.1209518788746209e-06,
+     "token_rel_err": 4.114920386655285e-07
     },
     "270": {
-     "feature_rel_err": 1.1492323892525746e-06,
-     "token_rel_err": 6.845641564723337e-07
+     "feature_rel_err": 1.1676582971631433e-06,
+     "token_rel_err": 4.114920386655285e-07
     }
    },
    "offgrid": {
     "45": {
-     "feature_rel_err_central_disk": 0.20721524953842163,
-     "mean_token_rel_err": 0.003535589436069131
+     "feature_rel_err_central_disk": 0.1994294673204422,
+     "mean_token_rel_err": 0.0019004291389137506
     },
     "135": {
-     "feature_rel_err_central_disk": 0.20721516013145447,
-     "mean_token_rel_err": 0.003535589436069131
+     "feature_rel_err_central_disk": 0.1994292140007019,
+     "mean_token_rel_err": 0.0019004566129297018
     },
     "225": {
-     "feature_rel_err_central_disk": 0.20721477270126343,
-     "mean_token_rel_err": 0.003535589436069131
+     "feature_rel_err_central_disk": 0.19942913949489594,
+     "mean_token_rel_err": 0.0019004566129297018
     },
     "315": {
-     "feature_rel_err_central_disk": 0.2072150558233261,
-     "mean_token_rel_err": 0.003535589436069131
+     "feature_rel_err_central_disk": 0.19942891597747803,
+     "mean_token_rel_err": 0.0019004839705303311
     }
    }
   }

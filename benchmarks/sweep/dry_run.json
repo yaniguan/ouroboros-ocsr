@@ -1473,11 +1473,11 @@
    "real_fraction": 0.05,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.6153769493103027,
-   "last_loss": 2.1892762184143066,
+   "first_loss": 2.605526924133301,
+   "last_loss": 2.2051584720611572,
    "n_real": 400,
    "evaluated": true,
-   "sec": 58.7
+   "sec": 57.6
   },
   {
    "config": "D_n200k_f0.05_s1.yaml",
@@ -1485,8 +1485,8 @@
    "real_fraction": 0.05,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.5987672805786133,
-   "last_loss": 2.054192543029785,
+   "first_loss": 2.5580949783325195,
+   "last_loss": 1.957808256149292,
    "n_real": 400,
    "sec": 33.0
   },
@@ -1496,10 +1496,10 @@
    "real_fraction": 0.05,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.7913122177124023,
-   "last_loss": 1.990565299987793,
+   "first_loss": 2.764333963394165,
+   "last_loss": 1.969584345817566,
    "n_real": 400,
-   "sec": 32.5
+   "sec": 32.7
   },
   {
    "config": "D_n200k_f0.1_s0.yaml",
@@ -1507,10 +1507,10 @@
    "real_fraction": 0.1,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.5538156032562256,
-   "last_loss": 2.1462759971618652,
+   "first_loss": 2.5334312915802,
+   "last_loss": 2.12864089012146,
    "n_real": 400,
-   "sec": 33.0
+   "sec": 31.6
   },
   {
    "config": "D_n200k_f0.1_s1.yaml",
@@ -1518,10 +1518,10 @@
    "real_fraction": 0.1,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.657650947570801,
-   "last_loss": 2.1156864166259766,
+   "first_loss": 2.6122803688049316,
+   "last_loss": 1.9801607131958008,
    "n_real": 400,
-   "sec": 32.6
+   "sec": 32.7
   },
   {
    "config": "D_n200k_f0.1_s2.yaml",
@@ -1529,10 +1529,10 @@
    "real_fraction": 0.1,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.581146717071533,
-   "last_loss": 1.9464842081069946,
+   "first_loss": 2.575611114501953,
+   "last_loss": 1.9328726530075073,
    "n_real": 400,
-   "sec": 32.4
+   "sec": 31.7
   },
   {
    "config": "D_n200k_f0.25_s0.yaml",
@@ -1540,10 +1540,10 @@
    "real_fraction": 0.25,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.6406943798065186,
-   "last_loss": 1.9679476022720337,
+   "first_loss": 2.6023874282836914,
+   "last_loss": 2.0214364528656006,
    "n_real": 400,
-   "sec": 33.2
+   "sec": 32.4
   },
   {
    "config": "D_n200k_f0.25_s1.yaml",
@@ -1551,10 +1551,10 @@
    "real_fraction": 0.25,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.5871808528900146,
-   "last_loss": 2.0013177394866943,
+   "first_loss": 2.5843780040740967,
+   "last_loss": 1.8584139347076416,
    "n_real": 400,
-   "sec": 33.1
+   "sec": 32.7
   },
   {
    "config": "D_n200k_f0.25_s2.yaml",
@@ -1562,10 +1562,10 @@
    "real_fraction": 0.25,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.9679815769195557,
-   "last_loss": 1.9988154172897339,
+   "first_loss": 2.848665714263916,
+   "last_loss": 1.8943299055099487,
    "n_real": 400,
-   "sec": 33.0
+   "sec": 32.1
   },
   {
    "config": "D_n200k_f0.5_s0.yaml",
@@ -1573,10 +1573,10 @@
    "real_fraction": 0.5,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.545396566390991,
-   "last_loss": 2.1296370029449463,
+   "first_loss": 2.556576728820801,
+   "last_loss": 2.1499295234680176,
    "n_real": 400,
-   "sec": 32.1
+   "sec": 33.5
   },
   {
    "config": "D_n200k_f0.5_s1.yaml",
@@ -1584,10 +1584,10 @@
    "real_fraction": 0.5,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.5718472003936768,
-   "last_loss": 1.982335090637207,
+   "first_loss": 2.567923069000244,
+   "last_loss": 1.8598588705062866,
    "n_real": 400,
-   "sec": 33.1
+   "sec": 33.2
   },
   {
    "config": "D_n200k_f0.5_s2.yaml",
@@ -1595,10 +1595,10 @@
    "real_fraction": 0.5,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.698263168334961,
-   "last_loss": 1.7364884614944458,
+   "first_loss": 2.643829822540283,
+   "last_loss": 1.7009979486465454,
    "n_real": 400,
-   "sec": 32.6
+   "sec": 32.0
   },
   {
    "config": "D_n200k_f0_s0.yaml",
@@ -1606,10 +1606,10 @@
    "real_fraction": 0.0,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.7066664695739746,
-   "last_loss": 1.7758679389953613,
+   "first_loss": 2.698918104171753,
+   "last_loss": 1.7719167470932007,
    "n_real": 0,
-   "sec": 33.0
+   "sec": 32.9
   },
   {
    "config": "D_n200k_f0_s1.yaml",
@@ -1617,10 +1617,10 @@
    "real_fraction": 0.0,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.5534839630126953,
-   "last_loss": 2.0156219005584717,
+   "first_loss": 2.5426926612854004,
+   "last_loss": 1.9557229280471802,
    "n_real": 0,
-   "sec": 33.7
+   "sec": 32.6
   },
   {
    "config": "D_n200k_f0_s2.yaml",
@@ -1628,10 +1628,10 @@
    "real_fraction": 0.0,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.6537444591522217,
-   "last_loss": 1.8262794017791748,
+   "first_loss": 2.6344923973083496,
+   "last_loss": 1.8158667087554932,
    "n_real": 0,
-   "sec": 33.2
+   "sec": 33.4
   },
   {
    "config": "D_n50k_f0.05_s0.yaml",
@@ -1639,10 +1639,10 @@
    "real_fraction": 0.05,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.6153769493103027,
-   "last_loss": 2.1892762184143066,
+   "first_loss": 2.605526924133301,
+   "last_loss": 2.2051584720611572,
    "n_real": 400,
-   "sec": 32.0
+   "sec": 31.8
   },
   {
    "config": "D_n50k_f0.05_s1.yaml",
@@ -1650,10 +1650,10 @@
    "real_fraction": 0.05,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.5987672805786133,
-   "last_loss": 2.054192543029785,
+   "first_loss": 2.5580949783325195,
+   "last_loss": 1.957808256149292,
    "n_real": 400,
-   "sec": 32.2
+   "sec": 33.6
   },
   {
    "config": "D_n50k_f0.05_s2.yaml",
@@ -1661,10 +1661,10 @@
    "real_fraction": 0.05,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.7913122177124023,
-   "last_loss": 1.990565299987793,
+   "first_loss": 2.764333963394165,
+   "last_loss": 1.969584345817566,
    "n_real": 400,
-   "sec": 33.9
+   "sec": 31.1
   },
   {
    "config": "D_n50k_f0.1_s0.yaml",
@@ -1672,10 +1672,10 @@
    "real_fraction": 0.1,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.5538156032562256,
-   "last_loss": 2.1462759971618652,
+   "first_loss": 2.5334312915802,
+   "last_loss": 2.12864089012146,
    "n_real": 400,
-   "sec": 33.7
+   "sec": 31.9
   },
   {
    "config": "D_n50k_f0.1_s1.yaml",
@@ -1683,10 +1683,10 @@
    "real_fraction": 0.1,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.657650947570801,
-   "last_loss": 2.1156864166259766,
+   "first_loss": 2.6122803688049316,
+   "last_loss": 1.9801607131958008,
    "n_real": 400,
-   "sec": 33.7
+   "sec": 32.9
   },
   {
    "config": "D_n50k_f0.1_s2.yaml",
@@ -1694,10 +1694,10 @@
    "real_fraction": 0.1,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.581146717071533,
-   "last_loss": 1.9464842081069946,
+   "first_loss": 2.575611114501953,
+   "last_loss": 1.9328726530075073,
    "n_real": 400,
-   "sec": 32.7
+   "sec": 31.1
   },
   {
    "config": "D_n50k_f0.25_s0.yaml",
@@ -1705,10 +1705,10 @@
    "real_fraction": 0.25,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.6406943798065186,
-   "last_loss": 1.9679476022720337,
+   "first_loss": 2.6023874282836914,
+   "last_loss": 2.0214364528656006,
    "n_real": 400,
-   "sec": 33.7
+   "sec": 31.0
   },
   {
    "config": "D_n50k_f0.25_s1.yaml",
@@ -1716,10 +1716,10 @@
    "real_fraction": 0.25,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.5871808528900146,
-   "last_loss": 2.0013177394866943,
+   "first_loss": 2.5843780040740967,
+   "last_loss": 1.8584139347076416,
    "n_real": 400,
-   "sec": 33.7
+   "sec": 32.9
   },
   {
    "config": "D_n50k_f0.25_s2.yaml",
@@ -1727,10 +1727,10 @@
    "real_fraction": 0.25,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.9679815769195557,
-   "last_loss": 1.9988154172897339,
+   "first_loss": 2.848665714263916,
+   "last_loss": 1.8943299055099487,
    "n_real": 400,
-   "sec": 32.9
+   "sec": 32.2
   },
   {
    "config": "D_n50k_f0.5_s0.yaml",
@@ -1738,10 +1738,10 @@
    "real_fraction": 0.5,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.545396566390991,
-   "last_loss": 2.1296370029449463,
+   "first_loss": 2.556576728820801,
+   "last_loss": 2.1499295234680176,
    "n_real": 400,
-   "sec": 32.3
+   "sec": 32.7
   },
   {
    "config": "D_n50k_f0.5_s1.yaml",
@@ -1749,10 +1749,10 @@
    "real_fraction": 0.5,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.5718472003936768,
-   "last_loss": 1.982335090637207,
+   "first_loss": 2.567923069000244,
+   "last_loss": 1.8598588705062866,
    "n_real": 400,
-   "sec": 32.8
+   "sec": 32.1
   },
   {
    "config": "D_n50k_f0.5_s2.yaml",
@@ -1760,10 +1760,10 @@
    "real_fraction": 0.5,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.698263168334961,
-   "last_loss": 1.7364884614944458,
+   "first_loss": 2.643829822540283,
+   "last_loss": 1.7009979486465454,
    "n_real": 400,
-   "sec": 32.2
+   "sec": 33.1
   },
   {
    "config": "D_n50k_f0_s0.yaml",
@@ -1771,10 +1771,10 @@
    "real_fraction": 0.0,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.7066664695739746,
-   "last_loss": 1.7758679389953613,
+   "first_loss": 2.698918104171753,
+   "last_loss": 1.7719167470932007,
    "n_real": 0,
-   "sec": 32.5
+   "sec": 33.3
   },
   {
    "config": "D_n50k_f0_s1.yaml",
@@ -1782,10 +1782,10 @@
    "real_fraction": 0.0,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.5534839630126953,
-   "last_loss": 2.0156219005584717,
+   "first_loss": 2.5426926612854004,
+   "last_loss": 1.9557229280471802,
    "n_real": 0,
-   "sec": 33.6
+   "sec": 32.7
   },
   {
    "config": "D_n50k_f0_s2.yaml",
@@ -1793,10 +1793,10 @@
    "real_fraction": 0.0,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.6537444591522217,
-   "last_loss": 1.8262794017791748,
+   "first_loss": 2.6344923973083496,
+   "last_loss": 1.8158667087554932,
    "n_real": 0,
-   "sec": 33.8
+   "sec": 33.0
   },
   {
    "config": "D_n50k_f1_s0.yaml",
@@ -1804,10 +1804,10 @@
    "real_fraction": 1.0,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.6251189708709717,
-   "last_loss": 2.1319990158081055,
+   "first_loss": 2.6061699390411377,
+   "last_loss": 2.143650531768799,
    "n_real": 400,
-   "sec": 32.9
+   "sec": 32.7
   },
   {
    "config": "D_n50k_f1_s1.yaml",
@@ -1815,8 +1815,8 @@
    "real_fraction": 1.0,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.8232789039611816,
-   "last_loss": 1.7536845207214355,
+   "first_loss": 2.7475228309631348,
+   "last_loss": 1.6887072324752808,
    "n_real": 400,
    "sec": 32.3
   },
@@ -1826,10 +1826,10 @@
    "real_fraction": 1.0,
    "ok": true,
    "steps": 50,
-   "first_loss": 2.5628795623779297,
-   "last_loss": 1.9447710514068604,
+   "first_loss": 2.584704875946045,
+   "last_loss": 1.9284594058990479,
    "n_real": 400,
-   "sec": 32.0
+   "sec": 31.9
   }
  ],
  "date": "2026-09-25"
