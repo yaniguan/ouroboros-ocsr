@@ -349,12 +349,11 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
 - [x] Stereo preservation ≥ 99% on 1,000 chiral molecules. — 1,000 test molecules with ≥ 1 specified
   stereo element: 999/1000 = 99.9% have the input stereo in ALL 10 conformers (only specified
   elements compared via CIP labels) → `benchmarks/geometry/embed.json`, 2026-09-25.
-- [~] Convergence (fmax < 0.05 eV/Å) ≥ 95%; median time recorded. — 40 test molecules × 3
-  conformers, MACE-OFF23 small, CPU: 39 embedded, 39/39 lowest-energy conformers and 100% of all
-  conformers converged; median 25.2 s/molecule (CPU) → `benchmarks/geometry/relax.json`. Re-run
-  queued for the corrected stereo-after-relaxation number (first run reported 72% because
-  unspecified centres were counted — a bug in the check, not in the geometry). 1,000-molecule run
-  on GPU is in `notebooks/03_geometry.ipynb` (U7).
+- [x] Convergence (fmax < 0.05 eV/Å) ≥ 95%; median time recorded. — first 40 regenerated test
+  molecules × 3 conformers, MACE-OFF23 small, CPU (4 cores), LBFGS float64: 40/40 embedded,
+  lowest-energy conformer converged 40/40 = 100%, all 120 conformers converged; stereo preserved
+  after relaxation 40/40 (corrected check); median 25.2 s/molecule on CPU → `benchmarks/geometry/relax.json`.
+  The 1,000-molecule × 10-conformer GPU run is in `notebooks/03_geometry.ipynb` (U8), 2026-09-25.
 - [x] Enantiomer pairs |ΔE| < 1e-3 eV (20 pairs). — 20 chiral test molecules (regenerated data, none
   skipped): ETKDG conformer and its mirror image relaxed identically (LBFGS, MACE-OFF23 small, fmax
   0.05, float64), all 40 converged; max |ΔE| = 7.3e-12 eV → `benchmarks/geometry/enantiomers.json`,
