@@ -220,3 +220,25 @@ def test_parallel_compose_is_identical(tiny_dataset, tmp_path):
     for split in build.SPLITS:
         a = (root / "manifests" / f"{split}.tsv").read_text()
         assert a == (tmp_path / "par" / f"{split}.tsv").read_text()
+
+
+def test_parallel_compose_serial_fallback_is_identical(tiny_dataset, tmp_path, monkeypatch):
+    """Prefetch shorter than the number of pops: the serial fallback must continue seamlessly."""
+    root, _ = tiny_dataset
+    orig = build._Assigner
+
+    class Short(orig):
+        def __init__(self, rows, pool, prefetch):
+            super().__init__(rows, pool, min(prefetch, 5))
+
+    monkeypatch.setattr(build, "_Assigner", Short)
+    cfg = build.ComposeConfig(
+        stereo_fraction=0.4,
+        sizes={"train": 100, "val": 20, "test": 20},
+        val_frac=0.1,
+        test_frac=0.1,
+    )
+    build.compose(build.read_pool(root / "pool.tsv.gz"), cfg, tmp_path / "par", workers=2)
+    for split in build.SPLITS:
+        a = (root / "manifests" / f"{split}.tsv").read_text()
+        assert a == (tmp_path / "par" / f"{split}.tsv").read_text()
