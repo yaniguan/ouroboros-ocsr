@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ouroboros-ocsr"
+version = "0.0.1"
+description = "Rotation-equivariant OCSR with stereochemistry, followed by a 3D MACE energy stage"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+# Exact pins live in requirements.txt; these are the direct dependencies only.
+dependencies = [
+    "torch",
+    "escnn",
+    "rdkit",
+    "mace-torch",
+    "webdataset",
+    "pyyaml",
+    "numpy",
+    "pillow",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
+[tool.setuptools.packages.find]
+include = ["ouroboros*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: long-running tests (deselect with -m 'not slow')",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E731"]
+
+[tool.ruff.lint.per-file-ignores]
+# notebook generators embed notebook source lines verbatim
+"scripts/make_*_nb.py" = ["E501"]

@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+# generated data / runs (kept out of git; see TASK.md)
+shards/
+runs/
+checkpoints/
+*.tar
+*.ckpt
+*.pt
+!tests/fixtures/**
