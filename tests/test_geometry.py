@@ -57,3 +57,12 @@ def test_embedding_keeps_stereo_and_mirror_inverts(smi):
 
 def test_embed_failure_reason():
     assert embed("not_smiles")[1] == "unparsable"
+
+
+def test_stereo_check_ignores_unspecified_centres():
+    for smi in ["CC(N)C(=O)O", "C[C@H](N)C(C)CC", "C/C=C/C(O)CC"]:
+        mol, _ = embed(smi, n_conf=2, seed=0)
+        assert all(stereo_preserved(mol, smi)), smi
+    # but a wrong specified centre is caught
+    mol, _ = embed("C[C@H](N)C(=O)O", n_conf=1, seed=0)
+    assert not stereo_preserved(mol, "C[C@@H](N)C(=O)O")[0]

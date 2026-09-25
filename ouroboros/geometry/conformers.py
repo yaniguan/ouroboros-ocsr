@@ -59,10 +59,47 @@ def stereo_from_3d(mol: Chem.Mol, conf_id: int = -1) -> str:
     return Chem.MolToSmiles(Chem.RemoveHs(m))
 
 
+def _cip_labels(m: Chem.Mol) -> tuple[dict[int, str], dict[tuple[int, int], str]]:
+    from rdkit.Chem import rdCIPLabeler
+
+    m = Chem.Mol(m)
+    rdCIPLabeler.AssignCIPLabels(m)
+    atoms = {a.GetIdx(): a.GetProp("_CIPCode") for a in m.GetAtoms() if a.HasProp("_CIPCode")}
+    bonds = {
+        tuple(sorted((b.GetBeginAtomIdx(), b.GetEndAtomIdx()))): b.GetProp("_CIPCode")
+        for b in m.GetBonds()
+        if b.HasProp("_CIPCode")
+    }
+    return atoms, bonds
+
+
+def stereo_matches(mol: Chem.Mol, smiles: str, conf_id: int = -1) -> bool:
+    """Does the 3D geometry reproduce every stereo element SPECIFIED in ``smiles``?
+
+    Elements left unspecified in the input are ignored (a 3D structure necessarily picks some
+    configuration for them). Compared through CIP labels at the same atom indices (``AddHs``
+    appends hydrogens, so heavy-atom indices of the embedded molecule equal the input's).
+    """
+    ref = Chem.MolFromSmiles(smiles)
+    ref_atoms, ref_bonds = _cip_labels(ref)
+    if not ref_atoms and not ref_bonds:
+        return True
+    m = Chem.Mol(mol)
+    if conf_id >= 0:
+        conf = Chem.Conformer(mol.GetConformer(conf_id))
+        m.RemoveAllConformers()
+        m.AddConformer(conf, assignId=True)
+    Chem.RemoveStereochemistry(m)
+    Chem.AssignStereochemistryFrom3D(m)
+    got_atoms, got_bonds = _cip_labels(Chem.RemoveHs(m))
+    return all(got_atoms.get(i) == c for i, c in ref_atoms.items()) and all(
+        got_bonds.get(k) == c for k, c in ref_bonds.items()
+    )
+
+
 def stereo_preserved(mol: Chem.Mol, smiles: str) -> list[bool]:
-    """Per conformer: does the 3D geometry encode exactly the input stereo?"""
-    ref = Chem.CanonSmiles(smiles)
-    return [stereo_from_3d(mol, c.GetId()) == ref for c in mol.GetConformers()]
+    """Per conformer: does the 3D geometry encode the input's specified stereo elements?"""
+    return [stereo_matches(mol, smiles, c.GetId()) for c in mol.GetConformers()]
 
 
 # ------------------------------------------------------------------------------ MACE
@@ -184,7 +221,7 @@ def lowest_energy_conformer(
         converged=r.converged,
         all_converged=all(x.converged for x in relaxed),
         stereo_ok_embed=stereo_embed,
-        stereo_ok_final=stereo_from_3d(final, 0) == Chem.CanonSmiles(smiles),
+        stereo_ok_final=stereo_matches(final, smiles, 0),
         seconds=time.perf_counter() - t0,
         conformer_energies=[x.energy for x in relaxed],
     )

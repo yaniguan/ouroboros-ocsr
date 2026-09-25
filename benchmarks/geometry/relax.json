@@ -1,0 +1,14 @@
+{
+ "model": "MACE-OFF23 small",
+ "n": 40,
+ "n_conf": 3,
+ "fmax": 0.05,
+ "embedded": 39,
+ "lowest_converged_rate": 1.0,
+ "all_conformers_converged_rate": 1.0,
+ "stereo_preserved_after_relax": 0.717948717948718,
+ "median_sec_per_mol": 25.20556543999919,
+ "device": "cpu",
+ "date": "2026-09-25",
+ "host": "vm"
+}
