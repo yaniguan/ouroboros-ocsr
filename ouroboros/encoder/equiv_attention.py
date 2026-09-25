@@ -138,7 +138,7 @@ class GroupAttentionHead(nn.Module):
 @dataclass
 class EquivAttnConfig:
     N: int = 8
-    fields: list[int] = field(default_factory=lambda: [7, 14, 29, 58])
+    fields: list[int] = field(default_factory=lambda: [7, 14, 27, 55])
     blocks: list[int] = field(default_factory=lambda: [2, 2, 2, 2])
     stem_kernel: int = 7
     d_model: int = 512

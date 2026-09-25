@@ -57,7 +57,8 @@ or changed are tagged **(Am1-A … Am1-F)**.
   fractions, U2). Seeds stay at 3 so the CIs remain meaningful.
 - Steerable arm config: param-matched vs FLOP-matched (numbers in Phase 3). My recommendation:
   FLOP-matched in the main grid (equal compute per image, the practical constraint), param-matched
-  as a single ablation (one size, f = 0, 3 seeds), because the param-matched C8 costs ≈ 12× the FLOPs.
+  as a single ablation (one size, f = 0, 3 seeds), because the param-matched C8 costs 12.4× the
+  FLOPs (127 vs 10.3 GFLOPs per image).
 - Please reply: full or pruned grid, and FLOP- vs param-matched.
 
 ## Phase 0 — Scaffold
@@ -198,11 +199,36 @@ cores (`data/full/pool.stats.json`).
 - [x] escnn C_N encoder (N ∈ {4, 8, 16}), regular reps, group pooling, invariant relative-position tokens.
   — `ouroboros/encoder/steerable.py` (`rot2dOnR2`, no flips; stride-1 R2Conv + blur/2×2 pooling;
   GroupPooling; distance-biased token mixer; `TokenHead` slot for arm D), 2026-09-25.
-- [ ] C4 equivariance < 1e-4; invariant token set equal up to permutation within 1e-4.
-- [ ] C8/C16 off-grid equivariance error recorded.
-- [ ] Param-matched (±10%) and FLOP-matched (±10%) configs; throughput recorded.
+- [x] C4 equivariance < 1e-4; invariant token set equal up to permutation within 1e-4. — 384 px,
+  full-width random-init encoders, eval mode, fp32 (`scripts/measure_equivariance.py` →
+  `benchmarks/encoders/equivariance.json`): C4 feature maps max rel. err 8.5e-07,
+  token set (after the known grid permutation) 8.2e-07 over 90/180/270°; the same
+  holds for C8 (1.2e-06 / 5.8e-07) and C16 (1.4e-06 /
+  7.4e-07) at 90° multiples. Also unit-tested (`tests/test_equivariance.py`, 15 pass,
+  incl. end-to-end decoder logits invariant for C4, and NOT reflection invariant), 2026-09-25.
+- [x] C8/C16 off-grid equivariance error recorded. — escnn's interpolated action on input and
+  output, central disk: C8 at 45/135/225/315°: feature rel. err 0.165–0.165, mean-token
+  rel. change 0.0037–0.0037; C16 at the 12 non-90° multiples of 22.5°: feature 0.192–0.240,
+  mean token 0.0006–0.0008 (report only; includes pixel-interpolation error of both sides),
+  2026-09-25.
+- [x] Param-matched (±10%) and FLOP-matched (±10%) configs; throughput recorded. —
+  `scripts/profile_encoders.py` → `benchmarks/encoders/profile.json` (encoder only, 384 px, FLOPs
+  by `FlopCounterMode`, CPU fp32 throughput on this VM; GPU throughput comes from Colab):
+
+  | encoder | fields / widths | params | vs base | GFLOPs | vs base | CPU img/s (eval) |
+  |---|---|---|---|---|---|---|
+  | baseline (A/B) | 64-128-256-512 ch | 17.81M | — | 10.27 | — | 15.9 |
+  | C8 param-matched | 28-56-111-222 regular fields | 17.71M | −0.6% | 126.98 | +1136% | 1.6 |
+  | C8 FLOP-matched | 7-14-27-55 regular fields | 7.02M | −60.6% | 10.29 | +0.2% | 10.8 (8.0 train-mode) |
+
+  Both include the identical 2-layer token mixer (≈6.3M). The sweep uses the FLOP-matched config
+  pending U5, 2026-09-25.
 - [ ] Overfit test passes.
-- [ ] `.export()` matches training model within 1e-4; speedup recorded.
+- [x] `.export()` matches training model within 1e-4; speedup recorded. — FLOP-matched C8 @384 px
+  on 4 rendered test images, eval mode: max rel. err 0.0e+00; CPU throughput
+  5.23 (escnn train-mode) / 5.73 (escnn eval) /
+  6.24 img/s (exported) → speedup 1.19× / 1.09×
+  (`benchmarks/encoders/export.json`); evaluation uses the exported encoder, 2026-09-25.
 - [ ] [colab] C8 on 200k vs baseline.
 
 ## Phase 4 — Experiment runner

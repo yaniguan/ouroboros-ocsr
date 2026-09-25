@@ -1,0 +1,45 @@
+{
+ "size": 384,
+ "baseline": {
+  "params": 17812416,
+  "params_trunk": null,
+  "gflops": 10.272374784,
+  "img_per_s_cpu": 15.926182114016795
+ },
+ "steerable": {
+  "C8": {
+   "params_matched": {
+    "width_mult": 3.475955519281804,
+    "fields": [
+     28,
+     56,
+     111,
+     222
+    ],
+    "rel_diff_vs_baseline": -0.005503464549671433,
+    "params": 17714386,
+    "params_trunk": 11293762,
+    "gflops": 126.981725184,
+    "img_per_s_cpu": 1.6127849101491363,
+    "img_per_s_cpu_train_mode_escnn": 1.6930101844840006
+   },
+   "gflops_matched": {
+    "width_mult": 0.8535253017989497,
+    "fields": [
+     7,
+     14,
+     27,
+     55
+    ],
+    "rel_diff_vs_baseline": 0.002179210209003246,
+    "params": 7024300,
+    "params_trunk": 689180,
+    "gflops": 10.294760448,
+    "img_per_s_cpu": 10.795087066281305,
+    "img_per_s_cpu_train_mode_escnn": 8.018847354492115
+   }
+  }
+ },
+ "date": "2026-09-25",
+ "note": "CPU throughput: 4-core dev VM, fp32, eval mode; GPU numbers come from Colab."
+}
