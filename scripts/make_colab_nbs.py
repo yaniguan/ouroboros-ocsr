@@ -52,7 +52,9 @@ def setup_cells(title: str, intro: str) -> list:
             f"BRANCH = '{BRANCH}'  # set to 'main' once merged\n"
             "DRIVE_ROOT = '/content/drive/MyDrive/ouroboros'  # data, runs, results live here\n"
             "REPO_DIR = '/content/ouroboros-ocsr'\n"
-            "LOCAL_DATA = '/content/data/full'  # configs expect shards at /content/data/full/shards"
+            "LOCAL_DATA = '/content/data/full'  # configs expect shards at /content/data/full/shards\n"
+            "# the kernel's inline matplotlib backend does not exist in the project venv (subprocesses)\n"
+            "os.environ['MPLBACKEND'] = 'Agg'"
         ),
         code(
             "from google.colab import drive\n"

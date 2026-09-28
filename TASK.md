@@ -400,6 +400,13 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
   `requirements-colab.txt` (Colab torch + remaining pins) was removed. Verified here: uv-downloaded
   CPython 3.11.16 venv, install 49 s, 129/129 tests pass. My earlier Colab assumption (Python 3.12,
   preinstalled torch) was wrong and was never tested on Colab.
+- 2026-09-28 — Second Colab report: 4 test failures + mace import error, all from the kernel's
+  inherited `MPLBACKEND=module://matplotlib_inline.backend_inline` (module absent in the venv →
+  matplotlib refuses to import). Reproduced locally (same 4 failures). Fixes: `ouroboros/__init__.py`
+  falls back to Agg when the backend module is missing; notebooks set `MPLBACKEND=Agg`; rendering
+  errors now raise instead of being counted as drops (the env bug had silently dropped ~90% of the
+  tiny test dataset — the one font that does not need matplotlib survived). Regression test added;
+  130/130 pass with the Colab variable set.
 - 2026-09-25 — numpy is pinned to 1.26.4: `lie_learn` (escnn dependency) and `matscipy`
   (mace-torch dependency) require numpy < 2.
 - 2026-09-25 — Colab notebook runs project code in subprocesses (`!python ...`) so the pinned

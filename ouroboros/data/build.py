@@ -279,8 +279,10 @@ def render_row(row: dict, split: str, size: int, seed: int) -> tuple[str, bytes,
     try:
         post_seed = _hash_int(key, f"noise{seed}") % 2**32
         r = render(mol, style, size=size, seed=post_seed, apply_postprocess=False)
-    except Exception as e:  # noqa: BLE001
-        return f"render_error:{type(e).__name__}"
+    except Exception as e:
+        # Never drop silently: an environment problem (e.g. a broken matplotlib/font setup) would
+        # otherwise remove a biased subset of samples (none failed in 65k local renders).
+        raise RuntimeError(f"rendering {key} ({row['smiles']}) failed: {e!r}") from e
     source = Chem.MolToSmiles(mol)
     if r.label != source:
         return "label_mismatch"

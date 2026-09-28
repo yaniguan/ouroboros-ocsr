@@ -69,3 +69,26 @@ def test_third_party_imports():
     import escnn.gspaces  # noqa: F401
     import mace.modules  # noqa: F401
     import webdataset  # noqa: F401
+
+
+def test_inherited_inline_mpl_backend_is_sanitized():
+    """Colab kernels export MPLBACKEND=module://matplotlib_inline...; child processes in the venv
+    must still be able to import matplotlib (it broke rendering and mace imports on Colab)."""
+    import os
+    import subprocess
+    import sys
+
+    env = dict(os.environ, MPLBACKEND="module://matplotlib_inline.backend_inline")
+    code = "import ouroboros, matplotlib, os; print(os.environ['MPLBACKEND'])"
+    out = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
+    assert out.returncode == 0, out.stderr
+    expected = (
+        "Agg" if not _has("matplotlib_inline") else "module://matplotlib_inline.backend_inline"
+    )
+    assert out.stdout.strip() == expected
+
+
+def _has(module: str) -> bool:
+    import importlib.util
+
+    return importlib.util.find_spec(module) is not None
