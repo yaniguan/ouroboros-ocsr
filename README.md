@@ -116,8 +116,10 @@ pytest -q && ruff check .
 ```
 
 `escnn` depends on `py3nj`, which needs a Fortran compiler (`apt-get install gfortran`) when no
-wheel is available. On Colab, `requirements-colab.txt` is used: it is `requirements.txt` without
-`torch`/`triton`/CUDA wheels, so the runtime's preinstalled CUDA build of PyTorch is kept.
+wheel is available. The pinned stack needs Python ≤ 3.12 (`lie_learn`, required by escnn at import
+time, has no 3.13 build, and `numpy<2` has none either). Colab's system Python is 3.13, so the
+notebooks create a Python 3.11 virtualenv with `uv` (`/content/venv`) and install exactly
+`requirements.txt` there, including the torch 2.10.0 CUDA wheel.
 
 ## Pipeline commands
 

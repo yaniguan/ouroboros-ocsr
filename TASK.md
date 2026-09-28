@@ -13,7 +13,8 @@ or changed are tagged **(Am1-A … Am1-F)**.
 2. Runtime → Change runtime type → **A100 GPU**.
 3. If the repo is private: add Colab secret `GITHUB_TOKEN` (read access to this repo) and enable it
    for the notebook.
-4. Runtime → Run all. Expected wall time ≈ 5–10 min (most of it is building `py3nj` and pip installs).
+4. Runtime → Run all. Expected wall time ≈ 5–10 min (uv downloads Python 3.11 and ~3 GB of wheels
+   incl. torch CUDA; `py3nj` is built from source).
 5. **Report back:** (a) whether every cell ran without error, (b) the final `wall time: X min`
    line, (c) the output of the last cell (`pip freeze` subset) and the `nvidia-smi` line,
    (d) the pytest summary line.
@@ -388,10 +389,17 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
 
 ## Decisions log
 
-- 2026-09-25 — torch pinned to 2.10.0 locally (PyPI CUDA wheel; the pytorch.org CPU index is
-  blocked by the sandbox proxy). On Colab the preinstalled CUDA torch is kept
-  (`requirements-colab.txt` = `requirements.txt` minus torch/triton/nvidia/cuda wheels) to avoid a
-  multi-GB download and driver mismatch; the notebook prints the torch version used.
+- 2026-09-25 — torch pinned to 2.10.0 (PyPI CUDA 12.8 wheel; the pytorch.org CPU index is blocked
+  by the sandbox proxy).
+- 2026-09-28 — Colab setup changed (user report: notebook 00 failed with "No matching distribution
+  found for lie_learn==0.0.2"). Colab's Python is now 3.13; `lie_learn` 0.0.2 (imported by escnn at
+  import time) only has cp39–cp312 wheels and no sdist, and numpy 1.26.4 / matscipy 1.1.1 have no
+  3.13 builds. The notebooks now create a Python 3.11 venv with `uv` (`uv venv --python 3.11
+  --python-preference only-managed /content/venv`) and install the full `requirements.txt` (same
+  pins as local, incl. torch 2.10.0+cu128); every project command runs with `/content/venv/bin/python`.
+  `requirements-colab.txt` (Colab torch + remaining pins) was removed. Verified here: uv-downloaded
+  CPython 3.11.16 venv, install 49 s, 129/129 tests pass. My earlier Colab assumption (Python 3.12,
+  preinstalled torch) was wrong and was never tested on Colab.
 - 2026-09-25 — numpy is pinned to 1.26.4: `lie_learn` (escnn dependency) and `matscipy`
   (mace-torch dependency) require numpy < 2.
 - 2026-09-25 — Colab notebook runs project code in subprocesses (`!python ...`) so the pinned

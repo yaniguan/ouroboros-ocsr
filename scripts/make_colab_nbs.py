@@ -32,7 +32,10 @@ def setup_cells(title: str, intro: str) -> list:
     return [
         md(
             f"# Ouroboros — {title}\n\n{intro}\n\n"
-            "All project code runs in subprocesses (`!python ...`) so the pinned numpy etc. take "
+            "Colab's system Python (3.13) cannot install the pinned stack (escnn needs lie_learn and "
+            "numpy<2, which have no 3.13 builds), so the setup creates a Python 3.11 virtualenv with "
+            "`uv` at `/content/venv` and installs exactly `requirements.txt` (incl. torch 2.10.0 CUDA). "
+            "All project code runs in that interpreter via subprocesses (`!{PY} ...`); this "
             "effect without restarting the kernel. If the repo is private, add a Colab secret "
             "`GITHUB_TOKEN` (key icon in the left sidebar) with read access to the repository."
         ),
@@ -40,7 +43,8 @@ def setup_cells(title: str, intro: str) -> list:
             "import time, os, subprocess, json\n"
             "T0 = time.time()\n"
             "!nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv || true\n"
-            "!python --version && nproc && free -g | head -2"
+            "!python --version && nproc && free -g | head -2\n"
+            "PY = '/content/venv/bin/python'  # project interpreter (created below)"
         ),
         code(
             "# ---- configuration ----\n"
@@ -78,9 +82,12 @@ def setup_cells(title: str, intro: str) -> list:
             'cd "$1"\n'
             "# py3nj (escnn dependency) builds from source and needs a Fortran compiler\n"
             "which gfortran || (apt-get -qq update && apt-get -qq install -y gfortran > /dev/null)\n"
-            "pip install -q -r requirements-colab.txt\n"
-            "pip install -q --no-deps -e .\n"
-            "python -c \"import torch; print('torch', torch.__version__, 'cuda', torch.cuda.is_available())\""
+            "pip install -q uv\n"
+            "# Python 3.11 venv with the exact tested pins (Colab's system Python is 3.13)\n"
+            "[ -x /content/venv/bin/python ] || uv venv -q --python 3.11 --python-preference only-managed /content/venv\n"
+            "uv pip install -q --python /content/venv/bin/python -r requirements.txt\n"
+            "uv pip install -q --python /content/venv/bin/python --no-deps -e .\n"
+            "/content/venv/bin/python -c \"import sys, torch; print(sys.version.split()[0], 'torch', torch.__version__, 'cuda', torch.cuda.is_available())\""
         ),
     ]
 
@@ -113,13 +120,13 @@ def nb00() -> list:
     cells += [
         copy_shards_cell("None"),
         code(
-            '!python -c "import escnn, mace; from escnn import gspaces; '
+            '!{PY} -c "import escnn, mace; from escnn import gspaces; '
             "from mace.calculators import mace_off; import rdkit; print('escnn/mace/rdkit import OK', rdkit.__version__)\""
         ),
-        code("!python -m pytest -q"),
+        code("!{PY} -m pytest -q"),
         code(
             "print(f'wall time: {(time.time() - T0) / 60:.1f} min')\n"
-            "!pip freeze | grep -iE '^(torch|escnn|mace-torch|rdkit|numpy|e3nn)=='"
+            "!uv pip freeze --python {PY} | grep -iE '^(torch|escnn|mace-torch|rdkit|numpy|e3nn)=='"
         ),
     ]
     return cells
@@ -136,7 +143,7 @@ def nb01() -> list:
     cells += [
         code(
             "t = time.time()\n"
-            "!python scripts/build_dataset.py --out {LOCAL_DATA} --cache /content/data_cache --preset 1m --workers $(nproc)\n"
+            "!{PY} scripts/build_dataset.py --out {LOCAL_DATA} --cache /content/data_cache --preset 1m --workers $(nproc)\n"
             "GEN_MIN = (time.time() - t) / 60\n"
             "print(f'generation wall time: {GEN_MIN:.1f} min')"
         ),
@@ -182,12 +189,12 @@ def nb02() -> list:
         ),
         code(
             "t = time.time()\n"
-            "!python -m ouroboros.train --config {CONFIG} --out {OUT} --set {OVERRIDES}\n"
+            "!{PY} -m ouroboros.train --config {CONFIG} --out {OUT} --set {OVERRIDES}\n"
             "TRAIN_H = (time.time() - t) / 3600"
         ),
         code(
             "t = time.time()\n"
-            "!python scripts/evaluate.py --run {OUT}\n"
+            "!{PY} scripts/evaluate.py --run {OUT}\n"
             "EVAL_H = (time.time() - t) / 3600\n"
             "print(f'train {TRAIN_H:.2f} GPU-h (this session), eval {EVAL_H:.2f} GPU-h')"
         ),
@@ -220,15 +227,15 @@ def nb03() -> list:
         ),
         code(
             "t = time.time()\n"
-            "!python scripts/bench_geometry.py embed --manifest {LOCAL_DATA}/manifests/test.tsv --n 1000\n"
-            "!python scripts/bench_geometry.py enantio --manifest {LOCAL_DATA}/manifests/test.tsv --n 20 --model {MODEL}\n"
-            "!python scripts/bench_geometry.py relax --manifest {LOCAL_DATA}/manifests/test.tsv --n {N_RELAX} --n-conf 10 --model {MODEL}\n"
+            "!{PY} scripts/bench_geometry.py embed --manifest {LOCAL_DATA}/manifests/test.tsv --n 1000\n"
+            "!{PY} scripts/bench_geometry.py enantio --manifest {LOCAL_DATA}/manifests/test.tsv --n 20 --model {MODEL}\n"
+            "!{PY} scripts/bench_geometry.py relax --manifest {LOCAL_DATA}/manifests/test.tsv --n {N_RELAX} --n-conf 10 --model {MODEL}\n"
             "!cp benchmarks/geometry/*.json {OUT}/\n"
             "print(f'benchmarks: {(time.time() - t) / 3600:.2f} GPU-h')"
         ),
         code(
             "t = time.time()\n"
-            "!python scripts/error_propagation.py --predictions {DRIVE_ROOT}/runs/{RUN_ID}/eval/predictions.jsonl "
+            "!{PY} scripts/error_propagation.py --predictions {DRIVE_ROOT}/runs/{RUN_ID}/eval/predictions.jsonl "
             "--set rendered_test --out {OUT}/{RUN_ID} --n-conf 10 --mmff-prescreen 3 --model {MODEL} "
             "--skip-correct --noise-seeds --per-category {PER_CATEGORY}\n"
             "print(f'error propagation: {(time.time() - t) / 3600:.2f} GPU-h')"
