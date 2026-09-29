@@ -73,3 +73,12 @@ composition. Shards rendered earlier can instead be filtered at load time
 MACE-OFF23 weights (downloaded by `mace-torch` from `ACEsuit/mace-off` on first use) are
 distributed under the Academic Software License (ASL, https://github.com/gabor1/ASL): academic,
 non-commercial use. They are cached in `~/.cache/mace/` and never committed.
+
+Download identities (pinned in `ouroboros/data/sources.py`): ZINC250k revision
+`37b9f96470d4471c0593cffefa448e0a8a184ef6`, Git blob
+`d31726bf929d35cb52fa109db90411c90a000dfe` (22,606,589 bytes); MOSES revision
+`a3866ff959325b60e36f8b15beebdaa3bfaea188`, Git LFS SHA256
+`bb47a94d347afd476d3828b5e26dceeabc42a2d8cf92a791d00349f22fea0d8b` (84,482,588 bytes).
+These identities were read from the upstream GitHub content metadata. Resumable raw downloads,
+filtering SQLite caches and checksum receipts remain in private data storage; see
+[reliable runs](docs/reliability.md).

@@ -25,7 +25,7 @@ import tarfile
 import tempfile
 import time
 from collections import Counter
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
 from importlib.metadata import version
@@ -74,48 +74,25 @@ def prepare_pool(
     out_path: str | Path,
     workers: int = os.cpu_count() or 1,
     limit: int | None = None,
+    batch_size: int = 1000,
 ) -> dict:
-    """Filter + dedupe all ``(source_name, smiles_iter)`` pairs into a gzipped TSV pool."""
+    """Filter/dedupe with a transactional batch cursor and content-bound restart."""
+    from ouroboros.data import chem, pool_cache, stereo
+    from ouroboros.data import filter as filtering
 
-    def items() -> Iterator[tuple[str, str]]:
-        n = 0
-        for name, it in sources:
-            for s in it:
-                if limit is not None and n >= limit:
-                    return
-                n += 1
-                yield name, s
-
-    seen: set[str] = set()
-    reasons: Counter = Counter()
-    n_in = n_out = 0
-    t0 = time.time()
-    out_path = Path(out_path)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = out_path.with_name(out_path.name + ".part")  # atomic: a crash never leaves a
-    with gzip.open(tmp_path, "wt", newline="") as f, Pool(workers) as pool:  # half-written pool
-        w = csv.writer(f, delimiter="\t")
-        w.writerow(["key14", "flat", "n_tet", "n_db", "src"])
-        for status, res in pool.imap(_pool_row, items(), chunksize=512):
-            n_in += 1
-            if status != "ok":
-                reasons[res] += 1
-                continue
-            if res["key14"] in seen:
-                reasons["duplicate"] += 1
-                continue
-            seen.add(res["key14"])
-            w.writerow([res["key14"], res["flat"], res["n_tet"], res["n_db"], res["src"]])
-            n_out += 1
-    stats = {
-        "n_in": n_in,
-        "n_out": n_out,
-        "rejects": dict(reasons),
-        "seconds": round(time.time() - t0, 1),
+    identity = {
+        "schema": 1,
+        "rdkit": version("rdkit"),
+        "code": json_sha256(
+            [
+                inspect.getsource(_pool_row),
+                inspect.getsource(filtering),
+                inspect.getsource(chem),
+                inspect.getsource(stereo),
+            ]
+        ),
     }
-    os.replace(tmp_path, out_path)
-    out_path.with_suffix(".stats.json").write_text(json.dumps(stats, indent=1))
-    return stats
+    return pool_cache.prepare(sources, out_path, workers, limit, _pool_row, identity, batch_size)
 
 
 def read_pool(path: str | Path) -> list[dict]:

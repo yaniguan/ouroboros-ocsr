@@ -71,7 +71,7 @@ def main(argv=None) -> None:
     pool_path = Path(args.pool) if args.pool else out / "pool.tsv.gz"
     t_all = time.time()
 
-    if "pool" in args.stages and not pool_path.exists():
+    if "pool" in args.stages and not (args.pool and pool_path.exists()):
         srcs = [(name, iter_source(name, args.cache)) for name in args.sources]
         print("pool:", build.prepare_pool(srcs, pool_path, args.workers, args.pool_limit))
 

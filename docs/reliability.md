@@ -47,3 +47,19 @@ The callable `run_eval` API only reuses results when an explicit identity is sup
 seed, versions and implementation. Failed geometry is retained too. To retry a failed job,
 use a new cache directory. Pair/summary files are regenerated from cached molecular jobs;
 rendered/real separation, bootstrap CIs and formula/mirror controls are unchanged.
+
+## Source downloads and filtering
+
+ZINC250k and MOSES now use immutable upstream revisions. ZINC bytes are checked against the
+Git blob identity and size; MOSES against the upstream Git LFS SHA256 and size. A local SHA256
+receipt is written only after verification. Existing source files are verified too. Downloads
+retain a source-bound `.part` file, request the remaining HTTP range on restart, and restart
+from byte zero when the server ignores Range. Wrong ranges and checksums never publish a source.
+
+Filtering stores the cursor, rejection counts and accepted connectivity keys transactionally in
+`<pool>.filter.sqlite`. Restart scans/spools the input to verify its identity, but skips chemistry
+work for committed batches. Input order/content, RDKit and filtering code changes are rejected.
+Deduplication, stereo assignment and split rules stay unchanged; ChEMBL is not made the default.
+An explicitly supplied existing `--pool` is still reusable and its bytes bind composition.
+Legacy default pools without filtering metadata require a new output path. The SQLite cache is
+generated data and belongs beside the pool outside version control.
