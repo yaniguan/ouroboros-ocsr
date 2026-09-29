@@ -10,10 +10,14 @@ from ouroboros.provenance import JsonCache
 
 
 class Dataset:
+    def __init__(self):
+        self.reads = 0
+
     def __len__(self):
         return 3
 
     def __getitem__(self, i):
+        self.reads += 1
         return {"image": torch.full((1, 4, 4), i / 3)}
 
     def meta(self, i):
@@ -43,6 +47,7 @@ def test_evaluation_recovers_completed_batches_and_rejects_changed_identity(tmp_
     with pytest.raises(RuntimeError, match="disconnect"):
         run_eval(interrupted, **kwargs)
     assert len(list((tmp_path / "batches").glob("*.json"))) == 1
+    assert sum(ds.reads for ds, _ in kwargs["sets"].values()) == 2
     calls.clear()
 
     def resumed(images):
@@ -50,6 +55,7 @@ def test_evaluation_recovers_completed_batches_and_rejects_changed_identity(tmp_
         return ["CCCCC"] * len(images)
 
     summary = run_eval(resumed, **kwargs)
+    assert sum(ds.reads for ds, _ in kwargs["sets"].values()) == 8
     assert len(calls) == 7  # 2 sets x 2 angles x 2 batches, one already completed
     assert len(summary["entries"]) == 4
     assert all(e["exact"] == 1 for e in summary["entries"])
@@ -58,6 +64,7 @@ def test_evaluation_recovers_completed_batches_and_rejects_changed_identity(tmp_
         summary, sort_keys=True
     )
     assert len(calls) == 7
+    assert sum(ds.reads for ds, _ in kwargs["sets"].values()) == 8
     assert (tmp_path / "predictions.jsonl").read_bytes() == original
     with pytest.raises(ValueError, match="identity changed"):
         run_eval(resumed, **{**kwargs, "identity": {"checkpoint": "two"}})

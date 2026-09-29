@@ -125,10 +125,13 @@ def run_eval(
         n = len(ds) if max_samples is None else min(max_samples, len(ds))
         for start in range(0, n, batch_size):
             idx = list(range(start, min(n, start + batch_size)))
+            prepared = []  # load once, only if at least one angle is unfinished
             for angle in angles:
 
-                def compute(idx=idx, angle=angle, ds=ds, name=name, kind=kind):
-                    imgs = torch.stack([ds[i]["image"] for i in idx]).to(device)
+                def compute(idx=idx, angle=angle, ds=ds, name=name, kind=kind, prepared=prepared):
+                    if not prepared:
+                        prepared.append(torch.stack([ds[i]["image"] for i in idx]).to(device))
+                    imgs = prepared[0]
                     if angle % 360:
                         imgs = rotate_images(imgs, torch.full((len(idx),), angle))
                     with torch.inference_mode():
