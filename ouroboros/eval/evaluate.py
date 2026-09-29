@@ -17,6 +17,8 @@ the extra on-grid angles still involve interpolation (reported, not assumed exac
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from collections.abc import Callable, Sequence
 from dataclasses import asdict
 from pathlib import Path
@@ -26,6 +28,7 @@ import torch
 from ouroboros.data.loader import rotate_images
 from ouroboros.eval.metrics import aggregate, bootstrap_ci, score_pair
 from ouroboros.eval.standardize import PARITY_FOOTNOTE, PARITY_VERIFIED
+from ouroboros.provenance import JsonCache, atomic_json, json_sha256
 
 KINDS = ("rendered", "real")
 SWEEP_ANGLES = tuple(range(0, 360, 15))
@@ -74,24 +77,110 @@ def run_eval(
     device: str | torch.device = "cpu",
     max_samples: int | None = None,
     n_boot: int = 1000,
+    identity: dict | None = None,
 ) -> dict:
-    """``sets`` maps name -> (dataset, kind). Writes ``predictions.jsonl`` and ``summary.json``."""
+    """Evaluate sets separately. Supplying checkpoint/code ``identity`` enables resume.
+
+    With identity, each dataset must expose identity() for its content and order.
+    Without it the callable is opaque, so results are recomputed, never reused.
+    """
+    if batch_size < 1 or (max_samples is not None and max_samples < 1):
+        raise ValueError("batch_size and max_samples must be positive")
+    if any(kind not in KINDS for _, kind in sets.values()):
+        raise ValueError(f"kind must be one of {KINDS}")
+    angles = [float(a) for a in angles]
+    if not angles or len(set(angles)) != len(angles):
+        raise ValueError("angles must be nonempty and unique")
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
+    cache = None
+    manifest = out / "evaluation.json"
+    if identity is not None:
+        settings = {
+            "schema": 1,
+            "model": identity,
+            "sets": [
+                {"name": name, "kind": kind, "data": ds.identity()}
+                for name, (ds, kind) in sets.items()
+            ],
+            "angles": angles,
+            "batch_size": batch_size,
+            "max_samples": max_samples,
+            "n_boot": n_boot,
+            "device": str(device),
+        }
+        if manifest.exists():
+            if json.loads(manifest.read_text()) != settings:
+                raise ValueError("Evaluation identity changed; use a new output directory")
+        elif (out / "predictions.jsonl").exists():
+            raise ValueError("Legacy evaluation has no identity; use a new output directory")
+        else:
+            atomic_json(manifest, settings)
+        cache = JsonCache(out / "batches")
+    elif manifest.exists():
+        raise ValueError("Resumable output requires an explicit checkpoint identity")
+    evaluation_digest = json_sha256(settings) if cache else None
     rows = []
-    with open(out / "predictions.jsonl", "w") as f:
-        for name, (ds, kind) in sets.items():
-            if kind not in KINDS:
-                raise ValueError(f"set {name}: kind must be one of {KINDS}")
-            for i, a, pred in predict(generate, ds, angles, batch_size, device, max_samples):
-                meta = ds.meta(i)
-                sc = score_pair(pred, meta["smiles"])
-                rec = {"set": name, "kind": kind, "index": i, "angle": a, "ref": meta["smiles"]}
-                rec.update(pred=pred, **asdict(sc))
-                rows.append(rec)
-                f.write(json.dumps(rec) + "\n")
+    for name, (ds, kind) in sets.items():
+        n = len(ds) if max_samples is None else min(max_samples, len(ds))
+        for start in range(0, n, batch_size):
+            idx = list(range(start, min(n, start + batch_size)))
+            prepared = []  # load once, only if at least one angle is unfinished
+            for angle in angles:
+
+                def compute(idx=idx, angle=angle, ds=ds, name=name, kind=kind, prepared=prepared):
+                    if not prepared:
+                        prepared.append(torch.stack([ds[i]["image"] for i in idx]).to(device))
+                    imgs = prepared[0]
+                    if angle % 360:
+                        imgs = rotate_images(imgs, torch.full((len(idx),), angle))
+                    with torch.inference_mode():
+                        predictions = generate(imgs)
+                    batch = []
+                    for i, pred in zip(idx, predictions, strict=True):
+                        meta = ds.meta(i)
+                        sc = score_pair(pred, meta["smiles"])
+                        batch.append(
+                            {
+                                "set": name,
+                                "kind": kind,
+                                "index": i,
+                                "angle": angle,
+                                "ref": meta["smiles"],
+                                "pred": pred,
+                                **asdict(sc),
+                            }
+                        )
+                    return batch
+
+                job = (
+                    {
+                        "evaluation": evaluation_digest,
+                        "set": name,
+                        "indices": idx,
+                        "angle": angle,
+                    }
+                    if cache
+                    else None
+                )
+                rows.extend(cache.get(job, compute) if cache else compute())
     summary = summarize(rows, n_boot=n_boot)
-    (out / "summary.json").write_text(json.dumps(summary, indent=1))
+    # The full file is replaced only when every batch has been committed.
+    with tempfile.NamedTemporaryFile(mode="w", dir=out, suffix=".part", delete=False) as f:
+        tmp = Path(f.name)
+        try:
+            for row in rows:
+                f.write(json.dumps(row, sort_keys=True) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
+    try:
+        os.replace(tmp, out / "predictions.jsonl")
+    finally:
+        tmp.unlink(missing_ok=True)
+    atomic_json(out / "summary.json", summary)
     return summary
 
 

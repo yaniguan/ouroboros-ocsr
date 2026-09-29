@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from importlib.metadata import version
 from pathlib import Path
 
 import torch
@@ -17,6 +18,7 @@ from ouroboros.data.loader import ShardDataset
 from ouroboros.decode.tokenizer import SmilesTokenizer
 from ouroboros.eval.evaluate import run_eval, summarize
 from ouroboros.model import build_model, load_model_state
+from ouroboros.provenance import file_sha256, implementation_identity
 from ouroboros.train.config import load_config
 
 
@@ -33,6 +35,9 @@ class _Prefix:
     def meta(self, i):
         return self.ds.meta(i)
 
+    def identity(self):
+        return {"dataset": self.ds.identity(), "prefix": self.n}
+
 
 def main(argv=None) -> None:
     ap = argparse.ArgumentParser()
@@ -46,7 +51,23 @@ def main(argv=None) -> None:
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tok = SmilesTokenizer.load(cfg["data"]["vocab"])
     model = build_model(cfg, tok)
-    st = torch.load(a.ckpt or run / "ckpt" / "last.pt", map_location="cpu", weights_only=False)
+    checkpoint = Path(a.ckpt) if a.ckpt else run / "ckpt" / "last.pt"
+    st = torch.load(checkpoint, map_location="cpu", weights_only=False)
+    if "vocab" in st and st["vocab"] != tok.itos:
+        raise ValueError("Evaluation vocabulary differs from checkpoint")
+    if "config" in st and st["config"]["model"] != cfg["model"]:
+        raise ValueError("Evaluation model configuration differs from checkpoint")
+    identity = {
+        "checkpoint": file_sha256(checkpoint),
+        "vocab": tok.itos,
+        "config": cfg,
+        "implementation": implementation_identity(
+            Path(__file__).resolve().parents[1] / "ouroboros"
+        ),
+        "versions": {
+            name: version(name) for name in ("torch", "rdkit", "numpy", "pillow", "escnn")
+        },
+    }
     load_model_state(model, st["model"])
     model.to(dev).eval()
     if hasattr(model.encoder, "export"):  # steerable: pure-PyTorch inference copy
@@ -64,12 +85,26 @@ def main(argv=None) -> None:
         full[name] = (ds, s["kind"])
         sweep[f"{name}:sweep"] = (_Prefix(ds, e["sweep_max_samples"]), s["kind"])
     out = run / "eval"
-    run_eval(generate, full, out / "full", angles=[0.0], batch_size=e["batch_size"], device=dev)
+    run_eval(
+        generate,
+        full,
+        out / "full",
+        angles=[0.0],
+        batch_size=e["batch_size"],
+        device=dev,
+        identity=identity,
+    )
     parts = [out / "full" / "predictions.jsonl"]
     if not a.no_sweep:
         angles = list(range(0, 360, e["sweep_angles_step"]))
         run_eval(
-            generate, sweep, out / "sweep", angles=angles, batch_size=e["batch_size"], device=dev
+            generate,
+            sweep,
+            out / "sweep",
+            angles=angles,
+            batch_size=e["batch_size"],
+            device=dev,
+            identity=identity,
         )
         parts.append(out / "sweep" / "predictions.jsonl")
     rows = [json.loads(x) for p in parts for x in p.read_text().splitlines()]

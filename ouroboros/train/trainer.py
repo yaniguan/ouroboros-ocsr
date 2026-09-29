@@ -14,11 +14,13 @@ logged step; on resume, lines after the checkpoint step are dropped so logs neve
 
 from __future__ import annotations
 
+import copy
 import functools
 import json
 import math
 import os
 import random
+import tempfile
 import time
 from pathlib import Path
 
@@ -31,6 +33,7 @@ from ouroboros.data.loader import ShardDataset, collate, rotate_batch
 from ouroboros.data.mixture import MixtureSampler
 from ouroboros.decode.tokenizer import SmilesTokenizer
 from ouroboros.model import OCSRModel, build_model, count_params, load_model_state
+from ouroboros.provenance import json_sha256
 
 
 def _device(cfg: dict) -> torch.device:
@@ -70,9 +73,19 @@ def save_checkpoint(path: Path, state: dict) -> float:
     """Atomic save (write temp file, then rename). Returns seconds taken."""
     t0 = time.perf_counter()
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(".tmp")
-    torch.save(state, tmp)
-    os.replace(tmp, path)
+    with tempfile.NamedTemporaryFile(dir=path.parent, suffix=".tmp", delete=False) as f:
+        tmp = Path(f.name)
+        try:
+            torch.save(state, f)
+            f.flush()
+            os.fsync(f.fileno())
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
+    try:
+        os.replace(tmp, path)
+    finally:
+        tmp.unlink(missing_ok=True)
     return time.perf_counter() - t0
 
 
@@ -101,12 +114,48 @@ def build_datasets(cfg: dict, tok: SmilesTokenizer):
     return synth, real
 
 
+def build_optimizer(model, train_config):
+    decay, no_decay = [], []
+    for name, parameter in model.named_parameters():
+        target = (
+            no_decay if parameter.ndim < 2 or name.endswith(".pos") or "norm" in name else decay
+        )
+        target.append(parameter)
+    return torch.optim.AdamW(
+        [
+            {"params": decay, "weight_decay": train_config.get("weight_decay", 0.05)},
+            {"params": no_decay, "weight_decay": 0.0},
+        ],
+        lr=train_config["lr"],
+        betas=(0.9, 0.98),
+    )
+
+
+def build_scheduler(optimizer, train_config):
+    return torch.optim.lr_scheduler.LambdaLR(
+        optimizer,
+        lambda step: lr_lambda(step, train_config.get("warmup", 1000), train_config["steps"]),
+    )
+
+
 class Trainer:
     def __init__(self, cfg: dict, out_dir: str | Path):
-        self.cfg = cfg
+        self.cfg = cfg = copy.deepcopy(cfg)
         self.out = Path(out_dir)
         self.out.mkdir(parents=True, exist_ok=True)
-        (self.out / "config.yaml").write_text(yaml.safe_dump(cfg, sort_keys=False))
+        self.ckpt_path = self.out / "ckpt" / "last.pt"
+        previous = load_checkpoint(self.ckpt_path) if self.ckpt_path.exists() else None
+        self.config_identity = json_sha256(cfg)
+        if previous is not None:
+            if previous.get("schema") != 1 or "identity" not in previous:
+                raise ValueError("Legacy checkpoint has no data identity; use a new run directory")
+            if previous["identity"]["config"] != self.config_identity:
+                raise ValueError("Checkpoint configuration mismatch (including scheduler horizon)")
+        config_path = self.out / "config.yaml"
+        if config_path.exists() and json_sha256(yaml.safe_load(config_path.read_text())) != (
+            self.config_identity
+        ):
+            raise ValueError("Run directory already contains a different configuration")
         self.dev = _device(cfg)
         t = cfg["train"]
         self.seed = int(cfg.get("seed", 0))
@@ -115,21 +164,11 @@ class Trainer:
         torch.manual_seed(self.seed)
 
         self.tok = SmilesTokenizer.load(cfg["data"]["vocab"])
+        if previous is not None and previous["vocab"] != self.tok.itos:
+            raise ValueError("Checkpoint vocabulary mismatch")
         self.model: OCSRModel = build_model(cfg, self.tok).to(self.dev)
-        decay, no_decay = [], []
-        for n, p in self.model.named_parameters():
-            (no_decay if p.ndim < 2 or n.endswith(".pos") or "norm" in n else decay).append(p)
-        self.opt = torch.optim.AdamW(
-            [
-                {"params": decay, "weight_decay": t.get("weight_decay", 0.05)},
-                {"params": no_decay, "weight_decay": 0.0},
-            ],
-            lr=t["lr"],
-            betas=(0.9, 0.98),
-        )
-        self.sched = torch.optim.lr_scheduler.LambdaLR(
-            self.opt, lambda s: lr_lambda(s, t.get("warmup", 1000), t["steps"])
-        )
+        self.opt = build_optimizer(self.model, t)
+        self.sched = build_scheduler(self.opt, t)
         self.step = 0
         self.synth, self.real = build_datasets(cfg, self.tok)
         f = float(cfg["data"].get("real_fraction", 0.0))
@@ -137,13 +176,21 @@ class Trainer:
             len(self.synth), len(self.real) if self.real else 0, f, t["batch_size"], seed=self.seed
         )
         self.dataset = ConcatDataset([self.synth, self.real]) if self.real else self.synth
-        self.ckpt_path = self.out / "ckpt" / "last.pt"
-        if self.ckpt_path.exists():
-            self._resume()
+        self.identity = {
+            "config": self.config_identity,
+            "synthetic": self.synth.identity(),
+            "real": [ds.identity() for ds in self.real.datasets] if self.real else [],
+        }
+        if previous is not None:
+            self._resume(previous)
+        if not config_path.exists():
+            config_path.write_text(yaml.safe_dump(cfg, sort_keys=False))
 
     # ------------------------------------------------------------------ state
     def state(self) -> dict:
         return {
+            "schema": 1,
+            "identity": self.identity,
             "model": self.model.state_dict(),
             "opt": self.opt.state_dict(),
             "sched": self.sched.state_dict(),
@@ -154,8 +201,11 @@ class Trainer:
             "vocab": self.tok.itos,
         }
 
-    def _resume(self) -> None:
-        st = load_checkpoint(self.ckpt_path)
+    def _resume(self, st: dict) -> None:
+        if st["identity"] != self.identity:
+            raise ValueError("Checkpoint dataset content or sample order mismatch")
+        if st["sampler_position"] != st["step"] * self.cfg["train"]["batch_size"]:
+            raise ValueError("Checkpoint sampler position is inconsistent")
         load_model_state(self.model, st["model"])
         self.opt.load_state_dict(st["opt"])
         self.sched.load_state_dict(st["sched"])

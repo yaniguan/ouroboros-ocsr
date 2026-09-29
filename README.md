@@ -168,3 +168,11 @@ Adjacent tasks:
 Methods used here:
 - [ ] Steerable CNNs / escnn (Weiler & Cesa, 2019); group-equivariant self-attention (Romero et al.)
 - [ ] MACE / MACE-OFF (Batatia et al.; Kovács et al.)
+
+## Reliable restarts and GPU probes
+
+See [reliable runs](docs/reliability.md) for checkpoint/data identity checks, verified shard
+reuse, transactional filtering, resumable evaluation/energy caches and current-model CUDA
+capacity/resume commands. Legacy outputs without provenance require new output directories;
+old checkpoints remain usable for evaluation. Historical local A100 reports are explicitly
+separated in `benchmarks/legacy-local/` and are not measurements of this implementation.

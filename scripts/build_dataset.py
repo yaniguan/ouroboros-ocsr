@@ -71,7 +71,7 @@ def main(argv=None) -> None:
     pool_path = Path(args.pool) if args.pool else out / "pool.tsv.gz"
     t_all = time.time()
 
-    if "pool" in args.stages and not pool_path.exists():
+    if "pool" in args.stages and not (args.pool and pool_path.exists()):
         srcs = [(name, iter_source(name, args.cache)) for name in args.sources]
         print("pool:", build.prepare_pool(srcs, pool_path, args.workers, args.pool_limit))
 
@@ -85,14 +85,12 @@ def main(argv=None) -> None:
         )
         manifests = out / "manifests"
         done = manifests / "compose.json"  # written last: marks a complete composition
-        want = {k: v for k, v in cfg.__dict__.items() if k != "exclude_key14"}
-        want["n_exclude_key14"] = len(excl)
-        if done.exists() and json.loads(done.read_text())["config"] == json.loads(json.dumps(want)):
-            print("compose: already done with the same config, skipping")
+        pool = build.read_pool(pool_path)
+        want = build.composition_identity(pool, cfg)
+        if done.exists() and json.loads(done.read_text()).get("identity") == want:
+            print("compose: already done with the same inputs and config, skipping")
         else:
-            print(
-                "compose:", build.compose(build.read_pool(pool_path), cfg, manifests, args.workers)
-            )
+            print("compose:", build.compose(pool, cfg, manifests, args.workers))
 
     if "render" in args.stages:
         for split in build.SPLITS:

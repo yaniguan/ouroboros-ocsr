@@ -25,14 +25,25 @@ from torch.utils.data import Dataset, Sampler
 
 from ouroboros.data.render import RenderStyle, postprocess
 from ouroboros.decode.tokenizer import SmilesTokenizer
+from ouroboros.provenance import atomic_json, file_sha256, json_sha256
 
 
 def index_shard(path: str | Path) -> list[dict]:
     """Return ``[{key, png: (offset, size), json: (offset, size)}, ...]``; cached on disk."""
     path = Path(path)
     idx_path = path.with_suffix(".idx.json")
-    if idx_path.exists() and idx_path.stat().st_mtime >= path.stat().st_mtime:
-        return json.loads(idx_path.read_text())
+    digest = file_sha256(path)
+    if idx_path.exists():
+        try:
+            cached = json.loads(idx_path.read_text())
+            if (
+                isinstance(cached, dict)
+                and cached.get("sha256") == digest
+                and cached.get("entries_sha256") == json_sha256(cached["entries"])
+            ):
+                return cached["entries"]
+        except (ValueError, KeyError):
+            pass  # old, interrupted or corrupt index: rebuild from the tar itself
     samples: dict[str, dict] = {}
     with tarfile.open(path, "r:") as tar:
         for m in tar:
@@ -40,7 +51,9 @@ def index_shard(path: str | Path) -> list[dict]:
             samples.setdefault(key, {"key": key})[ext] = (m.offset_data, m.size)
     out = [s for s in samples.values() if "png" in s and "json" in s]
     try:
-        idx_path.write_text(json.dumps(out))
+        atomic_json(
+            idx_path, {"sha256": digest, "entries": out, "entries_sha256": json_sha256(out)}
+        )
     except OSError:
         pass  # read-only location (e.g. Drive mount): just don't cache
     return out
@@ -93,6 +106,17 @@ class ShardDataset(Dataset):
                 break
         self.tokenizer = tokenizer
         self.image_size = image_size
+
+    def identity(self) -> dict:
+        """Hash actual shard bytes and the selected sample order; paths may be relocated."""
+        shards = list(dict.fromkeys(path for path, _ in self.entries))
+        indices = {path: i for i, path in enumerate(shards)}
+        return {
+            "shards": [file_sha256(path) for path in shards],
+            "selection": json_sha256([(indices[p], entry) for p, entry in self.entries]),
+            "count": len(self),
+            "image_size": self.image_size,
+        }
 
     def __len__(self) -> int:
         return len(self.entries)

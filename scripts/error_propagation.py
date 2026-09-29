@@ -22,11 +22,13 @@ import json
 import math
 import time
 from collections import defaultdict
+from importlib.metadata import version
 from pathlib import Path
 
 import numpy as np
 
 from ouroboros.eval.standardize import standardize
+from ouroboros.geometry.cache import calculator_weights_sha256
 from ouroboros.geometry.conformers import (
     lowest_energy_conformer,
     mace_calculator,
@@ -34,6 +36,7 @@ from ouroboros.geometry.conformers import (
     relax,
 )
 from ouroboros.geometry.propagation import CATEGORIES, categorize, same_formula
+from ouroboros.provenance import JsonCache, file_sha256, implementation_identity
 
 
 def load_pairs(a) -> list[dict]:
@@ -63,6 +66,7 @@ def main(argv=None) -> None:
     ap.add_argument("--out", required=True)
     ap.add_argument("--n-conf", type=int, default=10)
     ap.add_argument("--model", default="small")
+    ap.add_argument("--cache", type=Path, help="default: <out>/energy-cache")
     ap.add_argument("--max-pairs", type=int, default=None)
     ap.add_argument("--skip-correct", action="store_true", help="dE = 0 by definition")
     ap.add_argument("--per-category", type=int, default=None, help="at most N pairs per category")
@@ -81,31 +85,72 @@ def main(argv=None) -> None:
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     calc = mace_calculator(a.model)
+    persistent = JsonCache(a.cache or out / "energy-cache")
     cache: dict[tuple, dict] = {}
+    settings = {
+        "schema": 1,
+        "model": a.model,
+        "weights": calculator_weights_sha256(calc),
+        "n_conf": a.n_conf,
+        "mmff_prescreen": a.mmff_prescreen,
+        "fmax": 0.05,
+        "steps": 500,
+        "dtype": "float64",
+        "device": str(calc.device),
+        "versions": {name: version(name) for name in ("mace-torch", "rdkit", "ase", "torch")},
+        "code": implementation_identity(Path(__file__).resolve().parents[1] / "ouroboros"),
+        "script": file_sha256(__file__),
+    }
 
     def energy(smi: str, seed: int = 0) -> dict:
         if (smi, seed) not in cache:
-            g = lowest_energy_conformer(
-                smi, n_conf=a.n_conf, seed=seed, calc=calc, mmff_prescreen=a.mmff_prescreen
+
+            def compute():
+                g = lowest_energy_conformer(
+                    smi, n_conf=a.n_conf, seed=seed, calc=calc, mmff_prescreen=a.mmff_prescreen
+                )
+                return {
+                    "status": g.status,
+                    "E": g.energy,
+                    "converged": g.converged,
+                    "sec": g.seconds,
+                    "symbols": g.symbols,
+                    "positions": g.positions.tolist() if g.positions is not None else None,
+                    "failures": g.failures,
+                    "embedding_attempts": g.embedding_attempts,
+                }
+
+            cache[(smi, seed)] = persistent.get(
+                {**settings, "kind": "search", "smiles": smi, "seed": seed}, compute
             )
-            cache[(smi, seed)] = {
-                "status": g.status,
-                "E": g.energy,
-                "converged": g.converged,
-                "sec": g.seconds,
-                "symbols": g.symbols,
-                "positions": g.positions,
-            }
         return cache[(smi, seed)]
 
-    def mirrored_energy(ref: dict) -> dict:
+    def mirrored_energy(ref: dict, ref_smiles: str, pred_smiles: str) -> dict:
         """Enantiomer energy with the conformer search taken out: relax the mirror image of the
         truth's lowest-energy geometry exactly as the truth was relaxed."""
         from ase import Atoms
 
         atoms = Atoms(ref["symbols"], positions=mirror_positions(ref["positions"]))
         r = relax(atoms, calc)
-        return {"status": "ok", "E": r.energy, "converged": r.converged}
+        from rdkit import Chem
+
+        mol = Chem.AddHs(Chem.MolFromSmiles(ref_smiles))
+        conf = Chem.Conformer(mol.GetNumAtoms())
+        conf.Set3D(True)
+        for i, pos in enumerate(r.positions):
+            conf.SetAtomPosition(i, pos.tolist())
+        mol.AddConformer(conf, assignId=True)
+        ok = r.converged and r.fmax <= 0.05 and np.isfinite(r.energy)
+        ok = ok and np.isfinite(r.positions).all() and np.isfinite(r.forces).all()
+        Chem.RemoveStereochemistry(mol)
+        Chem.AssignStereochemistryFrom3D(mol, confId=0, replaceExistingTags=True)
+        expected = Chem.AddHs(Chem.MolFromSmiles(pred_smiles))
+        ok = ok and mol.HasSubstructMatch(expected, useChirality=True)
+        return {
+            "status": "ok" if ok else "invalid_mirrored_geometry",
+            "E": r.energy if ok else None,
+            "converged": bool(ok),
+        }
 
     t0 = time.time()
     results = []
@@ -118,7 +163,16 @@ def main(argv=None) -> None:
                 rec["isomer"] = same_formula(ps, rs)
                 er = energy(rs)
                 if cat == "enantiomer" and er["status"] == "ok":
-                    ep = mirrored_energy(er)  # exact symmetry: isolates the stereo error
+                    ep = persistent.get(
+                        {
+                            **settings,
+                            "kind": "mirror",
+                            "ref": rs,
+                            "pred": ps,
+                            "positions": er["positions"],
+                        },
+                        lambda er=er, rs=rs, ps=ps: mirrored_energy(er, rs, ps),
+                    )
                     rec["pred_energy_method"] = "mirrored truth geometry"
                 else:
                     ep = energy(ps) if ps != rs else er
@@ -134,7 +188,13 @@ def main(argv=None) -> None:
                     status_pred=ep["status"],
                     converged=bool(er["converged"] and ep["converged"]),
                 )
-                if rec["isomer"] and er["E"] is not None and ep["E"] is not None:
+                if (
+                    rec["isomer"]
+                    and rec["converged"]
+                    and er["status"] == ep["status"] == "ok"
+                    and er["E"] is not None
+                    and ep["E"] is not None
+                ):
                     rec["dE"] = ep["E"] - er["E"]
             results.append(rec)
             f.write(json.dumps(rec) + "\n")

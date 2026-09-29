@@ -39,6 +39,10 @@ BLOCKED_SUFFIXES = (
     ".arrow",
     ".ckpt",
     ".pt",
+    ".sqlite",
+    ".sqlite-journal",
+    ".sqlite-wal",
+    ".sqlite-shm",
 )
 IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".gif", ".bmp", ".webp")
 MAX_BYTES = 5 * 1024 * 1024

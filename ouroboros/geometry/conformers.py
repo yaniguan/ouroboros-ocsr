@@ -28,23 +28,49 @@ def embed_conformers(smiles: str, n_conf: int = 10, seed: int = 0) -> Chem.Mol:
     return mol
 
 
-def embed(smiles: str, n_conf: int = 10, seed: int = 0) -> tuple[Chem.Mol | None, str]:
-    """ETKDGv3 embedding with a random-coordinate retry. Returns (mol with Hs, "ok") or
-    (None, reason)."""
+def embed(
+    smiles: str,
+    n_conf: int = 10,
+    seed: int = 0,
+    timeout_seconds: int = 30,
+    diagnostics: list[dict] | None = None,
+) -> tuple[Chem.Mol | None, str]:
+    """ETKDGv3 with bounded attempts and random-coordinate retry.
+
+    RDKit's timeout is per conformer/fragment, not a deadline for the whole batch.
+    A returned -1 is a failure sentinel, never a conformer ID.
+    """
+    if n_conf < 1 or timeout_seconds < 0:
+        raise ValueError("n_conf must be positive and timeout_seconds nonnegative")
     mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
+    if mol is None or mol.GetNumAtoms() == 0:
         return None, "unparsable"
     mol = Chem.AddHs(mol)
     params = AllChem.ETKDGv3()
     params.randomSeed = seed
+    params.numThreads = 1
     params.enforceChirality = True
-    cids = list(AllChem.EmbedMultipleConfs(mol, numConfs=n_conf, params=params))
-    if not cids:
-        params.useRandomCoords = True  # standard fallback for hard ring systems
-        cids = list(AllChem.EmbedMultipleConfs(mol, numConfs=n_conf, params=params))
-        if not cids:
-            return None, "etkdg_failed"
-    return mol, "ok"
+    params.trackFailures = True
+    params.timeout = timeout_seconds
+    for random_coords in (False, True):
+        params.useRandomCoords = random_coords
+        params.clearConfs = True
+        returned = list(AllChem.EmbedMultipleConfs(mol, numConfs=n_conf, params=params))
+        existing = {c.GetId() for c in mol.GetConformers()}
+        valid = {i for i in returned if i >= 0 and i in existing}
+        if diagnostics is not None:
+            diagnostics.append(
+                {
+                    "random_coords": random_coords,
+                    "returned_ids": returned,
+                    "failure_counts": list(params.GetFailureCounts()),
+                }
+            )
+        for cid in existing - valid:
+            mol.RemoveConformer(cid)
+        if valid:
+            return mol, "ok"
+    return None, "etkdg_failed"
 
 
 def stereo_from_3d(mol: Chem.Mol, conf_id: int = -1) -> str:
@@ -173,6 +199,8 @@ class GeometryResult:
     stereo_ok_final: bool | None = None  # the chosen relaxed conformer carries the input stereo
     seconds: float = 0.0
     conformer_energies: list[float] = field(default_factory=list)
+    failures: list[dict] = field(default_factory=list)
+    embedding_attempts: list[dict] = field(default_factory=list)
 
 
 def lowest_energy_conformer(
@@ -190,41 +218,64 @@ def lowest_energy_conformer(
     MACE (a speed option; off by default).
     """
     t0 = time.perf_counter()
-    mol, status = embed(smiles, n_conf, seed)
+    if mmff_prescreen is not None and mmff_prescreen < 1:
+        raise ValueError("mmff_prescreen must be positive")
+    attempts: list[dict] = []
+    mol, status = embed(smiles, n_conf, seed, diagnostics=attempts)
+    result = GeometryResult(smiles, status, embedding_attempts=attempts)
     if mol is None:
-        return GeometryResult(smiles, status, seconds=time.perf_counter() - t0)
+        result.seconds = time.perf_counter() - t0
+        return result
     cids = [c.GetId() for c in mol.GetConformers()]
-    stereo_embed = all(stereo_preserved(mol, smiles))
+    valid_embed = dict(zip(cids, stereo_preserved(mol, smiles), strict=True))
+    result.stereo_ok_embed = all(valid_embed.values())
     if mmff_prescreen:
         res = AllChem.MMFFOptimizeMoleculeConfs(mol, maxIters=500)
         order = np.argsort([e for _, e in res])
         cids = [cids[i] for i in order[:mmff_prescreen]]
-    calc = calc or mace_calculator()
-    relaxed = [relax(to_atoms(mol, c), calc, fmax, steps) for c in cids]
-    best = int(np.argmin([r.energy for r in relaxed]))
-    r = relaxed[best]
-    final = Chem.Mol(mol)
-    final.RemoveAllConformers()
-    conf = Chem.Conformer(mol.GetNumAtoms())
-    conf.Set3D(True)
-    for i, p in enumerate(r.positions):
-        conf.SetAtomPosition(i, p.tolist())
-    final.AddConformer(conf, assignId=True)
-    return GeometryResult(
-        smiles=smiles,
-        status="ok",
-        n_conf=len(relaxed),
-        energy=r.energy,
-        forces=r.forces,
-        positions=r.positions,
-        symbols=[a.GetSymbol() for a in mol.GetAtoms()],
-        converged=r.converged,
-        all_converged=all(x.converged for x in relaxed),
-        stereo_ok_embed=stereo_embed,
-        stereo_ok_final=stereo_matches(final, smiles, 0),
-        seconds=time.perf_counter() - t0,
-        conformer_energies=[x.energy for x in relaxed],
-    )
+    calc = calc if calc is not None else mace_calculator()
+    candidates = []
+    result.symbols = [a.GetSymbol() for a in mol.GetAtoms()]
+    for cid in cids:
+        reason = None
+        if not valid_embed[cid] or not stereo_matches(mol, smiles, cid):
+            reason = "embedding_stereo_mismatch"
+        else:
+            try:
+                r = relax(to_atoms(mol, cid), calc, fmax, steps)
+                result.n_conf += 1
+                if not (
+                    np.isfinite(r.energy)
+                    and np.isfinite(r.positions).all()
+                    and np.isfinite(r.forces).all()
+                    and np.isfinite(r.fmax)
+                ):
+                    reason = "nonfinite_relaxation"
+                else:
+                    result.conformer_energies.append(r.energy)
+                    final = Chem.Mol(mol)
+                    conf = final.GetConformer(cid)
+                    for i, pos in enumerate(r.positions):
+                        conf.SetAtomPosition(i, pos.tolist())
+                    if not r.converged or r.fmax > fmax:
+                        reason = "not_converged"
+                    elif not stereo_matches(final, smiles, cid):
+                        reason = "optimization_stereo_mismatch"
+                    else:
+                        candidates.append(r)
+            except (RuntimeError, ValueError) as error:
+                reason = f"relaxation_failed: {error}"
+        if reason:
+            result.failures.append({"conformer_id": cid, "reason": reason})
+    result.seconds = time.perf_counter() - t0
+    result.all_converged = len(candidates) == len(cids) and bool(cids)
+    if not candidates:
+        result.status = "no_valid_conformer"
+        return result
+    best = min(candidates, key=lambda r: r.energy)
+    result.energy, result.forces, result.positions = best.energy, best.forces, best.positions
+    result.converged = result.stereo_ok_final = True
+    return result
 
 
 def mirror_positions(positions: np.ndarray) -> np.ndarray:
