@@ -114,6 +114,30 @@ def build_datasets(cfg: dict, tok: SmilesTokenizer):
     return synth, real
 
 
+def build_optimizer(model, train_config):
+    decay, no_decay = [], []
+    for name, parameter in model.named_parameters():
+        target = (
+            no_decay if parameter.ndim < 2 or name.endswith(".pos") or "norm" in name else decay
+        )
+        target.append(parameter)
+    return torch.optim.AdamW(
+        [
+            {"params": decay, "weight_decay": train_config.get("weight_decay", 0.05)},
+            {"params": no_decay, "weight_decay": 0.0},
+        ],
+        lr=train_config["lr"],
+        betas=(0.9, 0.98),
+    )
+
+
+def build_scheduler(optimizer, train_config):
+    return torch.optim.lr_scheduler.LambdaLR(
+        optimizer,
+        lambda step: lr_lambda(step, train_config.get("warmup", 1000), train_config["steps"]),
+    )
+
+
 class Trainer:
     def __init__(self, cfg: dict, out_dir: str | Path):
         self.cfg = cfg = copy.deepcopy(cfg)
@@ -143,20 +167,8 @@ class Trainer:
         if previous is not None and previous["vocab"] != self.tok.itos:
             raise ValueError("Checkpoint vocabulary mismatch")
         self.model: OCSRModel = build_model(cfg, self.tok).to(self.dev)
-        decay, no_decay = [], []
-        for n, p in self.model.named_parameters():
-            (no_decay if p.ndim < 2 or n.endswith(".pos") or "norm" in n else decay).append(p)
-        self.opt = torch.optim.AdamW(
-            [
-                {"params": decay, "weight_decay": t.get("weight_decay", 0.05)},
-                {"params": no_decay, "weight_decay": 0.0},
-            ],
-            lr=t["lr"],
-            betas=(0.9, 0.98),
-        )
-        self.sched = torch.optim.lr_scheduler.LambdaLR(
-            self.opt, lambda s: lr_lambda(s, t.get("warmup", 1000), t["steps"])
-        )
+        self.opt = build_optimizer(self.model, t)
+        self.sched = build_scheduler(self.opt, t)
         self.step = 0
         self.synth, self.real = build_datasets(cfg, self.tok)
         f = float(cfg["data"].get("real_fraction", 0.0))

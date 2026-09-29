@@ -63,3 +63,43 @@ Deduplication, stereo assignment and split rules stay unchanged; ChEMBL is not m
 An explicitly supplied existing `--pool` is still reusable and its bytes bind composition.
 Legacy default pools without filtering metadata require a new output path. The SQLite cache is
 generated data and belongs beside the pool outside version control.
+
+## How to run the GPU probes
+
+Use the installed project environment and generated experiment configs. Each output must be new.
+For an A100 or another bf16-capable CUDA GPU:
+
+```bash
+# Repeat with the A/C/D config you actually intend to train.
+python scripts/benchmark_cuda.py --config configs/sweep/D_n200k_f0_s0.yaml \
+  --output runs/probes/D-capacity.json --batch 32 --steps 20 --warmup 3
+# For a 512-token probe, explicitly increase the decoder capacity in this probe's config.
+python scripts/benchmark_cuda.py --config configs/sweep/D_n200k_f0_s0.yaml \
+  --output runs/probes/D-512-capacity.json --batch 32 --sequence-length 512 \
+  --set model.decoder.max_len=512
+# Existing dataset shards and matching vocabulary are required for the resume comparison.
+python scripts/benchmark_cuda_resume.py --config configs/sweep/A_n200k_f0_s0.yaml \
+  --output runs/probes/A-resume --checkpoint-step 25 --compared-steps 100 \
+  --set data.synthetic_root=/content/data/full/shards data.synthetic_max_samples=2000
+```
+
+Capacity uses the current model, vocabulary, AdamW parameter groups, learning-rate scheduler,
+augmentation and loss. Inputs are random tensors; data I/O and validation are excluded. Reports
+include source/config identities, versions, synchronized optimizer timings, CUDA peak allocated/
+reserved bytes and a stated warmup exclusion. Capacity results are not accuracy or full-run costs.
+
+The resume probe uses the actual Trainer and configured synthetic/real mixture, interrupts after
+a checkpoint, then compares the next 100 losses with uninterrupted training. It fails if the mean
+relative error exceeds 1% (configurable). It writes checkpoints/logs under `runs/`, never under
+`benchmarks/`. Small CPU smoke checks use `--device cpu --precision fp32` and suitably reduced
+model/data config; their reports explicitly carry `cpu_smoke_only: true` and no GPU memory values.
+Historical A100 reports in `benchmarks/legacy-local/` belong to the other implementation and must
+not be substituted for measurements of the current model.
+
+## Local verification (2026-09-28)
+
+The full suite passed **162 tests** on macOS/Python 3.11 using the existing local environment
+(torch 2.8 / RDKit 2025.9) plus temporary PyArrow/Hugging Face test dependencies. `ruff check .`
+passed. The final rotation-decoding and benchmark changes also passed their 8 targeted tests.
+This is a compatibility check, not validation of the repository's pinned CUDA environment.
+No CUDA/A100 execution or current-model GPU performance claim was made during this migration.
