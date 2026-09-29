@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import json
 import secrets
 import threading
@@ -93,22 +94,31 @@ class LabHandler(BaseHTTPRequestHandler):
             self._json(500, {"error": f"{type(exc).__name__}: {exc}"})
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--port", type=int, default=8765, help="0 chooses an available port")
+    ap.add_argument("--port", type=int, default=0, help="default: 0 (choose an available port)")
     ap.add_argument("--order", type=int, choices=(4, 8, 16), default=4)
     ap.add_argument("--checkpoint", type=Path)
     ap.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     ap.add_argument("--threads", type=int, default=2)
     ap.add_argument("--ready-file", type=Path, help="JSON connection info for the notebook")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     torch.set_num_threads(max(1, args.threads))
     lab = (
         RotationLab.from_checkpoint(args.checkpoint, args.device)
         if args.checkpoint
         else (RotationLab.random(args.order))
     )
-    with LabServer(args.port, lab) as server:
+    try:
+        server = LabServer(args.port, lab)
+    except OSError as exc:
+        if exc.errno == errno.EADDRINUSE:
+            ap.error(
+                f"Port {args.port} is already in use. "
+                "Run again without --port, or use --port 0 to choose an available port."
+            )
+        raise
+    with server:
         info = {"url": server.url, "port": server.server_port, "path": server.prefix}
         if args.ready_file:
             pending = args.ready_file.with_suffix(".tmp")

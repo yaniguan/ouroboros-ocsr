@@ -1,5 +1,6 @@
 """Exercise actual rotation, checkpoint restoration, scoring and the notebook API contract."""
 
+import errno
 import importlib.util
 import io
 import json
@@ -15,6 +16,28 @@ import torch
 from ouroboros.demo.__main__ import LabHandler, LabServer
 from ouroboros.demo.rotation import DEFAULT_SMILES, RotationLab, tiny_config
 from ouroboros.model import build_model
+
+
+@pytest.mark.parametrize("error_code", [errno.EADDRINUSE, errno.EACCES])
+def test_cli_reports_busy_port_without_masking_other_errors(monkeypatch, capsys, lab, error_code):
+    from ouroboros.demo import __main__ as cli
+
+    def unavailable_port(port, model):
+        raise OSError(error_code, "Cannot bind")
+
+    monkeypatch.setattr(cli, "LabServer", unavailable_port)
+    monkeypatch.setattr(cli.RotationLab, "random", lambda order: lab)
+    if error_code == errno.EADDRINUSE:
+        with pytest.raises(SystemExit) as error:
+            cli.main(["--port", "8765"])
+        assert error.value.code == 2
+        message = capsys.readouterr().err
+        assert "Port 8765 is already in use" in message
+        assert "--port 0" in message
+    else:
+        with pytest.raises(OSError) as error:
+            cli.main(["--port", "8765"])
+        assert error.value.errno == error_code
 
 
 @pytest.fixture(scope="module")

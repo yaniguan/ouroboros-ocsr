@@ -29,7 +29,9 @@ python -m ouroboros.demo
 # Open the session URL printed in the terminal. Stop with Ctrl+C.
 ```
 
-The server listens only on `127.0.0.1`. Use `--port 0` to choose an available port.
+The server listens only on `127.0.0.1` and automatically chooses an available port by default
+(`--port 0`). Open the actual session URL printed at startup. To request a fixed port, use
+`--port 8765`; if it is occupied, the launcher explains how to select a free port instead.
 An unguessable session path scopes requests; this is a local research tool, not a public server.
 Each server has one active model shared by its browser tabs.
 
