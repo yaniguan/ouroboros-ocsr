@@ -114,3 +114,27 @@ def test_unknown_split_defaults_to_test(tmp_path):
         csv.writer(f).writerows([["img", "smi"], ["x.png", "CCO"]])
     stats = write_manifests(snap, tmp_path / "out", default_source="mine")
     assert stats["rows"] == {"mine:test": 1}
+
+
+def test_pretty_printed_and_mapping_json(tmp_path):
+    """Pretty-printed JSON (the Colab failure: '{' then a newline), filename->SMILES mappings,
+    metadata objects without rows and broken files are all handled per file."""
+    snap = tmp_path / "snap"
+    (snap / "images").mkdir(parents=True)
+    for n in ("a.png", "b.png", "c.png"):
+        (snap / "images" / n).write_bytes(_png())
+    recs = [{"file_name": "images/a.png", "smiles": "CCO", "split": "train"}]
+    (snap / "train.json").write_text(json.dumps({"version": 1, "data": recs}, indent=2))
+    (snap / "labels_test.json").write_text(
+        json.dumps({"images/b.png": "c1ccccc1", "images/c.png": "CC(C)O"}, indent=2)
+    )
+    (snap / "info.json").write_text(json.dumps({"description": "x", "n": 3}, indent=2))
+    (snap / "broken.json").write_text('{\n  "a": 1,\n')
+    rep = inspect_snapshot(snap)
+    by_file = {t["file"]: t for t in rep["tables"]}
+    assert by_file["train.json"]["rows"] == 1 and by_file["labels_test.json"]["rows"] == 2
+    assert by_file["info.json"]["rows"] == 0 and "json_top_level_keys" in by_file["info.json"]
+    assert "error" in by_file["broken.json"]
+    assert rep["layout"]["files_by_ext"] == {".json": 4, ".png": 3}
+    stats = write_manifests(snap, tmp_path / "out", default_source="mine")
+    assert stats["rows"] == {"mine:test": 2, "mine:train": 1}

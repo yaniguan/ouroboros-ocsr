@@ -438,6 +438,11 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
   conservative placeholder until the user confirms (U1). Added pins `huggingface_hub==2.0.0`,
   `pyarrow==25.0.1` (+ deps); `uv pip install --dry-run` of the full requirements resolves;
   135/135 tests pass.
+- 2026-09-29 — First notebook-04 run: the dataset (public, 173 MB) contains pretty-printed `.json`
+  files, which the converter read as JSON lines (JSONDecodeError). JSON is now parsed by shape
+  (JSON lines / array / `{"key": [records]}` / `{file: record}` / `{file: smiles}`; metadata objects
+  give 0 rows), an unreadable table is reported and skipped instead of aborting, and `inspect`
+  prints the snapshot layout (file counts per extension / top directory, example paths).
 - 2026-09-25 — numpy is pinned to 1.26.4: `lie_learn` (escnn dependency) and `matscipy`
   (mace-torch dependency) require numpy < 2.
 - 2026-09-25 — Colab notebook runs project code in subprocesses (`!python ...`) so the pinned
