@@ -1,0 +1,13 @@
+{
+ "config": "CanonConfig defaults (N=4, orient fields 4-8-8-16 on 4x-downsampled input, baseline encoder)",
+ "errors": {
+  "90": 0.0,
+  "180": 0.0,
+  "270": 0.0
+ },
+ "params": 17827876,
+ "gflops": 10.387869696,
+ "pass": true,
+ "images": "4 rendered test images (/home/user/old_data/shards)",
+ "date": "2026-09-25"
+}

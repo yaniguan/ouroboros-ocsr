@@ -1,0 +1,14 @@
+{
+ "n": 1000,
+ "n_conf": 10,
+ "success": 1000,
+ "success_rate": 1.0,
+ "failure_reasons": {},
+ "failures": [],
+ "stereo_n": 1000,
+ "stereo_all_conformers_ok": 999,
+ "stereo_rate": 0.999,
+ "embed_sec_per_mol": 0.30727841042200454,
+ "date": "2026-09-25",
+ "host": "vm"
+}

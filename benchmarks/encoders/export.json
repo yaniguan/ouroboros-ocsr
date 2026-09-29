@@ -1,0 +1,22 @@
+{
+ "encoder": {
+  "type": "steerable",
+  "N": 8,
+  "fields": [
+   7,
+   14,
+   27,
+   55
+  ]
+ },
+ "size": 384,
+ "max_rel_err_tokens": 0.0,
+ "pass": true,
+ "img_per_s_escnn_train_mode": 5.22709772938233,
+ "img_per_s_escnn_eval": 5.7294050795459315,
+ "img_per_s_exported": 6.241046617274477,
+ "speedup_vs_eval": 1.0893009886061493,
+ "speedup_vs_train_mode": 1.1939793247393446,
+ "device": "cpu (4-core VM), fp32",
+ "date": "2026-09-25"
+}

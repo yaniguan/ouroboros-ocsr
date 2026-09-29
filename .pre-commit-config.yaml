@@ -1,0 +1,11 @@
+# Optional: for users of the pre-commit framework. scripts/install_git_hooks.sh installs the
+# same guard without it.
+repos:
+  - repo: local
+    hooks:
+      - id: check-no-data
+        name: refuse datasets, shards and real images
+        entry: python scripts/check_no_data.py
+        language: system
+        pass_filenames: false
+        always_run: true

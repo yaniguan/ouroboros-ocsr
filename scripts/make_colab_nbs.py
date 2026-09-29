@@ -1,0 +1,358 @@
+"""Generate the Colab notebooks in notebooks/ (kept as a script so notebooks diff cleanly).
+
+    python scripts/make_colab_nbs.py
+
+00_colab_setup.ipynb     Phase 0 smoke run: Drive, clone, install, copy shards, pytest.
+01_generate_data.ipynb   Phase 1: build the 1M-train dataset (200k = its prefix) and store on Drive.
+02_train_eval.ipynb      Train one sweep config (resumable) and evaluate it; results on Drive.
+03_geometry.ipynb        MACE-OFF benchmarks on 1,000 molecules + energy-error propagation.
+04_real_data.ipynb       Real corpus from Hugging Face -> manifests -> real shards + leakage check.
+"""
+
+import json
+from pathlib import Path
+
+BRANCH = "claude/vigilant-johnson-j4882f"
+
+
+def md(src):
+    return {"cell_type": "markdown", "metadata": {}, "source": src}
+
+
+def code(src):
+    return {
+        "cell_type": "code",
+        "metadata": {},
+        "execution_count": None,
+        "outputs": [],
+        "source": src,
+    }
+
+
+def setup_cells(title: str, intro: str) -> list:
+    return [
+        md(
+            f"# Ouroboros — {title}\n\n{intro}\n\n"
+            "Colab's system Python (3.13) cannot install the pinned stack (escnn needs lie_learn and "
+            "numpy<2, which have no 3.13 builds), so the setup creates a Python 3.11 virtualenv with "
+            "`uv` at `/content/venv` and installs exactly `requirements.txt` (incl. torch 2.10.0 CUDA). "
+            "All project code runs in that interpreter via subprocesses (`!{PY} ...`). "
+            "If the repo is private, add a Colab secret "
+            "`GITHUB_TOKEN` (key icon in the left sidebar) with read access to the repository."
+        ),
+        code(
+            "import time, os, subprocess, json\n"
+            "T0 = time.time()\n"
+            "!nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv || true\n"
+            "!python --version && nproc && free -g | head -2\n"
+            "VENV_PY = '/content/venv/bin/python'  # project interpreter (created below)\n"
+            "# Colab's kernel exports MPLBACKEND=module://matplotlib_inline..., which does not exist in\n"
+            "# the venv; every project command therefore runs with an explicit headless backend.\n"
+            "PY = f'MPLBACKEND=Agg {VENV_PY}'"
+        ),
+        code(
+            "# ---- configuration ----\n"
+            "REPO = 'yaniguan/ouroboros-ocsr'\n"
+            f"BRANCH = '{BRANCH}'  # set to 'main' once merged\n"
+            "DRIVE_ROOT = '/content/drive/MyDrive/ouroboros'  # data, runs, results live here\n"
+            "REPO_DIR = '/content/ouroboros-ocsr'\n"
+            "LOCAL_DATA = '/content/data/full'  # configs expect shards at /content/data/full/shards\n"
+            "# the kernel's inline matplotlib backend does not exist in the project venv (subprocesses)\n"
+            "os.environ['MPLBACKEND'] = 'Agg'"
+        ),
+        code(
+            "from google.colab import drive\n"
+            "drive.mount('/content/drive')\n"
+            "for sub in ('data', 'runs', 'results', 'real'):\n"
+            "    os.makedirs(f'{DRIVE_ROOT}/{sub}', exist_ok=True)"
+        ),
+        code(
+            "token = None\n"
+            "try:\n"
+            "    from google.colab import userdata\n"
+            "    token = userdata.get('GITHUB_TOKEN')\n"
+            "except Exception:\n"
+            "    pass\n"
+            "url = f'https://{token}@github.com/{REPO}.git' if token else f'https://github.com/{REPO}.git'\n"
+            "if os.path.isdir(REPO_DIR):\n"
+            "    subprocess.run(['git', '-C', REPO_DIR, 'fetch', 'origin', BRANCH], check=True)\n"
+            "    subprocess.run(['git', '-C', REPO_DIR, 'checkout', '-B', BRANCH, f'origin/{BRANCH}'], check=True)\n"
+            "else:\n"
+            "    subprocess.run(['git', 'clone', '-b', BRANCH, url, REPO_DIR], check=True)\n"
+            "os.chdir(REPO_DIR)\n"
+            "!git log --oneline -1"
+        ),
+        code(
+            '%%bash -s "$REPO_DIR"\n'
+            "set -e\n"
+            'cd "$1"\n'
+            "# py3nj (escnn dependency) builds from source and needs a Fortran compiler\n"
+            "which gfortran || (apt-get -qq update && apt-get -qq install -y gfortran > /dev/null)\n"
+            "pip install -q uv\n"
+            "# Python 3.11 venv with the exact tested pins (Colab's system Python is 3.13)\n"
+            "[ -x /content/venv/bin/python ] || uv venv -q --python 3.11 --python-preference only-managed /content/venv\n"
+            "uv pip install -q --python /content/venv/bin/python -r requirements.txt\n"
+            "uv pip install -q --python /content/venv/bin/python --no-deps -e .\n"
+            "# startup hook: any python of this venv replaces an inherited inline matplotlib backend\n"
+            "SP=$(/content/venv/bin/python -c 'import site; print(site.getsitepackages()[0])')\n"
+            'cp scripts/colab_mplbackend.pth "$SP/"\n'
+            "export MPLBACKEND=Agg\n"
+            "/content/venv/bin/python -c \"import sys, torch; print(sys.version.split()[0], 'torch', torch.__version__, 'cuda', torch.cuda.is_available())\""
+        ),
+    ]
+
+
+def copy_shards_cell(n_train_shards: str) -> dict:
+    return code(
+        "# Copy shards Drive -> local disk (Drive FUSE is too slow for training I/O).\n"
+        f"N_TRAIN_SHARDS = {n_train_shards}  # 1000 samples per shard; None = all\n"
+        "src = f'{DRIVE_ROOT}/data/full/shards'\n"
+        "dst = f'{LOCAL_DATA}/shards'\n"
+        "os.makedirs(dst, exist_ok=True)\n"
+        "names = sorted(os.listdir(src)) if os.path.isdir(src) else []\n"
+        "keep = [n for n in names if n.endswith('.tar') and (not n.startswith('train-') or\n"
+        "        N_TRAIN_SHARDS is None or int(n[6:12]) < N_TRAIN_SHARDS)]\n"
+        "t = time.time()\n"
+        "for n in keep:\n"
+        "    if not os.path.exists(f'{dst}/{n}'):\n"
+        "        subprocess.run(['cp', f'{src}/{n}', f'{dst}/{n}'], check=True)\n"
+        "print(f'{len(keep)} shards in {time.time() - t:.0f}s' if keep else 'no shards on Drive yet')\n"
+        "!du -sh {dst}"
+    )
+
+
+def nb00() -> list:
+    cells = setup_cells(
+        "Colab setup (A100)",
+        "Phase 0 smoke run: mounts Drive, clones the repo, installs pinned deps (keeping Colab's "
+        "CUDA PyTorch), copies WebDataset shards to local disk and runs the test suite.",
+    )
+    cells += [
+        copy_shards_cell("None"),
+        code(
+            '!{PY} -c "import ouroboros, escnn, mace; from escnn import gspaces; '
+            "from mace.calculators import mace_off; import rdkit; print('escnn/mace/rdkit import OK', rdkit.__version__)\""
+        ),
+        code("!{PY} -m pytest -q"),
+        code(
+            "print(f'wall time: {(time.time() - T0) / 60:.1f} min')\n"
+            "!uv pip freeze --python {VENV_PY} | grep -iE '^(torch|escnn|mace-torch|rdkit|numpy|e3nn)=='"
+        ),
+    ]
+    return cells
+
+
+def nb01() -> list:
+    cells = setup_cells(
+        "generate the 1M dataset (Phase 1)",
+        "Builds pool -> composition -> shards for 1M training molecules (the 200k set is its "
+        "first 200 shards) plus the shared 5k val / 10k test sets, written DIRECTLY to Drive "
+        "(`MyDrive/ouroboros/data/full`). CPU-only work: any runtime with many vCPUs works; "
+        "expected ~40-60 min on 12 vCPUs, ~7 GB. **Resumable:** after a disconnect just run all "
+        "again — a finished pool, an identical composition and every finished shard are skipped.",
+    )
+    cells += [
+        code(
+            "DATA = f'{DRIVE_ROOT}/data/full'\n"
+            "t = time.time()\n"
+            "!{PY} scripts/build_dataset.py --out {DATA} --cache {DRIVE_ROOT}/data_cache --preset 1m --workers $(nproc)\n"
+            "GEN_MIN = (time.time() - t) / 60\n"
+            "print(f'generation wall time (this session): {GEN_MIN:.1f} min')"
+        ),
+        code(
+            "# ---- report these numbers back ----\n"
+            "!du -sh {DATA}/shards && ls {DATA}/shards/train-*.tar | wc -l\n"
+            "!du -ch {DATA}/shards/train-000[01]*.tar | tail -1   # = 200k subset size\n"
+            "!cat {DATA}/pool.stats.json {DATA}/manifests/compose.json\n"
+            "!cat {DATA}/shards/*.render.jsonl\n"
+            "print(f'generation {GEN_MIN:.1f} min; total notebook {(time.time() - T0) / 60:.1f} min')"
+        ),
+    ]
+    return cells
+
+
+def nb02() -> list:
+    cells = setup_cells(
+        "train + evaluate one run",
+        "Trains one config from `configs/sweep/` (or `configs/base.yaml` with overrides) with "
+        "checkpoints on Drive. **After a disconnect, just run all cells again: training resumes "
+        "from the last checkpoint** (model, optimizer, scheduler, RNG and data position).",
+    )
+    cells += [
+        code(
+            "RUN_ID = 'A_n200k_f0_s0'     # any row of configs/sweep/index.csv\n"
+            "CONFIG = f'configs/sweep/{RUN_ID}.yaml'\n"
+            "OUT = f'{DRIVE_ROOT}/runs/{RUN_ID}'\n"
+            "OVERRIDES = 'train.ckpt_every=2000 data.num_workers=10'\n"
+            "import yaml\n"
+            "SIZE = yaml.safe_load(open(CONFIG))['data']['synthetic_max_samples']\n"
+            "print(RUN_ID, SIZE)"
+        ),
+        copy_shards_cell("SIZE // 1000"),
+        code(
+            "# real-data shards (Am1-A), only needed when real_fraction > 0\n"
+            "!mkdir -p /content/real && rsync -a {DRIVE_ROOT}/real/ /content/real/ && ls /content/real"
+        ),
+        code(
+            "t = time.time()\n"
+            "!{PY} -m ouroboros.train --config {CONFIG} --out {OUT} --set {OVERRIDES}\n"
+            "TRAIN_H = (time.time() - t) / 3600"
+        ),
+        code(
+            "t = time.time()\n"
+            "!{PY} scripts/evaluate.py --run {OUT}\n"
+            "EVAL_H = (time.time() - t) / 3600\n"
+            "print(f'train {TRAIN_H:.2f} GPU-h (this session), eval {EVAL_H:.2f} GPU-h')"
+        ),
+        code(
+            "# ---- report back: the eval printout above, and these lines ----\n"
+            "!tail -3 {OUT}/log.jsonl\n"
+            "!grep -h img_per_s {OUT}/log.jsonl | tail -1"
+        ),
+    ]
+    return cells
+
+
+def nb03() -> list:
+    cells = setup_cells(
+        "3D stage: MACE-OFF benchmarks and error propagation (Phase 6)",
+        "Runs the geometry benchmarks on 1,000 test molecules with MACE-OFF23 (GPU) and the "
+        "energy-error propagation for one evaluated run (predicted vs. true SMILES, by error "
+        "category). Needs `LOCAL_DATA/manifests/test.tsv` (copied from Drive) and a run whose "
+        "`eval/predictions.jsonl` exists on Drive.",
+    )
+    cells += [
+        code(
+            "!mkdir -p {LOCAL_DATA}/manifests && cp {DRIVE_ROOT}/data/full/manifests/test.tsv {LOCAL_DATA}/manifests/\n"
+            "MODEL = 'medium'  # MACE-OFF23 size (Academic Software License)\n"
+            "RUN_ID = 'C_n200k_f0_s0'  # the best arm's run (choose after aggregation)\n"
+            "N_RELAX = 200  # molecules for the convergence benchmark (10 conformers each)\n"
+            "PER_CATEGORY = 100  # error-propagation pairs per error category\n"
+            "OUT = f'{DRIVE_ROOT}/results/geometry'\n"
+            "os.makedirs(OUT, exist_ok=True)"
+        ),
+        code(
+            "t = time.time()\n"
+            "!{PY} scripts/bench_geometry.py embed --manifest {LOCAL_DATA}/manifests/test.tsv --n 1000\n"
+            "!{PY} scripts/bench_geometry.py enantio --manifest {LOCAL_DATA}/manifests/test.tsv --n 20 --model {MODEL}\n"
+            "!{PY} scripts/bench_geometry.py relax --manifest {LOCAL_DATA}/manifests/test.tsv --n {N_RELAX} --n-conf 10 --model {MODEL}\n"
+            "!cp benchmarks/geometry/*.json {OUT}/\n"
+            "print(f'benchmarks: {(time.time() - t) / 3600:.2f} GPU-h')"
+        ),
+        code(
+            "t = time.time()\n"
+            "!{PY} scripts/error_propagation.py --predictions {DRIVE_ROOT}/runs/{RUN_ID}/eval/predictions.jsonl "
+            "--set rendered_test --out {OUT}/{RUN_ID} --n-conf 10 --mmff-prescreen 3 --model {MODEL} "
+            "--skip-correct --noise-seeds --per-category {PER_CATEGORY}\n"
+            "print(f'error propagation: {(time.time() - t) / 3600:.2f} GPU-h')"
+        ),
+        code(
+            "# ---- report back ----\n"
+            "!cat {OUT}/embed.json | head -20; cat {OUT}/relax.json; grep -E 'max_abs|pass' {OUT}/enantiomers.json\n"
+            "!cat {OUT}/{RUN_ID}/summary.json"
+        ),
+    ]
+    return cells
+
+
+def nb04() -> list:
+    cells = setup_cells(
+        "real corpus from Hugging Face (Am1-A)",
+        "Downloads the real OCSR corpus from the Hugging Face Hub, detects its columns / splits / "
+        "sources, writes one manifest per source, ingests each into shards on Drive "
+        "(`MyDrive/ouroboros/real/<source>`) and runs the InChIKey leakage check against the "
+        "synthetic training set. CPU-only. For a private dataset add a Colab secret `HF_TOKEN` "
+        "(read access). **Check the inspect output before converting**: if a column, split or "
+        "source was detected wrongly, set the overrides in the convert cell.",
+    )
+    cells += [
+        code(
+            "HF_REPO = 'yaniguan/ocsr-dataset'\n"
+            "HF_LOCAL = '/content/hf/ocsr-dataset'  # raw snapshot (local disk, not Drive)\n"
+            "HF_OUT = '/content/hf_real'  # extracted images + manifests (local disk)\n"
+            "REAL = f'{DRIVE_ROOT}/real'  # ingested shards, one directory per source\n"
+            "try:\n"
+            "    from google.colab import userdata\n"
+            "    os.environ['HF_TOKEN'] = userdata.get('HF_TOKEN')\n"
+            "except Exception:\n"
+            "    print('no HF_TOKEN secret: fine for a public dataset')"
+        ),
+        code(
+            "# download + inspect (no files written besides the snapshot) -- report this output back\n"
+            "t = time.time()\n"
+            "!{PY} scripts/hf_to_manifest.py inspect --repo {HF_REPO} --local {HF_LOCAL} | tee {REAL}/hf_inspect.json\n"
+            "!du -sh {HF_LOCAL}\n"
+            "print(f'download + inspect {(time.time() - t) / 60:.1f} min')"
+        ),
+        code(
+            "# convert: set overrides only if the inspect output detected something wrongly, e.g.\n"
+            "# OVERRIDES = '--smiles-col gt_smiles --source-col dataset'; SPLIT_MAP = 'validation=test'\n"
+            "OVERRIDES = ''\n"
+            "SPLIT_MAP = ''  # e.g. 'val=test'; rows without a split become 'test' (never trained on)\n"
+            "SPLIT_ARG = f'--split-map {SPLIT_MAP}' if SPLIT_MAP else ''\n"
+            "!rm -rf {HF_OUT}\n"
+            "!{PY} scripts/hf_to_manifest.py convert --local {HF_LOCAL} --out {HF_OUT} {OVERRIDES} {SPLIT_ARG}\n"
+            "!cp {HF_OUT}/hf_manifest_stats.json {REAL}/"
+        ),
+        code(
+            "# ingest every source into its own shard directory (standardized labels, failures logged)\n"
+            "import glob\n"
+            "SOURCES = sorted(os.path.basename(m)[:-4] for m in glob.glob(f'{HF_OUT}/manifests/*.csv'))\n"
+            "print(SOURCES)\n"
+            "t = time.time()\n"
+            "for src in SOURCES:\n"
+            "    subprocess.run(['rm', '-rf', f'{REAL}/{src}'], check=True)\n"
+            "    !{PY} scripts/ingest_real.py --manifest {HF_OUT}/manifests/{src}.csv --out {REAL}/{src}\n"
+            "print(f'ingest {(time.time() - t) / 60:.1f} min')"
+        ),
+        code(
+            "# leakage: every real val/test set vs synthetic train (if generated) and real train sets.\n"
+            "# Writes the eval InChIKeys for data.exclude_keys (load-time exclusion from training).\n"
+            "def has(src, split):\n"
+            "    return bool(glob.glob(f'{REAL}/{src}/{split}-*.tar'))\n"
+            "EVAL = ' '.join(f'{s}_{sp}={REAL}/{s}:{sp}' for s in SOURCES for sp in ('val', 'test') if has(s, sp))\n"
+            "TRAIN = ' '.join(f'{s}_train={REAL}/{s}:train' for s in SOURCES if has(s, 'train'))\n"
+            "synth = f'{DRIVE_ROOT}/data/full/manifests/train.tsv'\n"
+            "if os.path.exists(synth):\n"
+            "    TRAIN += f' synth1m={synth}'\n"
+            "print('eval:', EVAL, '\\ntrain:', TRAIN)\n"
+            "!{PY} scripts/check_leakage.py --eval {EVAL} --train {TRAIN} --dump-eval-keys {REAL}/eval_keys.txt | tee {REAL}/leakage.txt"
+        ),
+        code(
+            "# ---- report back ----\n"
+            "!cat {REAL}/hf_manifest_stats.json | head -60\n"
+            "for src in SOURCES:\n"
+            "    print('==', src)\n"
+            "    !cat {REAL}/{src}/ingest_stats.json && head -3 {REAL}/{src}/ingest_failures.jsonl\n"
+            "!cat {REAL}/leakage.txt; wc -l {REAL}/eval_keys.txt; du -sh {REAL}\n"
+            "print(f'total notebook {(time.time() - T0) / 60:.1f} min')"
+        ),
+    ]
+    return cells
+
+
+def write(name: str, cells: list) -> None:
+    nb = {
+        "cells": cells,
+        "metadata": {
+            "accelerator": "GPU",
+            "colab": {"gpuType": "A100", "provenance": []},
+            "kernelspec": {"display_name": "Python 3", "name": "python3"},
+            "language_info": {"name": "python"},
+        },
+        "nbformat": 4,
+        "nbformat_minor": 0,
+    }
+    for c in nb["cells"]:
+        c["source"] = c["source"].splitlines(keepends=True)
+    out = Path(__file__).resolve().parents[1] / "notebooks" / name
+    out.write_text(json.dumps(nb, indent=1) + "\n")
+    print("wrote", out)
+
+
+if __name__ == "__main__":
+    write("00_colab_setup.ipynb", nb00())
+    write("01_generate_data.ipynb", nb01())
+    write("02_train_eval.ipynb", nb02())
+    write("03_geometry.ipynb", nb03())
+    write("04_real_data.ipynb", nb04())

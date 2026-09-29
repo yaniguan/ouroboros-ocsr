@@ -1,0 +1,9 @@
+pred	ref
+C[C@H](N)C(=O)O	C[C@H](N)C(=O)O
+C[C@@H](N)C(=O)O	C[C@H](N)C(=O)O
+C[C@H](O)[C@@H](C)Cl	C[C@@H](O)[C@@H](C)Cl
+C[C@H](O)[C@H](C)Cl	C[C@@H](O)[C@@H](C)Cl
+C/C=C\CCO	C/C=C/CCO
+CC(C)O	CCCO
+CCN	CCO
+C1CC(	CCO

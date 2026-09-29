@@ -1,0 +1,79 @@
+{
+ "name": "steerable_c8",
+ "n_samples": 256,
+ "overrides": [
+  "data.synthetic_root=data/full/shards",
+  "data.synthetic_max_samples=256",
+  "data.num_workers=0",
+  "train.batch_size=32",
+  "train.steps=3000",
+  "train.lr=5.0e-4",
+  "train.warmup=100",
+  "train.amp=none",
+  "train.log_every=50",
+  "train.ckpt_every=30000",
+  "data.image_size=128",
+  "model.decoder.dropout=0.0",
+  "model.encoder={type: steerable, N: 8, fields: [7, 14, 27, 55], dropout: 0.0}"
+ ],
+ "encoder": {
+  "type": "steerable",
+  "N": 8,
+  "fields": [
+   7,
+   14,
+   27,
+   55
+  ],
+  "dropout": 0.0
+ },
+ "history": [
+  {
+   "step": 250,
+   "loss": 0.3058505356311798,
+   "exact": 0.02734375,
+   "sec": 648.0843231678009
+  },
+  {
+   "step": 500,
+   "loss": 0.07240553200244904,
+   "exact": 0.53515625,
+   "sec": 1266.0875525474548
+  },
+  {
+   "step": 750,
+   "loss": 0.04241165146231651,
+   "exact": 0.73046875,
+   "sec": 1877.1323034763336
+  },
+  {
+   "step": 1000,
+   "loss": 0.03733820840716362,
+   "exact": 0.7734375,
+   "sec": 2478.1537132263184
+  },
+  {
+   "step": 1250,
+   "loss": 0.016753727570176125,
+   "exact": 0.89453125,
+   "sec": 3082.8187761306763
+  },
+  {
+   "step": 1500,
+   "loss": 0.0021346942521631718,
+   "exact": 0.93359375,
+   "sec": 3696.4770970344543
+  },
+  {
+   "step": 1750,
+   "loss": 0.0011052376357838511,
+   "exact": 1.0,
+   "sec": 4309.516414880753
+  }
+ ],
+ "steps_to_99": 1750,
+ "best_exact": 1.0,
+ "pass": true,
+ "device": "cpu",
+ "date": "2026-09-25"
+}

@@ -1,0 +1,9 @@
+# Throughput assumptions for the compute estimate (A100 40GB, bf16, 384 px, batch 64).
+# NOT measured yet: replace with the img/s reported by the first Colab runs (log.jsonl).
+train_img_per_s:
+  baseline: 600      # arms A, B
+  steerable: 400     # arms C, C+ (escnn filter expansion + full-res stem)
+  equiv_attention: 300
+eval_img_per_s: 1000         # greedy decoding with KV cache, batch 256
+eval_images: 58000           # 10k test at 0 deg + 2k x 24 sweep angles (+ real sets later)
+overhead_h_per_run: 0.05     # startup, shard copy (amortised), checkpoints

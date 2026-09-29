@@ -1,0 +1,39 @@
+{
+ "path": "benchmarks/data/contact_sheet.png",
+ "styles": {
+  "fonts": [
+   "DejaVuSans-Bold.ttf",
+   "DejaVuSans-Oblique.ttf",
+   "DejaVuSans.ttf",
+   "DejaVuSansMono.ttf",
+   "DejaVuSerif-Bold.ttf",
+   "DejaVuSerif.ttf",
+   "STIXGeneral.ttf",
+   "STIXGeneralBol.ttf",
+   "cmss10.ttf",
+   "rdkit-builtin"
+  ],
+  "palettes": [
+   "avalon",
+   "bw",
+   "cdk",
+   "default"
+  ],
+  "line_width_range": [
+   1.077634759070642,
+   3.9975130484897403
+  ],
+  "bond_length_range": [
+   18.383432779221742,
+   38.56212032926988
+  ],
+  "n_blur": 16,
+  "n_noise": 23,
+  "n_jpeg": 16,
+  "n_explicit_methyl": 7,
+  "n_comic": 3
+ },
+ "date": "2026-09-25",
+ "host": "vm",
+ "cpus": 4
+}

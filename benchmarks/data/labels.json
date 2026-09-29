@@ -1,0 +1,15 @@
+{
+ "checked": 12000,
+ "per_split": {
+  "train": 10000,
+  "val": 1000,
+  "test": 1000
+ },
+ "parse_fail": 0,
+ "mismatch": 0,
+ "ok": 12000,
+ "pass": true,
+ "date": "2026-09-25",
+ "host": "vm",
+ "cpus": 4
+}

@@ -1,0 +1,70 @@
+{
+ "size": 384,
+ "kind": "equiv_attention",
+ "results": {
+  "C4": {
+   "fields": [
+    14,
+    28,
+    54,
+    110
+   ],
+   "grid90": {
+    "90": {
+     "feature_rel_err": 1.0017436125053791e-06,
+     "token_rel_err": 4.6486886162711016e-07
+    },
+    "180": {
+     "feature_rel_err": 7.212556170088646e-07,
+     "token_rel_err": 5.469045731842925e-07
+    },
+    "270": {
+     "feature_rel_err": 8.81534560903674e-07,
+     "token_rel_err": 5.469045731842925e-07
+    }
+   },
+   "offgrid": {}
+  },
+  "C8": {
+   "fields": [
+    7,
+    14,
+    27,
+    55
+   ],
+   "grid90": {
+    "90": {
+     "feature_rel_err": 1.2844240018239361e-06,
+     "token_rel_err": 4.114920386655285e-07
+    },
+    "180": {
+     "feature_rel_err": 1.1209518788746209e-06,
+     "token_rel_err": 4.114920386655285e-07
+    },
+    "270": {
+     "feature_rel_err": 1.1676582971631433e-06,
+     "token_rel_err": 4.114920386655285e-07
+    }
+   },
+   "offgrid": {
+    "45": {
+     "feature_rel_err_central_disk": 0.1994294673204422,
+     "mean_token_rel_err": 0.0019004291389137506
+    },
+    "135": {
+     "feature_rel_err_central_disk": 0.1994292140007019,
+     "mean_token_rel_err": 0.0019004566129297018
+    },
+    "225": {
+     "feature_rel_err_central_disk": 0.19942913949489594,
+     "mean_token_rel_err": 0.0019004566129297018
+    },
+    "315": {
+     "feature_rel_err_central_disk": 0.19942891597747803,
+     "mean_token_rel_err": 0.0019004839705303311
+    }
+   }
+  }
+ },
+ "date": "2026-09-25"
+}

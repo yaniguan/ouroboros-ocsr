@@ -2,6 +2,8 @@
 
 Status legend: `[ ]` todo · `[~]` in progress · `[x]` done (with evidence) · `[!]` blocked/failed.
 Local dev machine: 4 CPU cores, 15 GB RAM, no GPU, Python 3.11.15.
+Amendment 1 (2026-09-25, real data / synthetic-to-real framing) is merged below; items it added
+or changed are tagged **(Am1-A … Am1-F)**.
 
 ## Needs user
 
@@ -11,10 +13,89 @@ Local dev machine: 4 CPU cores, 15 GB RAM, no GPU, Python 3.11.15.
 2. Runtime → Change runtime type → **A100 GPU**.
 3. If the repo is private: add Colab secret `GITHUB_TOKEN` (read access to this repo) and enable it
    for the notebook.
-4. Runtime → Run all. Expected wall time ≈ 5–10 min (most of it is building `py3nj` and pip installs).
+4. Runtime → Run all. Expected wall time ≈ 5–10 min (uv downloads Python 3.11 and ~3 GB of wheels
+   incl. torch CUDA; `py3nj` is built from source).
 5. **Report back:** (a) whether every cell ran without error, (b) the final `wall time: X min`
    line, (c) the output of the last cell (`pip freeze` subset) and the `nvidia-smi` line,
    (d) the pytest summary line.
+
+### U1 — Real training / evaluation data (Am1-A)
+- **Partly answered 2026-09-29:** the real corpus is the user-made HF dataset
+  `yaniguan/ocsr-dataset`. huggingface.co is blocked by this sandbox's network policy, so its layout
+  could not be inspected here; ingestion is therefore schema-detecting and runs in Colab.
+- **To do:** open `notebooks/04_real_data.ipynb` (CPU runtime is enough; add Colab secret
+  `HF_TOKEN` if the dataset is private), Run all. **Report back:** the inspect output
+  (`MyDrive/ouroboros/real/hf_inspect.json`), `hf_manifest_stats.json`, each source's
+  `ingest_stats.json`, and the leakage table.
+- **Still needed from you:** (a) which sources/splits are real-document **eval** sets and which
+  may be used for **training** (default: the dataset's own `train` split trains, `val`/`test` and
+  rows without a split are eval only); (b) license / permission of the underlying images (DATA.md);
+  (c) whether the paper's own real sets (ACS, CLEF-IP, USPTO per its abstract) are included.
+- Alternatively, allow `huggingface.co` in the environment's network settings and I inspect it
+  directly.
+
+### U2 — Real-data fractions of the paper's grid (Am1-B)
+- The abstract mentions 0, 9.5% and 50.2% real data for Qwen2.5-VL. Please give the full list of
+  fractions used, so the Ouroboros grid is directly comparable. Placeholders in use:
+  `{0, 0.05, 0.1, 0.25, 0.5, 1.0}` (marked as placeholders in `configs/`).
+
+### U3 — Paper's scoring / canonicalization code (Am1-C)
+- Path or repo of the scoring code used in arXiv:2608.09100 / VERDICT, for per-sample parity checks.
+- Unverified details I could not read (arxiv.org is blocked from this sandbox; only search-engine
+  snippets were visible): which RDKit standardization calls are used for "neutral largest fragment"
+  (e.g. `rdMolStandardize.ChargeParent` vs. `LargestFragmentChooser`+`Uncharger`), whether
+  tautomers are canonicalized, whether explicit/implicit H or isotopes are normalized, how
+  unparsable predictions count in exact match (as wrong, presumably), and how InChIKey identity is
+  combined with exact match in the tables.
+
+### U4 — Generate the 1M dataset on Colab (Phase 1 [colab]; 200k = its first 200 shards)
+1. Open `notebooks/01_generate_data.ipynb` (branch `claude/vigilant-johnson-j4882f`). It needs no GPU;
+   any runtime with many vCPUs works (an A100 runtime has ~12).
+2. Run all. Expected: pool ≈ 5 min, composition ≈ 10–15 min (parallel), rendering 1M ≈ 20–30 min
+   on 12 vCPUs; everything is written directly to Drive and is resumable (re-run all after a
+   disconnect). Output: `MyDrive/ouroboros/data/full/` ≈ 7 GB
+   (1M train ≈ 6.8 GB, 200k subset ≈ 1.4 GB, val+test ≈ 0.1 GB). Needs ~8 GB free on Drive.
+3. **Report back** the last cell's output: total and 200k-subset sizes, `pool.stats.json`,
+   `compose.json`, the three `render` lines (samples, drops, seconds) and the wall times.
+
+### U6 — First Colab training runs (Phase 2 and Phase 3 [colab]; needs U4 done first)
+1. Open `notebooks/02_train_eval.ipynb`, A100 runtime. Set `RUN_ID = 'A_n200k_f0_s0'` (baseline,
+   synthetic-only, 200k, 40k steps). Run all. If the runtime disconnects, reconnect and run all again:
+   training resumes from `MyDrive/ouroboros/runs/<RUN_ID>/ckpt/last.pt`.
+2. Repeat with `RUN_ID = 'C_n200k_f0_s0'` (FLOP-matched C8 steerable encoder).
+3. Expected (assumed, not measured): ≈ 1.2 GPU-h for A, ≈ 1.8 GPU-h for C, plus ≈ 0.02 h eval.
+4. **Report back** for each run: the evaluation printout (exact, CI, invalid rate per set), the last
+   three lines of `log.jsonl`, the logged `img_per_s`, the `train … GPU-h` line, and the path of
+   `eval/predictions.jsonl` on Drive (I aggregate from it; share the `runs/` folder or paste the
+   `eval/summary.json`). The rotation sweep is inside `eval/summary.json`.
+
+### U7 — Sweep execution (Phase 4 / Phase 5 [colab]; after U4, U5 and ideally U1/U2)
+- Run `notebooks/02_train_eval.ipynb` once per `RUN_ID` of the chosen grid (`configs/sweep/index.csv`;
+  pruned grid = rows with real_fraction in {0, 0.1, 0.5}). Several runs can share one session by
+  re-running from the RUN_ID cell. Real-fraction > 0 runs need the ingested real training shards in
+  `MyDrive/ouroboros/real/train` (U1). Report back the `runs/` folder (or each `eval/predictions.jsonl`
+  + `config.yaml`); I run `scripts/aggregate.py`.
+
+### U8 — 3D stage on GPU (Phase 6 [colab]; after the sweep has a best arm)
+- `notebooks/03_geometry.ipynb`, A100, set `RUN_ID` to the best arm's run. Expected ≈ 2–4 GPU-h
+  (ASE relaxations are sequential). Report `results/geometry/*.json` and `<RUN_ID>/summary.json`.
+
+### U5 — Decisions needed on the experiment grid (Am1-E) — see "Compute estimate" in Phase 4
+- The full grid (5 arms A, B, C, C+, D × 6 placeholder real fractions × {50k, 200k} × 3 seeds,
+  f = 1.0 at one size = 165 runs) is estimated at **210 A100-h** (A–C+ alone: 150.9 h), over the
+  150 h limit. Throughput is assumed, not yet measured.
+- **Proposed pruned grid (90 runs, ≈ 118 A100-h):** real fractions {0, 0.1, 0.5}, all 5 arms, both
+  sizes, 3 seeds. Why it still tests H1–H3: f = 0 is the synthetic-only condition for H1 (rendered
+  and rotated sets) and H2 (real sets); 0.1 and 0.5 bracket low and high real supervision for H3 and
+  sit next to the 9.5% / 50.2% points in arXiv:2608.09100's abstract (to be replaced by your exact
+  fractions, U2). Seeds stay at 3 so the CIs remain meaningful.
+- Steerable arm config: param-matched vs FLOP-matched (numbers in Phase 3). My recommendation:
+  FLOP-matched in the main grid (equal compute per image, the practical constraint), param-matched
+  as a single ablation (one size, f = 0, 3 seeds), because the param-matched C8 costs 12.4× the
+  FLOPs (127 vs 10.3 GFLOPs per image).
+- Arm E (learned canonicalization, optional, FLOP-matched): include it? (+33 runs full grid /
+  +18 pruned: full 240.6 A100-h, pruned 135.1 A100-h with E, both at the assumed throughput.)
+- Please reply: full or pruned grid, FLOP- vs param-matched, and whether to include arm E.
 
 ## Phase 0 — Scaffold
 
@@ -26,7 +107,8 @@ Local dev machine: 4 CPU cores, 15 GB RAM, no GPU, Python 3.11.15.
 - [x] `ruff check .` reports 0 errors. — "All checks passed!", 2026-09-25.
 - [x] README: research question, symmetry-per-stage table, no "first"/"groundbreaking" claims,
   related-work TODO lists DECIMER, MolScribe, MolNexTR, MolSight. — `grep -iE 'first|groundbreak'
-  README.md` → no matches, 2026-09-25.
+  README.md` → no matches, 2026-09-25. *(Modified by Am1-F: research question replaced, exactly one
+  sanctioned "first" sentence allowed; tracked under Am1-F below.)*
 - [x] Colab notebook exists (`notebooks/00_colab_setup.ipynb`, generated by
   `scripts/make_colab_setup_nb.py`): mounts Drive, clones repo, installs deps, copies shards to
   `/content`, runs `pytest -q`. — 2026-09-25.
@@ -34,72 +116,406 @@ Local dev machine: 4 CPU cores, 15 GB RAM, no GPU, Python 3.11.15.
   → see Needs user U0.
 
 ## Phase 1 — Data pipeline
-- [ ] Molecule filter (H C N O F P S Cl Br I; 5–60 heavy atoms; neutral), unit-tested.
-- [ ] Stereo composition ≥ 30% (configurable), measured within ±2 pp of target.
-- [ ] Splits: 0 InChIKey overlap train/val/test (script-verified).
-- [ ] Label integrity: 100% parse; canonical label == canonical source on 10k sample.
-- [ ] Mirror test: 200/200 mirrored renderings labeled as the enantiomer.
-- [ ] Style randomization (fonts, line width, bond length, label style, noise, blur, JPEG);
-  contact sheet `benchmarks/data/contact_sheet.png`.
-- [ ] Rendering throughput ≥ 20 img/s/process at 384 px.
-- [ ] Loader throughput ≥ 500 img/s with 8 workers.
-- [ ] 10k and 50k shards generated locally; 200k / 1M scripts tested on 1k dry run.
-- [ ] [colab] 200k and 1M shards on Drive; sizes and times reported.
+
+Sources: ZINC250k (GitHub raw) + MOSES (GitHub LFS media), 2,186,417 input SMILES → pool of
+2,154,733 unique constitutions (785 charged after neutralization, 30,899 duplicates), 612 s on 4
+cores (`data/full/pool.stats.json`).
+
+- [x] Molecule filter: H C N O F P S Cl Br I only, 5–60 heavy atoms, neutral; unit-tested. —
+  `ouroboros/data/filter.py`; `tests/test_data.py::test_filter_rules` (11 cases incl. both bounds,
+  Si/B/Se, radical, quaternary N, isotope) + salt/neutralization test, all pass, 2026-09-25.
+- [x] Stereo composition ≥ 30% (configurable), measured within ±2 pp of target. — target 0.40
+  (`--stereo-fraction`); measured 0.400 for train prefixes 10k/50k/200k/1M, val 0.400, test 0.400
+  (recomputed from label SMILES for the 50k prefix: 0.400) → `benchmarks/data/stereo_fraction.json`, 2026-09-25.
+- [x] Splits: 0 InChIKey overlap train/val/test (script-verified). — `scripts/verify_data.py splits`:
+  1M/5k/10k, full-key and connectivity-block overlaps all 0 → `benchmarks/data/splits.json`, 2026-09-25.
+- [x] Label integrity: 100% parse; canonical label == canonical source on 10k sample. — 12,000/12,000
+  (10k train + 1k val + 1k test; 0 parse failures, 0 mismatches) → `benchmarks/data/labels.json`;
+  additionally 0 render-time drops (label ≠ source) among all 65,000 rendered samples, 2026-09-25.
+  Re-verified after the bridged-ring data fix (regenerated manifests/shards): splits 0 overlap,
+  labels 12,000/12,000, mirror 200/200, render 55.6 img/s, loader 586 img/s (8 workers), stereo
+  fraction 0.400 at every prefix, 0 render drops; rebuild 1,152 s (compose 4 workers + render).
+  A serial (1-worker) 1M dry-run compose (2,737 s) produced a train manifest byte-identical to the
+  parallel one. Full test suite after all fixes: 129 passed.
+- [x] Mirror test: 200/200 mirrored renderings labeled as the enantiomer. — 200/200 (chiral, non-meso
+  test molecules, random styles) → `benchmarks/data/mirror.json`, 2026-09-25.
+- [x] Style randomization (fonts, line width, bond length, label style, noise, blur, JPEG);
+  contact sheet `benchmarks/data/contact_sheet.png`. — 64 samples cover 10 fonts, 4 palettes, line
+  width 1.1–4.0 px, bond length 18–39 px, 16 blurred / 23 noisy / 16 JPEG, 7 explicit-methyl, 3 comic
+  → `benchmarks/data/contact_sheet.json`, 2026-09-25.
+- [x] Rendering throughput ≥ 20 img/s/process at 384 px. — 55.8 img/s single process (style +
+  render + degradation + PNG) → `benchmarks/data/render_speed.json`; shard generation 346 img/s with
+  4 processes, 2026-09-25.
+- [x] Loader throughput ≥ 500 img/s with 8 workers. — 605 img/s (8 workers on this 4-core VM, incl.
+  load-time degradation, shuffled random access, batch 64) → `benchmarks/data/loader_speed.json`, 2026-09-25.
+- [x] 10k and 50k shards generated locally; 200k / 1M scripts tested on 1k dry run. — 50k train
+  (50 shards; 10k = first 10 shards) + 5k val + 10k test in `data/full/shards`, 443 MB (train 341 MB,
+  ≈6.8 KB/img), 0 drops, train 144.6 s on 4 processes. Dry runs `--preset 200k/1m --dry-run 1000`:
+  compose + render 1000/100/100 OK, 0 drops (207 s / 877 s incl. composing the full manifest); the
+  dry-run 1M manifest is byte-identical to `data/full` and its first 200k rows equal the 200k
+  manifest (nested prefixes, deterministic), 2026-09-25.
+- [ ] [colab] 200k and 1M shards on Drive; sizes and times reported. → Needs user U4. *(Am1-E grid uses only 50k and
+  200k; 1M is kept for the original data-efficiency curve unless you drop it.)*
+
+### Am1-A — Real-data adapter
+- [x] Adapter ingests a manifest (image path, SMILES, source/split fields) into the synthetic shard
+  format; interface documented. — `ouroboros/data/real.py` (docstring + DATA.md),
+  `scripts/ingest_real.py`; `tests/test_real.py` (5 pass); stand-in set (600 cropped synthetic val
+  images, PNG/JPEG, varying sizes) ingested 600/600, 2026-09-25.
+- [~] 100% of real labels parse after Am1-C standardization; failures logged with reasons, never
+  silently dropped. — mechanism done and tested (every failed row → `ingest_failures.jsonl` with
+  reason, counted in `ingest_stats.json`; test covers unparsable/empty label and missing image);
+  the 100% measurement needs the real sets (U1).
+- [~] Leakage check: 0 InChIKey overlap between every real-document eval set and every training
+  set (synthetic + real); script prints counts and exits nonzero if any > 0. — `scripts/check_leakage.py`
+  (exit 1 on overlap, tested with a planted duplicate); `--dump-eval-keys` + `build_dataset.py
+  --exclude-keys` / `ShardDataset(exclude_key14=)` remove eval molecules (incl. stereoisomers) from
+  training. Stand-in run: 0 overlaps for all 4 pairs. Real-set measurement pending U1.
+- [x] Real data / images / derived shards never committed: `.gitignore` + pre-commit check;
+  `DATA.md` notes redistribution restrictions. — `scripts/check_no_data.py` installed as
+  `.git/hooks/pre-commit` (`scripts/install_git_hooks.sh`, also `.pre-commit-config.yaml`); a staged
+  `benchmarks/real_tmp/x.png` was refused ("Commit refused"), rules unit-tested, 2026-09-25.
+- [~] HF corpus path (U1): `ouroboros/data/hf_manifest.py` + `scripts/hf_to_manifest.py`
+  (inspect / convert; detects HF `Image` structs, raw bytes or image paths, SMILES column by name
+  and RDKit parse rate, source from column or config directory, split from column or HF file
+  naming, unknown split → `test`; overrides for every role) and `notebooks/04_real_data.ipynb`
+  (download → inspect → convert → ingest per source → leakage check + `eval_keys.txt`).
+  `tests/test_hf_manifest.py` (5 pass: parquet + imagefolder + plain-CSV layouts, end-to-end into
+  `ShardDataset`); CLI smoke run on a fake snapshot: 3 sources ingested, leakage 0, 2026-09-29.
+  Real run pending U1 (Colab).
+- [!] Real sets — waiting on U1 (notebook 04 run + eval/train roles of each source).
 
 ## Phase 2 — Baseline model and training infrastructure
-- [ ] Baseline encoder + 6-layer Transformer decoder; 20M–60M params.
-- [ ] Overfit: 256 samples → ≥ 99% exact match within 3,000 steps.
-- [ ] Resume test: ≤ 1% mean relative loss difference over next 100 steps.
-- [ ] Checkpoint save < 30 s.
-- [ ] Metric unit tests 100% pass.
-- [ ] Rotation-sweep eval (0–360°, 15°), on-grid vs off-grid, tested on dummy model.
+- [x] Baseline encoder + 6-layer Transformer decoder; 20M–60M params. — 43.17M total (encoder
+  17.81M: ResNet-18-style CNN + abs. 2D pos-emb + 2-layer mixer; decoder 25.36M: 6 layers, d=512,
+  8 heads, ff 2048, 133-token vocab, tied embeddings); encoder 10.3 GFLOPs @384 px, 2026-09-25.
+- [x] Overfit: 256 samples → ≥ 99% exact match within 3,000 steps. — 256/256 = 100% at step 1,750
+  (13.3% @250, 55.9% @500, 83.2% @750, 91.0% @1250); settings: default architecture (43.1M) at
+  128 px, CPU, fp32, batch 32, AdamW lr 5e-4, warmup 100, cosine over 3,000, dropout 0, greedy
+  decoding, eval every 250 steps; 57 min → `benchmarks/train/overfit_baseline.json`, 2026-09-25.
+- [x] Resume test: ≤ 1% mean relative loss difference over next 100 steps. — default architecture
+  (43.1M, dropout 0.1, rotation aug on, 2 loader workers) at 128 px, CPU: checkpoint at step 50,
+  run killed at 73, resumed at 50; losses of steps 51–150 identical to the uninterrupted run (mean
+  and max relative difference 0.0) → `benchmarks/train/resume_baseline.json`; restored: model,
+  optimizer, LR scheduler, python/numpy/torch RNG, sampler position, augmentation RNG; also
+  bit-exact in `tests/test_train.py`, 2026-09-25.
+- [x] Checkpoint save < 30 s. — default model @384 px with Adam state: 518 MB, save 0.56–1.78 s
+  (3 saves), load 0.42 s, local disk → `benchmarks/train/checkpoint_time.json`, 2026-09-25.
+- [x] Metric unit tests 100% pass (stereo-aware exact match, InChI match, Tanimoto,
+  per-stereocenter accuracy, invalid-SMILES rate). *(Am1-C: standardization below applies.)* —
+  `tests/test_metrics.py` 16/16 pass (salts, enantiomer, missing stereo, 1-of-2 centres, E/Z, ring
+  cis/trans, random SMILES orderings ×6 molecules, invalid/empty, tautomer InChIKey, aggregation,
+  bootstrap), 2026-09-25.
+- [x] Rotation-sweep eval (0–360°, 15°), on-grid vs off-grid, tested on dummy model.
+  *(Am1-D: must run on rendered AND real-document eval sets.)* — `ouroboros/eval/evaluate.py`,
+  `scripts/evaluate.py`; dummy exactly-C4-invariant model: exact 1.0 at the 4 pixel-exact angles, 0.0
+  at the 20 others, flags for C4/C8/C16 grids; `tests/test_rotation_sweep.py` 2/2, 2026-09-25.
 - [ ] [colab] Baseline on 200k: exact match ≥ 70%, invalid < 5%.
 
+### Am1-B — Mixture sampler
+- [x] Configurable real fraction per batch; measured fraction over 10,000 samples within ±1 pp;
+  identical sample order across two runs with the same seed. — `ouroboros/data/mixture.py`; over
+  10,000 samples (batch 64): f=0→0.0000, 0.05→0.0499, 0.1→0.1000, 0.25→0.2502, 0.5→0.5000,
+  1.0→1.0000 (max |Δ| 0.02 pp); two runs identical for every f; every batch within one sample of
+  B·f; resume at arbitrary positions exact (`tests/test_mixture.py` 20/20), 2026-09-25.
+- [x] Fraction 0 reproduces the synthetic-only sample order exactly (same seed). — 3,000-sample
+  stream identical to `ResumableSampler` (test), 2026-09-25.
+- [!] Paper's fraction grid — waiting on U2 (placeholders `{0, 0.05, 0.1, 0.25, 0.5, 1.0}`).
+
+### Am1-C — Scoring parity with arXiv:2608.09100
+- [x] Standardization: RDKit parse + canonicalize; salts/solvates → neutral largest fragment;
+  exact match under full stereochemistry; identity cross-check via stereo-preserving InChIKey;
+  validity = fraction parseable by RDKit. Verification status per rule recorded in
+  `ouroboros/eval/standardize.py` docstring (see Decisions log). — implemented with
+  `rdMolStandardize.ChargeParent`; the RDKit call itself and two choices (empty output = invalid, no
+  tautomer canonicalization) are marked UNVERIFIED vs. the paper, 2026-09-25.
+- [!] pending parity — per-sample agreement with the paper's scoring code on ≥ 1,000 pairs (100%
+  identical) needs U3. Every results table carries the footnote "scoring parity with
+  arXiv:2608.09100 unverified" until this is done.
+
+### Am1-D — Evaluation reporting
+- [x] Rendered and real-document test sets reported as separate columns; aggregation raises an
+  error on any headline number averaged across rendered and real sets. — `ouroboros/eval/aggregate.py`
+  (`MixedKindsError` from `pool_sets` / `--average`), tested on synthetic logs, 2026-09-25.
+- [x] Rotation sweep runs on both rendered and real-document eval sets. — every `eval.sets` entry
+  (kind rendered|real) gets angle 0 in full + the 24-angle sweep on a fixed prefix
+  (`sweep_max_samples`, default 2000); tested with a rendered and a (pretend) real set, 2026-09-25.
+- [x] Per-set sample counts and bootstrap 95% CIs (≥ 1,000 resamples) for exact match; plots draw CIs.
+  — table cells show mean ± std over seeds, [95% CI from 1,000 paired item resamples], n; `results_table`
+  refuses n_boot < 1000; all plots draw CI bands, 2026-09-25.
+
 ## Phase 3 — Steerable CNN encoder
-- [ ] escnn C_N encoder (N ∈ {4, 8, 16}), regular reps, group pooling, invariant relative-position tokens.
-- [ ] C4 equivariance < 1e-4; invariant token set equal up to permutation within 1e-4.
-- [ ] C8/C16 off-grid equivariance error recorded.
-- [ ] Param-matched (±10%) and FLOP-matched (±10%) configs; throughput recorded.
-- [ ] Overfit test passes.
-- [ ] `.export()` matches training model within 1e-4; speedup recorded.
+- [x] escnn C_N encoder (N ∈ {4, 8, 16}), regular reps, group pooling, invariant relative-position tokens.
+  — `ouroboros/encoder/steerable.py` (`rot2dOnR2`, no flips; stride-1 R2Conv + blur/2×2 pooling;
+  GroupPooling; distance-biased token mixer; `TokenHead` slot for arm D), 2026-09-25.
+- [x] C4 equivariance < 1e-4; invariant token set equal up to permutation within 1e-4. — 384 px,
+  full-width random-init encoders, eval mode, fp32 (`scripts/measure_equivariance.py` →
+  `benchmarks/encoders/equivariance.json`): C4 feature maps max rel. err 8.5e-07,
+  token set (after the known grid permutation) 8.2e-07 over 90/180/270°; the same
+  holds for C8 (1.2e-06 / 5.8e-07) and C16 (1.4e-06 /
+  7.4e-07) at 90° multiples. Also unit-tested (`tests/test_equivariance.py`, 15 pass,
+  incl. end-to-end decoder logits invariant for C4, and NOT reflection invariant), 2026-09-25.
+- [x] C8/C16 off-grid equivariance error recorded. — escnn's interpolated action on input and
+  output, central disk: C8 at 45/135/225/315°: feature rel. err 0.165–0.165, mean-token
+  rel. change 0.0037–0.0037; C16 at the 12 non-90° multiples of 22.5°: feature 0.192–0.240,
+  mean token 0.0006–0.0008 (report only; includes pixel-interpolation error of both sides),
+  2026-09-25.
+- [x] Param-matched (±10%) and FLOP-matched (±10%) configs; throughput recorded. —
+  `scripts/profile_encoders.py` → `benchmarks/encoders/profile.json` (encoder only, 384 px, FLOPs
+  by `FlopCounterMode`, CPU fp32 throughput on this VM; GPU throughput comes from Colab):
+
+  | encoder | fields / widths | params | vs base | GFLOPs | vs base | CPU img/s (eval) |
+  |---|---|---|---|---|---|---|
+  | baseline (A/B) | 64-128-256-512 ch | 17.81M | — | 10.27 | — | 15.9 |
+  | C8 param-matched | 28-56-111-222 regular fields | 17.71M | −0.6% | 126.98 | +1136% | 1.6 |
+  | C8 FLOP-matched | 7-14-27-55 regular fields | 7.02M | −60.6% | 10.29 | +0.2% | 10.8 (8.0 train-mode) |
+
+  Both include the identical 2-layer token mixer (≈6.3M). The sweep uses the FLOP-matched config
+  pending U5, 2026-09-25.
+- [x] Overfit test passes. — FLOP-matched C8 (32.4M total, encoder 7.0M), identical settings to the
+  baseline test: 256/256 = 100% at step 1,750 (2.7% @250, 53.5% @500, 73.0% @750, 77.3% @1000,
+  89.5% @1250, 93.4% @1500); 72 min → `benchmarks/train/overfit_steerable_c8.json`, 2026-09-25.
+- [x] `.export()` matches training model within 1e-4; speedup recorded. — FLOP-matched C8 @384 px
+  on 4 rendered test images, eval mode: max rel. err 0.0e+00; CPU throughput
+  5.23 (escnn train-mode) / 5.73 (escnn eval) /
+  6.24 img/s (exported) → speedup 1.19× / 1.09×
+  (`benchmarks/encoders/export.json`); evaluation uses the exported encoder, 2026-09-25.
 - [ ] [colab] C8 on 200k vs baseline.
 
 ## Phase 4 — Experiment runner
-- [ ] Sweep configs A/B/C/C+ × {10k, 50k, 200k, 1M} × ≥ 3 seeds from one definition.
-- [ ] Every config passes 50-step dry run.
-- [ ] Aggregation script (table + plots) tested on synthetic logs.
-- [ ] GPU-hour estimates per run and total.
+- [!] ~~Sweep configs A/B/C/C+ × {10k, 50k, 200k, 1M} × ≥ 3 seeds from one definition.~~
+  Superseded by Am1-E (grid redefined), 2026-09-25.
+- [x] Aggregation script (table + plots) tested on synthetic logs. *(Am1-D rules apply.)* —
+  `scripts/aggregate.py`: results.md/json, data-efficiency, real-fraction and rotation-sweep plots;
+  `tests/test_aggregate.py` 2/2 on 216 fake runs' logs, 2026-09-25.
 - [ ] [colab] Sweep executed.
 
+### Am1-E — Experiment grid (replaces the Phase 4 sweep definition)
+- [x] Grid = arms {A, B, C, C+} (D/E when Phase 5 lands) × real fraction (Am1-B) × size
+  {50k, 200k} × ≥ 3 seeds, generated from one sweep file. — `configs/sweep.yaml` →
+  `scripts/make_sweep.py` → 132 configs in `configs/sweep/` + `index.csv` (4 arms × 6 placeholder
+  fractions × 2 sizes × 3 seeds, f = 1.0 kept at one size only since it uses no synthetic data);
+  generator refuses arm overrides of the decoder and asserts one decoder config, 2026-09-25.
+- [x] Every config passes a 50-step dry run. — `scripts/dry_run_sweep.py`: 132/132 configs ran 50
+  steps (64 px, batch 4, fp32, CPU; architecture/optimizer/mixture/augmentation as configured;
+  f > 0 configs mixed the stand-in real shards, n_real = 400); one run per arm (A, B, C, C+) was
+  evaluated (angle 0 + 4-angle sweep on a rendered and a stand-in real set) and aggregated →
+  `benchmarks/sweep/dry_run.json`. The first pass exposed a real bug (steerable checkpoints did not
+  reload: escnn caches filters only in eval mode) → fixed with `load_model_state`, regression test
+  added, C/C+ re-run. After arm D was added (final FLOP-matched config): 165/165 (D: 33/33, one D run
+  evaluated), 2026-09-25. Full test suite: 125 passed.
+- [x] Compute estimate (GPU-h per run and total) in TASK.md; if > 150 A100-h, propose a pruned grid
+  that still tests H1–H3 under Needs user. — see "Compute estimate" below; full grid 150.9 A100-h
+  (> 150) → pruned grid proposed in U5, 2026-09-25.
+
+#### Compute estimate (2026-09-25; `scripts/estimate_compute.py`)
+Assumptions (NOT measured; `configs/compute_assumptions.yaml`): A100 bf16, 384 px, batch 64;
+training 600 img/s for the baseline, 400 img/s for the steerable C8 (FLOP-matched), 300 img/s for
+arm D; eval 58k greedy decodes at 1000 img/s; 0.05 h overhead per run. Steps: 20k (50k set),
+40k (200k set) → 1.28M / 2.56M samples seen.
+
+| arm | size | runs | GPU-h/run | GPU-h |
+|-----|------|------|-----------|-------|
+| A, B (each) | 50k | 18 | 0.66 | 11.9 |
+| A, B (each) | 200k | 15 | 1.25 | 18.8 |
+| C, C+ (each) | 50k | 18 | 0.95 | 17.2 |
+| C, C+ (each) | 200k | 15 | 1.84 | 27.7 |
+| **full grid, arms A–C+** | | **132** | | **150.9** |
+| pruned grid A–C+ (fractions {0, 0.1, 0.5}) | | 72 | | 84.8 |
+| D (each size: 50k / 200k) | 50k / 200k | 18 / 15 | 1.25 / 2.44 | 22.5 / 36.5 |
+| **full grid incl. D** | | **165** | | **210.0** |
+| **pruned grid incl. D** | | **90** | | **117.9** |
+
+Arm D was added to `configs/sweep.yaml` when Phase 5 landed (165 configs). The estimate will be redone with the img/s that the
+first Colab runs log (`img_per_s` in `log.jsonl`).
+
 ## Phase 5 — Equivariant attention (D) and canonicalization (E, optional)
-- [ ] Steerable stem + group-equivariant self-attention with rotated relative positions.
-- [ ] Equivariance thresholds as Phase 3; overfit passes.
-- [ ] Memory estimate: batch ≥ 32 @ 384 px bf16 fits 40 GB.
-- [ ] Arm E invariance < 1e-4 (if implemented).
+- [x] Steerable stem + group-equivariant self-attention with rotated relative positions. —
+  `ouroboros/encoder/equiv_attention.py`: tokens on the lifted grid (location × C_N rotation), bias
+  b(R_h⁻¹(y−x), h′−h), mean over h → invariant token set; encoder `equiv_attention`, final config
+  FLOP-matched: C8 trunk 7-14-27-55 + 2 group-attention layers (d = 160, ff 640, 8 heads):
+  encoder 1.40M params, 10.33 GFLOPs @384 px (baseline 10.27, +0.6%), 2026-09-25.
+- [x] Equivariance thresholds as Phase 3; overfit passes. — 384 px, final config: C4 feature max
+  rel. err 1.0e-6, token set 5.5e-7 (90/180/270°); C8 at 90° multiples 1.3e-6 / 4.1e-7; C8 off-grid
+  45° (report only): feature 0.199, mean token 0.0019 → `benchmarks/encoders/equivariance_attention.json`;
+  unit tests `tests/test_equiv_attention.py` 5/5 (token-set invariance C4/C8, lifted-token equivariance
+  inside the attention, bias depends on relative pose only, not mirror-invariant, export parity).
+  Overfit, same settings as Phase 2/3: 256/256 = 100% at step 2,000 (2.3% @250, 58.6% @500, 72.7% @750, 72.7% @1000, 88.7% @1250, 92.6% @1500, 98.0% @1750, 100.0% @2000)
+  → `benchmarks/train/overfit_equiv_attention_c8.json`. (The earlier d = 256 variant also passed, at
+  step 2,250, before it was FLOP-matched.) 2026-09-25.
+- [x] Memory estimate: batch ≥ 32 @ 384 px bf16 fits 40 GB. — `scripts/memory_estimate.py`
+  (16 B/param static + saved-for-backward activations measured at batch 1 and 2 on CPU, linear
+  extrapolation, +20%): arm D batch 32 → 9.2 GiB bf16 estimate, 17.9 GiB fp32 upper bound; max
+  batch in 40 GB ≈ 137 (activations 0.44 GiB/sample fp32). Arm C (for reference): 4.4 / 8.2 GiB.
+  → `benchmarks/encoders/memory_*.json`, 2026-09-25.
+- [x] Arm E invariance < 1e-4 (if implemented). — `ouroboros/encoder/canonicalize.py`: C4-equivariant
+  orientation net (escnn, rotations only) → argmax → rotate back → baseline encoder; trained with a
+  canonicalization prior (CE towards the true orientation). 384 px, 4 rendered test images: max
+  rel. error of the encoder output under 90/180/270° = 0.0 / 0.0 / 0.0 (exact: the canonical image is
+  a pixel permutation); 17.83M params, 10.39 GFLOPs (+1.1%) → `benchmarks/encoders/canonicalization.json`;
+  `tests/test_canonicalize.py` 2/2 (logits cyclically shift, output invariant, prior loss trains the
+  orientation net). Added to `configs/sweep.yaml` as an OPTIONAL arm (expanded with
+  `make_sweep.py --with-optional`, +33 runs); decision in U5, 2026-09-25.
 - [ ] [colab] D (and E) in sweep.
 
-## Phase 6 — Geometry / MACE
-- [ ] SMILES → N ETKDG conformers → MACE-OFF opt → lowest-energy conformer (energy, forces).
-- [ ] Embedding success ≥ 98% on 1,000 molecules; failures logged.
-- [ ] Stereo preservation ≥ 99% on 1,000 chiral molecules.
-- [ ] Convergence (fmax < 0.05 eV/Å) ≥ 95%; median time recorded.
-- [ ] Enantiomer pairs |ΔE| < 1e-3 eV (20 pairs).
-- [ ] Error categorization unit tests 100%.
-- [ ] Error-propagation script tested on a small set.
+## Phase 6 — Geometry / MACE (positioned as an error-propagation analysis, Am1-F)
+- [x] SMILES → N ETKDG conformers → MACE-OFF opt → lowest-energy conformer (energy, forces). —
+  `ouroboros/geometry/conformers.py::lowest_energy_conformer` (ETKDGv3, default N = 10, random-coords
+  retry; MACE-OFF23 via `mace_off`, ASE LBFGS, fmax 0.05 eV/Å, float64; returns energy, forces,
+  positions, convergence, stereo check), 2026-09-25.
+- [x] Embedding success ≥ 98% on 1,000 molecules; failures logged. — regenerated test set, first
+  1,000 molecules, 10 ETKDGv3 conformers each: 1000/1000 = 100% (0.31 s/mol); failures would be
+  logged with reasons in `benchmarks/geometry/embed.json` (the first run, before the bridged-ring
+  data fix, had 997/1000 with 3 logged `etkdg_failed` bridged bicycles), 2026-09-25.
+- [x] Stereo preservation ≥ 99% on 1,000 chiral molecules. — 1,000 test molecules with ≥ 1 specified
+  stereo element: 999/1000 = 99.9% have the input stereo in ALL 10 conformers (only specified
+  elements compared via CIP labels) → `benchmarks/geometry/embed.json`, 2026-09-25.
+- [x] Convergence (fmax < 0.05 eV/Å) ≥ 95%; median time recorded. — first 40 regenerated test
+  molecules × 3 conformers, MACE-OFF23 small, CPU (4 cores), LBFGS float64: 40/40 embedded,
+  lowest-energy conformer converged 40/40 = 100%, all 120 conformers converged; stereo preserved
+  after relaxation 40/40 (corrected check); median 25.2 s/molecule on CPU → `benchmarks/geometry/relax.json`.
+  The 1,000-molecule × 10-conformer GPU run is in `notebooks/03_geometry.ipynb` (U8), 2026-09-25.
+- [x] Enantiomer pairs |ΔE| < 1e-3 eV (20 pairs). — 20 chiral test molecules (regenerated data, none
+  skipped): ETKDG conformer and its mirror image relaxed identically (LBFGS, MACE-OFF23 small, fmax
+  0.05, float64), all 40 converged; max |ΔE| = 7.3e-12 eV → `benchmarks/geometry/enantiomers.json`,
+  2026-09-25.
+- [x] Error categorization unit tests 100%. — `tests/test_geometry.py`: 19 hand-constructed
+  prediction/truth pairs (correct incl. reordered / salt, enantiomer incl. both-centre inversion and
+  E/Z-kept, diastereomer incl. dropped stereo, E/Z swap and ring cis/trans, meso/achiral, isomeric
+  and non-isomeric constitutional, invalid) 19/19 pass. One of my own hand labels was wrong
+  (`OC(=O)[C@@H](C)N` is the enantiomer, verified with RDKit) and was corrected, 2026-09-25.
+- [x] Error-propagation script tested on a small set. — `scripts/error_propagation.py` on 8
+  hand-made pairs (`tests/fixtures/propagation_pairs.tsv`, 3 conformers, `--noise-seeds`):
+  correct 1 (ΔE 0), enantiomer 2 (ΔE exactly 0 via the mirrored truth geometry), diastereomer 2
+  (|ΔE| 0.095, 0.132 eV), constitutional 2 (isomer |ΔE| 0.160 eV; non-isomer reported NaN),
+  invalid 1; conformer-search noise floor (truth searched with 2 seeds) median 1.6e-4, max 1.6e-3 eV
+  → `benchmarks/geometry/propagation_fixture_*.json*`. The first version (independent searches for
+  enantiomers) gave a spurious 0.076 eV — fixed as described in the script docstring, 2026-09-25.
 - [ ] [colab] Energy-error distribution per category on best arm's predictions.
+
+### Am1-F — README / related work
+- [x] Research question replaced; H1–H3 pre-registered with date (before any Colab result). —
+  README "Pre-registered hypotheses (registered 2026-09-25 …)"; no Colab run has happened yet.
+- [x] Related work cites arXiv:2608.09100 and VERDICT (motivating), DECIMER, MolScribe, MolNexTR,
+  MolGrapher, MolSight, MolParser, DeepMoLM, Auto3D. — README "Related work", 2026-09-25
+  (VERDICT arXiv id 2608.22183 found via web search; paper bodies not readable from sandbox).
+- [x] Only novelty statement: "To our knowledge, the first systematic study of group-equivariant
+  vision encoders for OCSR, evaluated against both augmentation and real-data supervision." —
+  `grep -niE 'first|groundbreak' README.md` → exactly line 23 (that sentence), 2026-09-25.
+- [x] Geometry/MACE stage positioned as error-propagation analysis, not a novel pipeline. —
+  README "Geometry / MACE stage", 2026-09-25.
 
 ## Decisions log
 
-- 2026-09-25 — torch pinned to 2.10.0 locally (PyPI CUDA wheel; the pytorch.org CPU index is
-  blocked by the sandbox proxy). On Colab the preinstalled CUDA torch is kept
-  (`requirements-colab.txt` = `requirements.txt` minus torch/triton/nvidia/cuda wheels) to avoid a
-  multi-GB download and driver mismatch; the notebook prints the torch version used.
+- 2026-09-25 — torch pinned to 2.10.0 (PyPI CUDA 12.8 wheel; the pytorch.org CPU index is blocked
+  by the sandbox proxy).
+- 2026-09-28 — Colab setup changed (user report: notebook 00 failed with "No matching distribution
+  found for lie_learn==0.0.2"). Colab's Python is now 3.13; `lie_learn` 0.0.2 (imported by escnn at
+  import time) only has cp39–cp312 wheels and no sdist, and numpy 1.26.4 / matscipy 1.1.1 have no
+  3.13 builds. The notebooks now create a Python 3.11 venv with `uv` (`uv venv --python 3.11
+  --python-preference only-managed /content/venv`) and install the full `requirements.txt` (same
+  pins as local, incl. torch 2.10.0+cu128); every project command runs with `/content/venv/bin/python`.
+  `requirements-colab.txt` (Colab torch + remaining pins) was removed. Verified here: uv-downloaded
+  CPython 3.11.16 venv, install 49 s, 129/129 tests pass. My earlier Colab assumption (Python 3.12,
+  preinstalled torch) was wrong and was never tested on Colab.
+- 2026-09-28 — Second Colab report: 4 test failures + mace import error, all from the kernel's
+  inherited `MPLBACKEND=module://matplotlib_inline.backend_inline` (module absent in the venv →
+  matplotlib refuses to import). Reproduced locally (same 4 failures). Fixes: `ouroboros/__init__.py`
+  falls back to Agg when the backend module is missing; notebooks set `MPLBACKEND=Agg`; rendering
+  errors now raise instead of being counted as drops (the env bug had silently dropped ~90% of the
+  tiny test dataset — the one font that does not need matplotlib survived). Regression test added;
+  130/130 pass with the Colab variable set.
+- 2026-09-29 — Third Colab report: the import check (mace imported before ouroboros) still failed.
+  Now the fix no longer relies on the kernel environment: every notebook command runs as
+  `MPLBACKEND=Agg /content/venv/bin/python …`, and the install cell adds a venv startup hook
+  (`scripts/colab_mplbackend.pth`) that replaces an inherited inline backend for ANY python of the
+  venv. Verified locally in a fresh venv with the Colab variable set: mace/matplotlib import OK
+  without importing ouroboros, 130/130 tests pass.
+- 2026-09-29 — User reported notebook 00 now runs (numbers for U0 not yet reported). User named the
+  real corpus: HF dataset `yaniguan/ocsr-dataset` (user-made). huggingface.co is blocked here, so the
+  converter detects the layout itself and runs in Colab (notebook 04). Default role assignment —
+  the dataset's `train` split may train, `val`/`test`/unsplit rows are eval only — is a
+  conservative placeholder until the user confirms (U1). Added pins `huggingface_hub==2.0.0`,
+  `pyarrow==25.0.1` (+ deps); `uv pip install --dry-run` of the full requirements resolves;
+  135/135 tests pass.
 - 2026-09-25 — numpy is pinned to 1.26.4: `lie_learn` (escnn dependency) and `matscipy`
   (mace-torch dependency) require numpy < 2.
 - 2026-09-25 — Colab notebook runs project code in subprocesses (`!python ...`) so the pinned
   numpy is picked up without a kernel restart.
 - 2026-09-25 — Notebooks are generated from `scripts/make_*_nb.py` so they diff cleanly in review.
+- 2026-09-25 — Molecule sources: ZINC250k + MOSES (both reachable from the sandbox; ChEMBL/PubChem
+  FTP are blocked). Both are ZINC-derived and drug-like; the largest molecules have < 60 heavy
+  atoms, so the upper bound of the filter is rarely active. Other sources can be added in
+  `ouroboros/data/sources.py`.
+- 2026-09-25 — "Neutral" = net formal charge 0 and no radicals, evaluated after standardization
+  (largest organic fragment + RDKit `Uncharger`), so protonated amines / carboxylate salts are
+  neutralized instead of discarded; charge-separated neutral groups (nitro) are kept.
+- 2026-09-25 — Labels are re-derived from the drawing (2D coords + wedge flags → MolBlock → RDKit
+  stereo perception), and the drawn molecule is that same MolBlock molecule. Images and labels
+  therefore cannot disagree; the mirror test exercises exactly this path.
+- 2026-09-25 — Every drawing depicts a definite geometry for stereogenic double bonds, so E/Z is
+  always assigned; tetrahedral stereo is assigned (randomly, seeded by the InChIKey) only for
+  molecules drawn into the stereo bucket. Train order is interleaved so every prefix has the target
+  stereo fraction (default 0.40) → 10k ⊂ 50k ⊂ 200k ⊂ 1M are nested prefixes of one manifest.
+- 2026-09-25 — Random stereo assignment only accepts 3D-embeddable isomers for molecules with
+  bridgehead atoms (2.3% of stereo-capable pool molecules): up to 16 random isomers, first one that
+  a quick ETKDG check (5 attempts, chirality enforced) can embed; none → no stereo for that molecule.
+  RDKit's `tryEmbedding` did the same but cost ~25 s per bridged molecule (≈190 CPU-h at 1M scale);
+  the quick check costs 0.35 s (9 ms per row on average). Found by the Phase 6 embedding benchmark:
+  all 3 ETKDG failures among 1,000 test molecules were bridged bicycles with impossible random tags.
+  Manifests / local shards / Phase 1 checks are regenerated. Composition now also prefetches stereo
+  assignments in parallel (`--workers`), with output byte-identical to the serial path (tested).
+- 2026-09-25 — Splits are assigned by a hash of the InChIKey connectivity block, so all
+  stereoisomers of a constitution share a split (stricter than full-key disjointness).
+- 2026-09-25 — The molecule is drawn inside the inscribed circle of the canvas so any rotation
+  about the image centre never crops it; image tensors use ink = 1 − gray/255 (background 0) so
+  zero-fill rotation adds no border.
+- 2026-09-25 — Training reads the WebDataset tar shards by random access (tar member offsets
+  indexed once) instead of streaming, so sample order is a pure function of (seed, position) and
+  resume is exact. Shards remain valid WebDataset shards.
+- 2026-09-25 — Am1-C: from search-engine snippets of arXiv:2608.09100 (full text blocked here), the
+  following are confirmed: RDKit parse + canonicalize; exact match requires equality under the
+  complete stereochemistry convention; identity additionally checked via InChIKey; validity =
+  fraction parseable by RDKit; salts/solvates reduced to the neutral largest fragment, mapped to a
+  stereo-preserving InChIKey; real benchmarks ACS, CLEF-IP, USPTO. Everything else is unverified (U3).
+- 2026-09-25 — Shards store the CLEAN drawing plus its style; blur/noise/JPEG are applied at load
+  time with the stored per-sample seed (bit-identical to eager degradation, unit-tested). Noise made
+  PNGs 5× larger (55 vs 5 KB); now 1M train ≈ 6.8 GB instead of ≈ 28 GB.
+- 2026-09-25 — One fixed 133-token vocabulary (`configs/vocab.json`) for every arm: all 50 tokens of
+  the 1M synthetic manifest + common tokens of real documents (other elements, charges, isotopes).
+- 2026-09-25 — Baseline = ResNet-18-style CNN (stride 32 → 12×12 tokens at 384 px) + learned
+  absolute 2D positional embedding + 2-layer Transformer mixer; the steerable encoders use the same
+  stride-32 token grid and mixer size, so only the encoder family differs.
+- 2026-09-25 — Steerable trunk uses stride-1 R2Conv + fixed binomial blur + 2×2 average pooling on
+  even maps instead of strided convolutions: stride-2 sampling of an even-sized map is not rotation
+  symmetric, 2×2 windows are. Measured 90° errors ≈ 1e-6 at 384 px.
+- 2026-09-25 — Option (a) token head (group pooling + distance-only relative bias) cannot represent
+  global handedness from token geometry (distance matrices of mirror-image point sets are equal);
+  chirality must come from the per-location C_N-invariant (but not reflection-invariant) features.
+  Arm D (option b) keeps relative orientation. Flagged as an expected mechanism difference, not tuned.
+- 2026-09-25 — Arms C/C+ use the FLOP-matched C8 config (7-14-27-55 fields) by default; the
+  param-matched one costs 12.4× the FLOPs (U5).
+- 2026-09-25 — Arm D is FLOP-matched too: with attention width 256 its encoder cost 12.57 GFLOPs
+  (+22%); attn_dim 160 / ff 640 gives 10.34 GFLOPs (+0.6%, 1.40M encoder params). Arm D's
+  overfit / equivariance / memory / dry-run evidence is re-measured for this final config.
+- 2026-09-25 — Overfit tests run with dropout 0 (the ~40% dropout overhead on CPU and memorisation
+  is the point of the test); resume test keeps the default dropout 0.1 to test RNG restoration.
+- 2026-09-25 — Evaluation uses the last checkpoint (no early stopping or checkpoint selection on
+  test data); the rotation sweep uses a fixed 2,000-sample prefix of each eval set per angle
+  (stored as `<set>:sweep`) while angle 0 is scored on the full set.
+- 2026-09-25 — Grid: real_fraction = 1.0 is trained at one synthetic size only (it uses no
+  synthetic data); 132 instead of 144 configs.
+- 2026-09-25 — A STAND-IN real dataset (600 cropped synthetic val images, `scripts/make_standin_real.py`)
+  exercises the real-data code paths locally; it is never reported as real-data evidence.
+- 2026-09-25 — MACE-OFF23 "small" locally (CPU), "medium" (mace default) recommended for Colab runs;
+  LBFGS, fmax 0.05 eV/Å, float64.
 
 ## Deviations
 
+- 2026-09-25 — The plan amendment was delivered a second time after a container restart; its content is identical to Am1, already merged above, so nothing was changed.
+
 - Added `scripts/` (notebook generators and data-generation CLIs) to the proposed repo layout.
+- Am1 (2026-09-25): research question reframed around the synthetic-to-real gap; Phase 4 sweep
+  redefined (sizes {50k, 200k} × real fractions instead of {10k, 50k, 200k, 1M}); README now allows
+  exactly one sanctioned "first" sentence (overrides the Phase 0 "no first claims" wording);
+  real-data adapter, mixture sampler, scoring parity and split reporting added.

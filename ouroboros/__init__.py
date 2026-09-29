@@ -7,3 +7,24 @@ Symmetry per stage (see README):
 """
 
 __version__ = "0.0.1"
+
+
+def _sanitize_mpl_backend() -> None:
+    """Jupyter/Colab kernels export MPLBACKEND=module://matplotlib_inline...; subprocesses running
+    in another environment (our Colab venv) inherit it and matplotlib then refuses to import.
+    Fall back to the headless Agg backend when the requested backend module is not importable."""
+    import importlib.util
+    import os
+
+    backend = os.environ.get("MPLBACKEND", "")
+    if backend.startswith("module://"):
+        module = backend[len("module://") :]
+        try:
+            found = importlib.util.find_spec(module) is not None
+        except (ImportError, ValueError):
+            found = False
+        if not found:
+            os.environ["MPLBACKEND"] = "Agg"
+
+
+_sanitize_mpl_backend()
