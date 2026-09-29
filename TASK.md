@@ -19,11 +19,20 @@ or changed are tagged **(Am1-A … Am1-F)**.
    line, (c) the output of the last cell (`pip freeze` subset) and the `nvidia-smi` line,
    (d) the pytest summary line.
 
-### U1 — Real training / evaluation data from arXiv:2608.09100 (Am1-A)
-- Where are the real training sets and the real-document eval sets (ACS, CLEF-IP, USPTO per the
-  paper's abstract) stored, in what format (image paths + SMILES? CSV/JSONL columns?), and **may
-  they be used in this project** (license / redistribution)?
-- Until then the adapter is built and tested against a synthetic stand-in manifest.
+### U1 — Real training / evaluation data (Am1-A)
+- **Partly answered 2026-09-29:** the real corpus is the user-made HF dataset
+  `yaniguan/ocsr-dataset`. huggingface.co is blocked by this sandbox's network policy, so its layout
+  could not be inspected here; ingestion is therefore schema-detecting and runs in Colab.
+- **To do:** open `notebooks/04_real_data.ipynb` (CPU runtime is enough; add Colab secret
+  `HF_TOKEN` if the dataset is private), Run all. **Report back:** the inspect output
+  (`MyDrive/ouroboros/real/hf_inspect.json`), `hf_manifest_stats.json`, each source's
+  `ingest_stats.json`, and the leakage table.
+- **Still needed from you:** (a) which sources/splits are real-document **eval** sets and which
+  may be used for **training** (default: the dataset's own `train` split trains, `val`/`test` and
+  rows without a split are eval only); (b) license / permission of the underlying images (DATA.md);
+  (c) whether the paper's own real sets (ACS, CLEF-IP, USPTO per its abstract) are included.
+- Alternatively, allow `huggingface.co` in the environment's network settings and I inspect it
+  directly.
 
 ### U2 — Real-data fractions of the paper's grid (Am1-B)
 - The abstract mentions 0, 9.5% and 50.2% real data for Qwen2.5-VL. Please give the full list of
@@ -166,7 +175,15 @@ cores (`data/full/pool.stats.json`).
   `DATA.md` notes redistribution restrictions. — `scripts/check_no_data.py` installed as
   `.git/hooks/pre-commit` (`scripts/install_git_hooks.sh`, also `.pre-commit-config.yaml`); a staged
   `benchmarks/real_tmp/x.png` was refused ("Commit refused"), rules unit-tested, 2026-09-25.
-- [!] Real sets from the paper — waiting on U1.
+- [~] HF corpus path (U1): `ouroboros/data/hf_manifest.py` + `scripts/hf_to_manifest.py`
+  (inspect / convert; detects HF `Image` structs, raw bytes or image paths, SMILES column by name
+  and RDKit parse rate, source from column or config directory, split from column or HF file
+  naming, unknown split → `test`; overrides for every role) and `notebooks/04_real_data.ipynb`
+  (download → inspect → convert → ingest per source → leakage check + `eval_keys.txt`).
+  `tests/test_hf_manifest.py` (5 pass: parquet + imagefolder + plain-CSV layouts, end-to-end into
+  `ShardDataset`); CLI smoke run on a fake snapshot: 3 sources ingested, leakage 0, 2026-09-29.
+  Real run pending U1 (Colab).
+- [!] Real sets — waiting on U1 (notebook 04 run + eval/train roles of each source).
 
 ## Phase 2 — Baseline model and training infrastructure
 - [x] Baseline encoder + 6-layer Transformer decoder; 20M–60M params. — 43.17M total (encoder
@@ -414,6 +431,13 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
   (`scripts/colab_mplbackend.pth`) that replaces an inherited inline backend for ANY python of the
   venv. Verified locally in a fresh venv with the Colab variable set: mace/matplotlib import OK
   without importing ouroboros, 130/130 tests pass.
+- 2026-09-29 — User reported notebook 00 now runs (numbers for U0 not yet reported). User named the
+  real corpus: HF dataset `yaniguan/ocsr-dataset` (user-made). huggingface.co is blocked here, so the
+  converter detects the layout itself and runs in Colab (notebook 04). Default role assignment —
+  the dataset's `train` split may train, `val`/`test`/unsplit rows are eval only — is a
+  conservative placeholder until the user confirms (U1). Added pins `huggingface_hub==2.0.0`,
+  `pyarrow==25.0.1` (+ deps); `uv pip install --dry-run` of the full requirements resolves;
+  135/135 tests pass.
 - 2026-09-25 — numpy is pinned to 1.26.4: `lie_learn` (escnn dependency) and `matscipy`
   (mace-torch dependency) require numpy < 2.
 - 2026-09-25 — Colab notebook runs project code in subprocesses (`!python ...`) so the pinned

@@ -3,8 +3,9 @@
 Installed as .git/hooks/pre-commit by ``scripts/install_git_hooks.sh`` (or via
 ``.pre-commit-config.yaml``). Checks the staged files; exits 1 on any violation.
 Rules (see DATA.md):
-  * nothing under data/, data_cache/, real_data/, real/, shards/, runs/, checkpoints/
-  * no archives / shard indices / pools: .tar .tar.gz .tgz .zip .idx.json .tsv.gz .npz .ckpt .pt
+  * nothing under data/, data_cache/, real_data/, real/, hf/, hf_real/, shards/, runs/, checkpoints/
+  * no archives / shard indices / pools / tables: .tar .tar.gz .tgz .zip .idx.json .tsv.gz .npz
+    .parquet .arrow .ckpt .pt
   * raster images only under benchmarks/ (our own plots), and never with "real" in the path
   * no file larger than 5 MB
 """
@@ -15,7 +16,17 @@ import subprocess
 import sys
 from pathlib import PurePosixPath
 
-BLOCKED_DIRS = {"data", "data_cache", "real_data", "real", "shards", "runs", "checkpoints"}
+BLOCKED_DIRS = {
+    "data",
+    "data_cache",
+    "real_data",
+    "real",
+    "hf",
+    "hf_real",
+    "shards",
+    "runs",
+    "checkpoints",
+}
 BLOCKED_SUFFIXES = (
     ".tar",
     ".tar.gz",
@@ -24,6 +35,8 @@ BLOCKED_SUFFIXES = (
     ".idx.json",
     ".tsv.gz",
     ".npz",
+    ".parquet",
+    ".arrow",
     ".ckpt",
     ".pt",
 )

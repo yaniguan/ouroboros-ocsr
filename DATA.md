@@ -47,6 +47,18 @@ images/0001.png,CC(=O)Oc1ccccc1C(=O)O,USPTO,test,US1234567-C1
 Ingest with `python scripts/ingest_real.py --manifest M.csv --out real/<name>`; rows that fail are
 logged to `real/<name>/ingest_failures.jsonl` with a reason and counted in `ingest_stats.json`.
 
+### Real corpus on the Hugging Face Hub
+
+The user's real corpus is the HF dataset `yaniguan/ocsr-dataset` (made by the user). It is
+downloaded only inside Colab (`notebooks/04_real_data.ipynb`; private access via a Colab secret
+`HF_TOKEN`), never into the repository. `scripts/hf_to_manifest.py inspect` reports the detected
+image / SMILES / source / split columns; `convert` writes one manifest per source
+(`/content/hf_real/manifests/<source>.csv`), and each is ingested to
+`MyDrive/ouroboros/real/<source>`. Rows with no recognisable split are assigned `test`, so an
+unlabelled row is never trained on. Snapshot, extracted images and manifests stay on the Colab
+disk / Drive; `hf/`, `hf_real/`, `*.parquet`, `*.arrow` are git-ignored and refused by the
+pre-commit guard.
+
 ## Leakage control
 
 `scripts/check_leakage.py` compares standard InChIKeys of every real-document eval set with every

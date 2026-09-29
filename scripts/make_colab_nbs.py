@@ -6,6 +6,7 @@
 01_generate_data.ipynb   Phase 1: build the 1M-train dataset (200k = its prefix) and store on Drive.
 02_train_eval.ipynb      Train one sweep config (resumable) and evaluate it; results on Drive.
 03_geometry.ipynb        MACE-OFF benchmarks on 1,000 molecules + energy-error propagation.
+04_real_data.ipynb       Real corpus from Hugging Face -> manifests -> real shards + leakage check.
 """
 
 import json
@@ -254,6 +255,82 @@ def nb03() -> list:
     return cells
 
 
+def nb04() -> list:
+    cells = setup_cells(
+        "real corpus from Hugging Face (Am1-A)",
+        "Downloads the real OCSR corpus from the Hugging Face Hub, detects its columns / splits / "
+        "sources, writes one manifest per source, ingests each into shards on Drive "
+        "(`MyDrive/ouroboros/real/<source>`) and runs the InChIKey leakage check against the "
+        "synthetic training set. CPU-only. For a private dataset add a Colab secret `HF_TOKEN` "
+        "(read access). **Check the inspect output before converting**: if a column, split or "
+        "source was detected wrongly, set the overrides in the convert cell.",
+    )
+    cells += [
+        code(
+            "HF_REPO = 'yaniguan/ocsr-dataset'\n"
+            "HF_LOCAL = '/content/hf/ocsr-dataset'  # raw snapshot (local disk, not Drive)\n"
+            "HF_OUT = '/content/hf_real'  # extracted images + manifests (local disk)\n"
+            "REAL = f'{DRIVE_ROOT}/real'  # ingested shards, one directory per source\n"
+            "try:\n"
+            "    from google.colab import userdata\n"
+            "    os.environ['HF_TOKEN'] = userdata.get('HF_TOKEN')\n"
+            "except Exception:\n"
+            "    print('no HF_TOKEN secret: fine for a public dataset')"
+        ),
+        code(
+            "# download + inspect (no files written besides the snapshot) -- report this output back\n"
+            "t = time.time()\n"
+            "!{PY} scripts/hf_to_manifest.py inspect --repo {HF_REPO} --local {HF_LOCAL} | tee {REAL}/hf_inspect.json\n"
+            "!du -sh {HF_LOCAL}\n"
+            "print(f'download + inspect {(time.time() - t) / 60:.1f} min')"
+        ),
+        code(
+            "# convert: set overrides only if the inspect output detected something wrongly, e.g.\n"
+            "# OVERRIDES = '--smiles-col gt_smiles --source-col dataset'; SPLIT_MAP = 'validation=test'\n"
+            "OVERRIDES = ''\n"
+            "SPLIT_MAP = ''  # e.g. 'val=test'; rows without a split become 'test' (never trained on)\n"
+            "SPLIT_ARG = f'--split-map {SPLIT_MAP}' if SPLIT_MAP else ''\n"
+            "!rm -rf {HF_OUT}\n"
+            "!{PY} scripts/hf_to_manifest.py convert --local {HF_LOCAL} --out {HF_OUT} {OVERRIDES} {SPLIT_ARG}\n"
+            "!cp {HF_OUT}/hf_manifest_stats.json {REAL}/"
+        ),
+        code(
+            "# ingest every source into its own shard directory (standardized labels, failures logged)\n"
+            "import glob\n"
+            "SOURCES = sorted(os.path.basename(m)[:-4] for m in glob.glob(f'{HF_OUT}/manifests/*.csv'))\n"
+            "print(SOURCES)\n"
+            "t = time.time()\n"
+            "for src in SOURCES:\n"
+            "    subprocess.run(['rm', '-rf', f'{REAL}/{src}'], check=True)\n"
+            "    !{PY} scripts/ingest_real.py --manifest {HF_OUT}/manifests/{src}.csv --out {REAL}/{src}\n"
+            "print(f'ingest {(time.time() - t) / 60:.1f} min')"
+        ),
+        code(
+            "# leakage: every real val/test set vs synthetic train (if generated) and real train sets.\n"
+            "# Writes the eval InChIKeys for data.exclude_keys (load-time exclusion from training).\n"
+            "def has(src, split):\n"
+            "    return bool(glob.glob(f'{REAL}/{src}/{split}-*.tar'))\n"
+            "EVAL = ' '.join(f'{s}_{sp}={REAL}/{s}:{sp}' for s in SOURCES for sp in ('val', 'test') if has(s, sp))\n"
+            "TRAIN = ' '.join(f'{s}_train={REAL}/{s}:train' for s in SOURCES if has(s, 'train'))\n"
+            "synth = f'{DRIVE_ROOT}/data/full/manifests/train.tsv'\n"
+            "if os.path.exists(synth):\n"
+            "    TRAIN += f' synth1m={synth}'\n"
+            "print('eval:', EVAL, '\\ntrain:', TRAIN)\n"
+            "!{PY} scripts/check_leakage.py --eval {EVAL} --train {TRAIN} --dump-eval-keys {REAL}/eval_keys.txt | tee {REAL}/leakage.txt"
+        ),
+        code(
+            "# ---- report back ----\n"
+            "!cat {REAL}/hf_manifest_stats.json | head -60\n"
+            "for src in SOURCES:\n"
+            "    print('==', src)\n"
+            "    !cat {REAL}/{src}/ingest_stats.json && head -3 {REAL}/{src}/ingest_failures.jsonl\n"
+            "!cat {REAL}/leakage.txt; wc -l {REAL}/eval_keys.txt; du -sh {REAL}\n"
+            "print(f'total notebook {(time.time() - T0) / 60:.1f} min')"
+        ),
+    ]
+    return cells
+
+
 def write(name: str, cells: list) -> None:
     nb = {
         "cells": cells,
@@ -278,3 +355,4 @@ if __name__ == "__main__":
     write("01_generate_data.ipynb", nb01())
     write("02_train_eval.ipynb", nb02())
     write("03_geometry.ipynb", nb03())
+    write("04_real_data.ipynb", nb04())

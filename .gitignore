@@ -22,3 +22,7 @@ checkpoints/
 *.idx.json
 *.tsv.gz
 *.part
+/hf/
+/hf_real/
+*.parquet
+*.arrow
