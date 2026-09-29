@@ -110,18 +110,63 @@ def iter_table(path: Path, batch_size: int = 512) -> Iterator[dict]:
         for batch in pf.iter_batches(batch_size=batch_size):
             yield from batch.to_pylist()
     elif suf in (".jsonl", ".json"):
-        with open(path) as f:
-            first = f.read(1)
-            f.seek(0)
-            if first == "[":  # a JSON array rather than JSON lines
-                yield from json.load(f)
-                return
-            for line in f:
-                if line.strip():
-                    yield json.loads(line)
+        yield from _iter_json(path)
     else:
         with open(path, newline="") as f:
             yield from csv.DictReader(f, delimiter="\t" if suf == ".tsv" else ",")
+
+
+def json_rows(obj) -> list[dict]:
+    """Records from a parsed JSON document of unknown shape.
+
+    * ``[{...}, ...]``                         -> the list
+    * ``{"images": [{...}], ...}``             -> the first list of objects
+    * ``{"a.png": {...}, ...}``                -> one row per key (``key`` + the object's fields)
+    * ``{"a.png": "CCO", ...}``                -> one row per key (``key``, ``value``)
+    Anything else (e.g. a metadata/config object) yields no rows.
+    """
+    if isinstance(obj, list):
+        return [r for r in obj if isinstance(r, dict)]
+    if not isinstance(obj, dict) or not obj:
+        return []
+    for v in obj.values():
+        if isinstance(v, list) and v and all(isinstance(x, dict) for x in v[:50]):
+            return [x for x in v if isinstance(x, dict)]
+    vals = list(obj.values())
+    if all(isinstance(v, dict) for v in vals):
+        return [{"key": k, **v} for k, v in obj.items()]
+    if all(isinstance(v, str) for v in vals):
+        return [{"key": k, "value": v} for k, v in obj.items()]
+    return []
+
+
+def _first_line_is_object(path: Path) -> bool:
+    with open(path) as f:
+        for line in f:
+            if line.strip():
+                try:
+                    return isinstance(json.loads(line), dict)
+                except json.JSONDecodeError:
+                    return False
+    return False
+
+
+def _iter_json(path: Path) -> Iterator[dict]:
+    """JSON lines when the first line is a complete object, else one (possibly pretty-printed)
+    JSON document whatever the extension."""
+    if _first_line_is_object(path):
+        with open(path) as f:
+            for n, line in enumerate(f, 1):
+                if line.strip():
+                    try:
+                        r = json.loads(line)
+                    except json.JSONDecodeError as e:
+                        raise ValueError(f"{path}:{n}: invalid JSON line ({e})") from e
+                    if isinstance(r, dict):
+                        yield r
+        return
+    with open(path) as f:
+        yield from json_rows(json.load(f))
 
 
 def _is_image_value(v) -> bool:
@@ -216,17 +261,24 @@ def _preview(v, n: int = 80):
 def inspect_snapshot(root: str | Path, sample: int = 64, overrides: dict | None = None) -> dict:
     """Describe every table in the snapshot: rows, columns, detected roles, split/source counts."""
     root = Path(root)
-    report = {"root": str(root), "tables": []}
+    report = {"root": str(root), "layout": snapshot_layout(root), "tables": []}
     for path in find_tables(root):
         rel = path.relative_to(root)
         n = 0
         split_counts: Counter = Counter()
         source_counts: Counter = Counter()
         head = []
-        for r in iter_table(path):
-            if len(head) < sample:
-                head.append(r)
-            n += 1
+        try:
+            for r in iter_table(path):
+                if len(head) < sample:
+                    head.append(r)
+                n += 1
+        except (ValueError, OSError) as e:  # report the file, keep inspecting the others
+            report["tables"].append({"file": str(rel), "error": f"{type(e).__name__}: {e}"})
+            continue
+        if not head:
+            report["tables"].append({"file": str(rel), "rows": 0, **_json_shape(path)})
+            continue
         col = detect_columns(head, overrides)
         for r in iter_table(path) if (col.split or col.source) else ():
             if col.split:
@@ -255,6 +307,37 @@ def inspect_snapshot(root: str | Path, sample: int = 64, overrides: dict | None 
             }
         )
     return report
+
+
+def snapshot_layout(root: Path, n_examples: int = 5) -> dict:
+    """File counts by extension and by top-level directory, with a few example paths."""
+    by_ext: Counter = Counter()
+    by_dir: Counter = Counter()
+    examples: dict[str, list[str]] = {}
+    for p in sorted(root.rglob("*")):
+        rel = p.relative_to(root)
+        if not p.is_file() or any(part.startswith(".") for part in rel.parts):
+            continue
+        ext = p.suffix.lower() or "<none>"
+        by_ext[ext] += 1
+        by_dir[rel.parts[0] if len(rel.parts) > 1 else "."] += 1
+        if len(examples.setdefault(ext, [])) < n_examples:
+            examples[ext].append(f"{rel} ({p.stat().st_size} B)")
+    return {"files_by_ext": dict(by_ext), "files_by_top_dir": dict(by_dir), "examples": examples}
+
+
+def _json_shape(path: Path) -> dict:
+    """For a JSON table without rows: its top-level structure, to show what it holds."""
+    if path.suffix.lower() not in (".json", ".jsonl"):
+        return {}
+    try:
+        with open(path) as f:
+            obj = json.load(f)
+    except (ValueError, OSError) as e:
+        return {"error": f"{type(e).__name__}: {e}"}
+    if isinstance(obj, dict):
+        return {"json_top_level_keys": {k: type(v).__name__ for k, v in list(obj.items())[:30]}}
+    return {"json_top_level_type": type(obj).__name__}
 
 
 def _image_ext(data: bytes) -> str:
@@ -316,10 +399,14 @@ def write_manifests(
     for path in find_tables(root):
         rel = path.relative_to(root)
         head = []
-        for r in iter_table(path):
-            head.append(r)
-            if len(head) >= 64:
-                break
+        try:
+            for r in iter_table(path):
+                head.append(r)
+                if len(head) >= 64:
+                    break
+        except (ValueError, OSError) as e:
+            tables.append({"file": str(rel), "used": False, "error": f"{type(e).__name__}: {e}"})
+            continue
         col = detect_columns(head, overrides)
         if col.image is None or col.smiles is None:
             tables.append({"file": str(rel), "used": False, "notes": col.notes})
