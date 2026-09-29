@@ -145,3 +145,45 @@ def test_steerable_resume_and_eval_mode_checkpoints(tiny_dataset, vocab, tmp_pat
     x = torch.rand(2, 1, 64, 64)
     with torch.no_grad():
         assert torch.allclose(fresh.encoder(x).tokens, tr.model.encoder(x).tokens, atol=1e-6)
+
+
+@pytest.mark.parametrize("change", ["batch_size", "steps", "seed", "vocab", "data", "legacy"])
+def test_resume_rejects_changed_experiment(tiny_dataset, vocab, tmp_path, change):
+    import copy
+    import shutil
+
+    from ouroboros.train.trainer import load_checkpoint, save_checkpoint
+
+    root, _ = tiny_dataset
+    data = tmp_path / "dataset"
+    shutil.copytree(root / "shards", data / "shards")
+    local_vocab = tmp_path / "vocab.json"
+    shutil.copy(vocab, local_vocab)
+    cfg = tiny_cfg(data, local_vocab)
+    out = tmp_path / "run"
+    trainer = Trainer(cfg, out)
+    trainer.save()
+    original_config = (out / "config.yaml").read_bytes()
+    original_ckpt = (out / "ckpt" / "last.pt").read_bytes()
+    changed = copy.deepcopy(cfg)
+    if change in ("batch_size", "steps"):
+        changed["train"][change] += 1
+    elif change == "seed":
+        changed["seed"] += 1
+    elif change == "vocab":
+        tokens = json.loads(local_vocab.read_text())
+        tokens[-2:] = reversed(tokens[-2:])
+        local_vocab.write_text(json.dumps(tokens))
+    elif change == "data":
+        shard = next((data / "shards").glob("train-*.tar"))
+        with shard.open("ab") as f:
+            f.write(b"changed")
+    elif change == "legacy":
+        state = load_checkpoint(out / "ckpt" / "last.pt")
+        state.pop("identity")
+        save_checkpoint(out / "ckpt" / "last.pt", state)
+        original_ckpt = (out / "ckpt" / "last.pt").read_bytes()
+    with pytest.raises(ValueError, match="mismatch|different configuration|Legacy"):
+        Trainer(changed, out)
+    assert (out / "config.yaml").read_bytes() == original_config
+    assert (out / "ckpt" / "last.pt").read_bytes() == original_ckpt

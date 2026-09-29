@@ -25,6 +25,7 @@ from torch.utils.data import Dataset, Sampler
 
 from ouroboros.data.render import RenderStyle, postprocess
 from ouroboros.decode.tokenizer import SmilesTokenizer
+from ouroboros.provenance import file_sha256, json_sha256
 
 
 def index_shard(path: str | Path) -> list[dict]:
@@ -93,6 +94,17 @@ class ShardDataset(Dataset):
                 break
         self.tokenizer = tokenizer
         self.image_size = image_size
+
+    def identity(self) -> dict:
+        """Hash actual shard bytes and the selected sample order; paths may be relocated."""
+        shards = list(dict.fromkeys(path for path, _ in self.entries))
+        indices = {path: i for i, path in enumerate(shards)}
+        return {
+            "shards": [file_sha256(path) for path in shards],
+            "selection": json_sha256([(indices[p], entry) for p, entry in self.entries]),
+            "count": len(self),
+            "image_size": self.image_size,
+        }
 
     def __len__(self) -> int:
         return len(self.entries)
