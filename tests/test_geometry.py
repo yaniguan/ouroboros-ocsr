@@ -66,3 +66,62 @@ def test_stereo_check_ignores_unspecified_centres():
     # but a wrong specified centre is caught
     mol, _ = embed("C[C@H](N)C(=O)O", n_conf=1, seed=0)
     assert not stereo_preserved(mol, "C[C@@H](N)C(=O)O")[0]
+
+
+@pytest.mark.parametrize("timeout_first", [True, False])
+def test_embedding_timeout_sentinel(monkeypatch, timeout_first):
+    from ouroboros.geometry import conformers as g
+
+    original = g.AllChem.EmbedMultipleConfs
+    modes = []
+
+    def timed_out(mol, numConfs, params):
+        modes.append(params.useRandomCoords)
+        assert params.timeout == 7
+        if timeout_first and len(modes) == 2:
+            return original(mol, numConfs=numConfs, params=params)
+        return [-1]
+
+    monkeypatch.setattr(g.AllChem, "EmbedMultipleConfs", timed_out)
+    attempts = []
+    mol, status = g.embed("C[C@H](N)C(=O)O", 2, timeout_seconds=7, diagnostics=attempts)
+    assert modes == [False, True] and attempts[0]["returned_ids"] == [-1]
+    if timeout_first:
+        assert status == "ok" and mol.GetNumConformers() == 2
+    else:
+        assert mol is None and status == "etkdg_failed"
+
+
+@pytest.mark.parametrize("bad", ["unconverged", "stereo", "nan", "exception"])
+def test_only_valid_relaxed_candidates_can_win(monkeypatch, bad):
+    from ouroboros.geometry import conformers as g
+
+    calls = []
+
+    def fake_relax(atoms, calc, fmax, steps):
+        first = not calls
+        calls.append(True)
+        if first and bad == "exception":
+            raise RuntimeError("optimizer failure")
+        pos = atoms.positions.copy()
+        if first and bad == "stereo":
+            pos[:, 0] *= -1
+        energy = float("nan") if first and bad == "nan" else (-10.0 if first else -5.0)
+        return g.Relaxed(energy, pos * 0, pos, not (first and bad == "unconverged"), 1, 0.01, 0.0)
+
+    monkeypatch.setattr(g, "relax", fake_relax)
+    result = g.lowest_energy_conformer("C[C@H](N)C(=O)O", n_conf=2, calc=object())
+    assert result.status == "ok" and result.energy == -5.0
+    assert result.converged and result.stereo_ok_final and len(result.failures) == 1
+
+
+def test_no_converged_candidate_has_no_energy(monkeypatch):
+    from ouroboros.geometry import conformers as g
+
+    def failed(atoms, *args):
+        return g.Relaxed(-10.0, atoms.positions * 0, atoms.positions, False, 500, 1.0, 0.0)
+
+    monkeypatch.setattr(g, "relax", failed)
+    result = g.lowest_energy_conformer("CCCCC", n_conf=2, calc=object())
+    assert result.status == "no_valid_conformer" and result.energy is None
+    assert not result.converged and len(result.failures) == 2
