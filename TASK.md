@@ -407,6 +407,12 @@ first Colab runs log (`img_per_s` in `log.jsonl`).
   errors now raise instead of being counted as drops (the env bug had silently dropped ~90% of the
   tiny test dataset — the one font that does not need matplotlib survived). Regression test added;
   130/130 pass with the Colab variable set.
+- 2026-09-29 — Third Colab report: the import check (mace imported before ouroboros) still failed.
+  Now the fix no longer relies on the kernel environment: every notebook command runs as
+  `MPLBACKEND=Agg /content/venv/bin/python …`, and the install cell adds a venv startup hook
+  (`scripts/colab_mplbackend.pth`) that replaces an inherited inline backend for ANY python of the
+  venv. Verified locally in a fresh venv with the Colab variable set: mace/matplotlib import OK
+  without importing ouroboros, 130/130 tests pass.
 - 2026-09-25 — numpy is pinned to 1.26.4: `lie_learn` (escnn dependency) and `matscipy`
   (mace-torch dependency) require numpy < 2.
 - 2026-09-25 — Colab notebook runs project code in subprocesses (`!python ...`) so the pinned

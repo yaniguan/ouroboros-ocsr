@@ -1,0 +1,1 @@
+import os; os.environ.get("MPLBACKEND", "").startswith("module://matplotlib_inline") and os.environ.__setitem__("MPLBACKEND", "Agg")

@@ -44,7 +44,10 @@ def setup_cells(title: str, intro: str) -> list:
             "T0 = time.time()\n"
             "!nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv || true\n"
             "!python --version && nproc && free -g | head -2\n"
-            "PY = '/content/venv/bin/python'  # project interpreter (created below)"
+            "VENV_PY = '/content/venv/bin/python'  # project interpreter (created below)\n"
+            "# Colab's kernel exports MPLBACKEND=module://matplotlib_inline..., which does not exist in\n"
+            "# the venv; every project command therefore runs with an explicit headless backend.\n"
+            "PY = f'MPLBACKEND=Agg {VENV_PY}'"
         ),
         code(
             "# ---- configuration ----\n"
@@ -89,6 +92,10 @@ def setup_cells(title: str, intro: str) -> list:
             "[ -x /content/venv/bin/python ] || uv venv -q --python 3.11 --python-preference only-managed /content/venv\n"
             "uv pip install -q --python /content/venv/bin/python -r requirements.txt\n"
             "uv pip install -q --python /content/venv/bin/python --no-deps -e .\n"
+            "# startup hook: any python of this venv replaces an inherited inline matplotlib backend\n"
+            "SP=$(/content/venv/bin/python -c 'import site; print(site.getsitepackages()[0])')\n"
+            "cp scripts/colab_mplbackend.pth \"$SP/\"\n"
+            "export MPLBACKEND=Agg\n"
             "/content/venv/bin/python -c \"import sys, torch; print(sys.version.split()[0], 'torch', torch.__version__, 'cuda', torch.cuda.is_available())\""
         ),
     ]
@@ -122,13 +129,13 @@ def nb00() -> list:
     cells += [
         copy_shards_cell("None"),
         code(
-            '!{PY} -c "import escnn, mace; from escnn import gspaces; '
+            '!{PY} -c "import ouroboros, escnn, mace; from escnn import gspaces; '
             "from mace.calculators import mace_off; import rdkit; print('escnn/mace/rdkit import OK', rdkit.__version__)\""
         ),
         code("!{PY} -m pytest -q"),
         code(
             "print(f'wall time: {(time.time() - T0) / 60:.1f} min')\n"
-            "!uv pip freeze --python {PY} | grep -iE '^(torch|escnn|mace-torch|rdkit|numpy|e3nn)=='"
+            "!uv pip freeze --python {VENV_PY} | grep -iE '^(torch|escnn|mace-torch|rdkit|numpy|e3nn)=='"
         ),
     ]
     return cells
