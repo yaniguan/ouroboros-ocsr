@@ -16,24 +16,29 @@ from __future__ import annotations
 import csv
 import gzip
 import hashlib
+import inspect
 import io
 import json
 import os
 import random
 import tarfile
+import tempfile
 import time
 from collections import Counter
 from collections.abc import Iterable, Iterator
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
+from importlib.metadata import version
 from multiprocessing import Pool
 from pathlib import Path
 
 from rdkit import Chem
 
+from ouroboros.data import render as rendering_module
 from ouroboros.data.filter import FilterConfig, filter_smiles
 from ouroboros.data.render import encode_png, render, sample_style
 from ouroboros.data.stereo import assign_random_stereo, has_stereo, potential_stereo
+from ouroboros.provenance import atomic_json, file_sha256, json_sha256
 
 SPLITS = ("train", "val", "test")
 
@@ -225,6 +230,22 @@ def _compose_split(
     return out
 
 
+def composition_identity(pool: list[dict], cfg: ComposeConfig) -> dict:
+    return {
+        "pool": json_sha256(pool),
+        "config": {k: v for k, v in cfg.__dict__.items() if k != "exclude_key14"},
+        "excluded": sorted(cfg.exclude_key14),
+        "code": json_sha256(
+            [
+                inspect.getsource(_compose_split),
+                inspect.getsource(_assign_row),
+                inspect.getsource(assign_random_stereo),
+            ]
+        ),
+        "rdkit": version("rdkit"),
+    }
+
+
 def compose(pool: list[dict], cfg: ComposeConfig, out_dir: str | Path, workers: int = 1) -> dict:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -255,7 +276,10 @@ def compose(pool: list[dict], cfg: ComposeConfig, out_dir: str | Path, workers: 
     stats["excluded_from_pool"] = n_excluded
     conf = {k: v for k, v in cfg.__dict__.items() if k != "exclude_key14"}
     conf["n_exclude_key14"] = len(cfg.exclude_key14)
-    (out_dir / "compose.json").write_text(json.dumps({"config": conf, "stats": stats}, indent=1))
+    atomic_json(
+        out_dir / "compose.json",
+        {"config": conf, "stats": stats, "identity": composition_identity(pool, cfg)},
+    )
     return stats
 
 
@@ -308,19 +332,27 @@ def _render_shard(args) -> dict:
     t0 = time.time()
     drops: Counter = Counter()
     n = 0
-    tmp = str(shard_path) + ".part"
-    with tarfile.open(tmp, "w", format=tarfile.USTAR_FORMAT) as tar:
-        for row in rows:
-            res = render_row(row, split, size, seed)
-            if isinstance(res, str):
-                drops[res] += 1
-                continue
-            key, png, meta = res
-            _add(tar, f"{key}.png", png)
-            _add(tar, f"{key}.json", json.dumps(meta).encode())
-            n += 1
-    os.replace(tmp, shard_path)
-    return {"shard": Path(shard_path).name, "n": n, "drops": dict(drops), "sec": time.time() - t0}
+    shard_path = Path(shard_path)
+    with tempfile.NamedTemporaryFile(dir=shard_path.parent, suffix=".part", delete=False) as f:
+        tmp = Path(f.name)
+    try:
+        with tarfile.open(tmp, "w", format=tarfile.USTAR_FORMAT) as tar:
+            for row in rows:
+                res = render_row(row, split, size, seed)
+                if isinstance(res, str):
+                    drops[res] += 1
+                    continue
+                key, png, meta = res
+                _add(tar, f"{key}.png", png)
+                _add(tar, f"{key}.json", json.dumps(meta).encode())
+                n += 1
+        receipt = {"sha256": file_sha256(tmp), "n": n, "drops": dict(drops)}
+        atomic_json(shard_path.with_suffix(".receipt.json"), receipt)
+        os.replace(tmp, shard_path)
+        shard_path.with_suffix(".idx.json").unlink(missing_ok=True)
+    finally:
+        tmp.unlink(missing_ok=True)
+    return {"shard": shard_path.name, "n": n, "drops": dict(drops), "sec": time.time() - t0}
 
 
 def render_shards(
@@ -333,21 +365,64 @@ def render_shards(
     workers: int = os.cpu_count() or 1,
     skip_existing: bool = True,
 ) -> dict:
-    """Render ``manifest`` into ``{split}-{i:06d}.tar`` shards. Resumable: finished shards
-    (renamed from ``.part`` only on completion) are skipped."""
+    """Resume only matching input/settings and checksum-verified completed shards.
+
+    Legacy outputs without manifests/receipts require a new output directory.
+    A single writer owns each output directory; .part files are never trusted.
+    """
+    if shard_size < 1 or workers < 1:
+        raise ValueError("shard_size and workers must be positive")
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    identity = {
+        "schema": 1,
+        "rows_sha256": json_sha256(manifest),
+        "rows": len(manifest),
+        "split": split,
+        "shard_size": shard_size,
+        "size": size,
+        "seed": seed,
+        "renderer": json_sha256(
+            [
+                inspect.getsource(rendering_module),
+                inspect.getsource(render_row),
+                inspect.getsource(_add),
+            ]
+        ),
+        "versions": {name: version(name) for name in ("rdkit", "pillow", "numpy", "matplotlib")},
+    }
+    metadata = out_dir / f"{split}.generation.json"
+    existing = set(out_dir.glob(f"{split}-*.tar"))
+    if metadata.exists():
+        if json.loads(metadata.read_text()) != identity:
+            raise ValueError("Rendering identity changed; choose a new output directory")
+    elif existing:
+        raise ValueError("Existing shards have no generation identity; choose a new directory")
+    else:
+        atomic_json(metadata, identity)
+    expected = {
+        out_dir / f"{split}-{i // shard_size:06d}.tar" for i in range(0, len(manifest), shard_size)
+    }
+    if existing - expected:
+        raise ValueError("Unexpected shards in output directory")
     jobs = []
     for i in range(0, len(manifest), shard_size):
         path = out_dir / f"{split}-{i // shard_size:06d}.tar"
         if skip_existing and path.exists():
+            receipt = path.with_suffix(".receipt.json")
+            if not receipt.exists() or json.loads(receipt.read_text())["sha256"] != file_sha256(
+                path
+            ):
+                raise ValueError(f"Unverified or corrupt shard: {path}")
             continue
         jobs.append((manifest[i : i + shard_size], split, path, size, seed))
     t0 = time.time()
     results = []
-    with ProcessPoolExecutor(workers) as ex:
-        for res in ex.map(_render_shard, jobs):
-            results.append(res)
+    if workers == 1:
+        results = [_render_shard(job) for job in jobs]
+    elif jobs:
+        with ProcessPoolExecutor(workers) as ex:
+            results = list(ex.map(_render_shard, jobs))
     drops: Counter = Counter()
     for r in results:
         drops.update(r["drops"])

@@ -22,3 +22,14 @@ Negative or missing conformer IDs are rejected. Only finite, converged, stereo-p
 candidates can supply the reported energy. Failure reasons and embedding attempt diagnostics are
 retained. Mirrored enantiomer geometry is still evaluated explicitly; energy differences remain
 restricted to equal molecular formulae. Invalid geometry contributes no energy-error observation.
+
+## Generated data
+
+Composition reuse checks the pool, complete exclusion set and stereo-assignment implementation.
+Rendering binds the ordered manifest, image size, seed, shard size, renderer code and relevant
+library versions in `<split>.generation.json`. Each completed tar has a SHA256 receipt. Resume
+verifies existing bytes and rejects changed inputs, missing receipts or unexpected shards.
+Interrupted `.part` files are ignored. Legacy render directories need regeneration into a new
+output directory. Extending a dry-run/prefix also needs a new output directory.
+The PNG/JSON shard format and connectivity-based split policy are unchanged. Loader index caches
+are bound to tar contents and rebuild after content changes or incomplete metadata writes.
