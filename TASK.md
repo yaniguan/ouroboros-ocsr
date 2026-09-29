@@ -43,7 +43,8 @@ or changed are tagged **(Am1-A … Am1-F)**.
 1. Open `notebooks/01_generate_data.ipynb` (branch `claude/vigilant-johnson-j4882f`). It needs no GPU;
    any runtime with many vCPUs works (an A100 runtime has ~12).
 2. Run all. Expected: pool ≈ 5 min, composition ≈ 10–15 min (parallel), rendering 1M ≈ 20–30 min
-   on 12 vCPUs, copy to Drive ≈ 5–15 min. Output: `MyDrive/ouroboros/data/full/` ≈ 7 GB
+   on 12 vCPUs; everything is written directly to Drive and is resumable (re-run all after a
+   disconnect). Output: `MyDrive/ouroboros/data/full/` ≈ 7 GB
    (1M train ≈ 6.8 GB, 200k subset ≈ 1.4 GB, val+test ≈ 0.1 GB). Needs ~8 GB free on Drive.
 3. **Report back** the last cell's output: total and 200k-subset sizes, `pool.stats.json`,
    `compose.json`, the three `render` lines (samples, drops, seconds) and the wall times.

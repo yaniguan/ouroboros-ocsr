@@ -35,8 +35,8 @@ def setup_cells(title: str, intro: str) -> list:
             "Colab's system Python (3.13) cannot install the pinned stack (escnn needs lie_learn and "
             "numpy<2, which have no 3.13 builds), so the setup creates a Python 3.11 virtualenv with "
             "`uv` at `/content/venv` and installs exactly `requirements.txt` (incl. torch 2.10.0 CUDA). "
-            "All project code runs in that interpreter via subprocesses (`!{PY} ...`); this "
-            "effect without restarting the kernel. If the repo is private, add a Colab secret "
+            "All project code runs in that interpreter via subprocesses (`!{PY} ...`). "
+            "If the repo is private, add a Colab secret "
             "`GITHUB_TOKEN` (key icon in the left sidebar) with read access to the repository."
         ),
         code(
@@ -94,7 +94,7 @@ def setup_cells(title: str, intro: str) -> list:
             "uv pip install -q --python /content/venv/bin/python --no-deps -e .\n"
             "# startup hook: any python of this venv replaces an inherited inline matplotlib backend\n"
             "SP=$(/content/venv/bin/python -c 'import site; print(site.getsitepackages()[0])')\n"
-            "cp scripts/colab_mplbackend.pth \"$SP/\"\n"
+            'cp scripts/colab_mplbackend.pth "$SP/"\n'
             "export MPLBACKEND=Agg\n"
             "/content/venv/bin/python -c \"import sys, torch; print(sys.version.split()[0], 'torch', torch.__version__, 'cuda', torch.cuda.is_available())\""
         ),
@@ -145,29 +145,25 @@ def nb01() -> list:
     cells = setup_cells(
         "generate the 1M dataset (Phase 1)",
         "Builds pool -> composition -> shards for 1M training molecules (the 200k set is its "
-        "first 200 shards) plus the shared 5k val / 10k test sets, then copies everything to "
-        "Drive. CPU-only work: any runtime with many vCPUs works; expected ~35-60 min on 12 vCPUs, "
-        "~7 GB of shards.",
+        "first 200 shards) plus the shared 5k val / 10k test sets, written DIRECTLY to Drive "
+        "(`MyDrive/ouroboros/data/full`). CPU-only work: any runtime with many vCPUs works; "
+        "expected ~40-60 min on 12 vCPUs, ~7 GB. **Resumable:** after a disconnect just run all "
+        "again — a finished pool, an identical composition and every finished shard are skipped.",
     )
     cells += [
         code(
+            "DATA = f'{DRIVE_ROOT}/data/full'\n"
             "t = time.time()\n"
-            "!{PY} scripts/build_dataset.py --out {LOCAL_DATA} --cache /content/data_cache --preset 1m --workers $(nproc)\n"
+            "!{PY} scripts/build_dataset.py --out {DATA} --cache {DRIVE_ROOT}/data_cache --preset 1m --workers $(nproc)\n"
             "GEN_MIN = (time.time() - t) / 60\n"
-            "print(f'generation wall time: {GEN_MIN:.1f} min')"
-        ),
-        code(
-            "t = time.time()\n"
-            "!mkdir -p {DRIVE_ROOT}/data/full\n"
-            "!rsync -a --info=progress2 {LOCAL_DATA}/ {DRIVE_ROOT}/data/full/\n"
-            "print(f'copy to Drive: {(time.time() - t) / 60:.1f} min')"
+            "print(f'generation wall time (this session): {GEN_MIN:.1f} min')"
         ),
         code(
             "# ---- report these numbers back ----\n"
-            "!du -sh {LOCAL_DATA}/shards && ls {LOCAL_DATA}/shards/train-*.tar | wc -l\n"
-            "!du -ch {LOCAL_DATA}/shards/train-000[01]*.tar | tail -1   # = 200k subset size\n"
-            "!cat {LOCAL_DATA}/pool.stats.json {LOCAL_DATA}/manifests/compose.json\n"
-            "!cat {LOCAL_DATA}/shards/*.render.jsonl\n"
+            "!du -sh {DATA}/shards && ls {DATA}/shards/train-*.tar | wc -l\n"
+            "!du -ch {DATA}/shards/train-000[01]*.tar | tail -1   # = 200k subset size\n"
+            "!cat {DATA}/pool.stats.json {DATA}/manifests/compose.json\n"
+            "!cat {DATA}/shards/*.render.jsonl\n"
             "print(f'generation {GEN_MIN:.1f} min; total notebook {(time.time() - T0) / 60:.1f} min')"
         ),
     ]

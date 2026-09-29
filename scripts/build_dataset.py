@@ -84,7 +84,15 @@ def main(argv=None) -> None:
             stereo_fraction=args.stereo_fraction, sizes=sizes, seed=args.seed, exclude_key14=excl
         )
         manifests = out / "manifests"
-        print("compose:", build.compose(build.read_pool(pool_path), cfg, manifests, args.workers))
+        done = manifests / "compose.json"  # written last: marks a complete composition
+        want = {k: v for k, v in cfg.__dict__.items() if k != "exclude_key14"}
+        want["n_exclude_key14"] = len(excl)
+        if done.exists() and json.loads(done.read_text())["config"] == json.loads(json.dumps(want)):
+            print("compose: already done with the same config, skipping")
+        else:
+            print(
+                "compose:", build.compose(build.read_pool(pool_path), cfg, manifests, args.workers)
+            )
 
     if "render" in args.stages:
         for split in build.SPLITS:

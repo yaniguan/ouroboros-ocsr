@@ -87,7 +87,8 @@ def prepare_pool(
     t0 = time.time()
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    with gzip.open(out_path, "wt", newline="") as f, Pool(workers) as pool:
+    tmp_path = out_path.with_name(out_path.name + ".part")  # atomic: a crash never leaves a
+    with gzip.open(tmp_path, "wt", newline="") as f, Pool(workers) as pool:  # half-written pool
         w = csv.writer(f, delimiter="\t")
         w.writerow(["key14", "flat", "n_tet", "n_db", "src"])
         for status, res in pool.imap(_pool_row, items(), chunksize=512):
@@ -107,6 +108,7 @@ def prepare_pool(
         "rejects": dict(reasons),
         "seconds": round(time.time() - t0, 1),
     }
+    os.replace(tmp_path, out_path)
     out_path.with_suffix(".stats.json").write_text(json.dumps(stats, indent=1))
     return stats
 
