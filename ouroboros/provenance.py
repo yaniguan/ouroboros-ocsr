@@ -39,3 +39,27 @@ def atomic_json(path: str | Path, value) -> None:
     finally:
         if tmp is not None:
             tmp.unlink(missing_ok=True)
+
+
+def implementation_identity(root: str | Path) -> dict:
+    root = Path(root)
+    return {str(p.relative_to(root)): file_sha256(p) for p in sorted(root.rglob("*.py"))}
+
+
+class JsonCache:
+    """Content-addressed completed jobs; atomic writes and corruption checks."""
+
+    def __init__(self, directory: str | Path):
+        self.directory = Path(directory)
+        self.directory.mkdir(parents=True, exist_ok=True)
+
+    def get(self, settings, compute):
+        path = self.directory / f"{json_sha256(settings)}.json"
+        if path.exists():
+            saved = json.loads(path.read_text())
+            if saved["settings"] != settings or saved["sha256"] != json_sha256(saved["result"]):
+                raise ValueError(f"Corrupt cache entry: {path}")
+            return saved["result"]
+        result = compute()
+        atomic_json(path, {"settings": settings, "result": result, "sha256": json_sha256(result)})
+        return result

@@ -33,3 +33,17 @@ Interrupted `.part` files are ignored. Legacy render directories need regenerati
 output directory. Extending a dry-run/prefix also needs a new output directory.
 The PNG/JSON shard format and connectivity-based split policy are unchanged. Loader index caches
 are bound to tar contents and rebuild after content changes or incomplete metadata writes.
+
+## Evaluation and energy caches
+
+`scripts/evaluate.py` binds checkpoint bytes, vocabulary, config, data/selection, angles, batch
+size, device, library versions and implementation to `eval/{full,sweep}/evaluation.json`.
+Completed batches are atomic JSON cache entries with checksums. Restart uses those entries;
+changing any identity input requires a new evaluation output (use a new run directory).
+The callable `run_eval` API only reuses results when an explicit identity is supplied.
+
+`scripts/error_propagation.py --cache DIR` persists each search and mirrored-geometry job
+(default: `<out>/energy-cache`). Keys include actual MACE model weights, conformer settings,
+seed, versions and implementation. Failed geometry is retained too. To retry a failed job,
+use a new cache directory. Pair/summary files are regenerated from cached molecular jobs;
+rendered/real separation, bootstrap CIs and formula/mirror controls are unchanged.
