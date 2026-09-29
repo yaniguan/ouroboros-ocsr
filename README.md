@@ -1,5 +1,10 @@
 # Ouroboros — rotation-equivariant OCSR with stereochemistry → 3D energy
 
+**Try the interactive rotation lab:** [notebook](notebooks/05_rotation_demo.ipynb) ·
+[setup and guide](docs/rotation-demo.md). Drag a slider to rotate a molecule and measure
+equivariance on CPU, without training or datasets. Load your own checkpoint to compare
+original/rotated predictions, molecule redraws and stereo-aware ground-truth scores.
+
 Optical Chemical Structure Recognition (OCSR) pipeline:
 
 ```

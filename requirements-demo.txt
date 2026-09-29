@@ -1,0 +1,8 @@
+# Small CPU/notebook environment, Python 3.11 recommended. No MACE, dataset or CUDA pins.
+# escnn -> py3nj may need a Fortran compiler (see docs/rotation-demo.md).
+torch>=2.4,<3
+numpy>=1.26,<2
+escnn==1.0.11
+rdkit>=2024.3
+pillow>=10
+jupyterlab>=4,<5
