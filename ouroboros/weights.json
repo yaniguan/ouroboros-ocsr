@@ -1,0 +1,26 @@
+{
+  "version": "0.1.0-alpha",
+  "weights": {
+    "A": {
+      "filename": "ouroboros-A.pt",
+      "url": "https://github.com/yaniguan/ouroboros-ocsr/releases/download/v0.1.0-alpha/ouroboros-A.pt",
+      "bytes": 172824785,
+      "sha256": "34961cab27b1f9f8b9487c0a03d4f3ddb3c601356217a81e6b35817d78bb837b",
+      "step": 10000
+    },
+    "B": {
+      "filename": "ouroboros-B.pt",
+      "url": "https://github.com/yaniguan/ouroboros-ocsr/releases/download/v0.1.0-alpha/ouroboros-B.pt",
+      "bytes": 172824785,
+      "sha256": "2d60bf1d07030e9f9f6d25bcf566dec2112010ed62564e9f8f28587aa4e1e939",
+      "step": 10000
+    },
+    "C": {
+      "filename": "ouroboros-C.pt",
+      "url": "https://github.com/yaniguan/ouroboros-ocsr/releases/download/v0.1.0-alpha/ouroboros-C.pt",
+      "bytes": 129796507,
+      "sha256": "c889aea292756bf57fe2023089c53b9ec9fa4b37c080b291c7b7acdb96390a08",
+      "step": 10000
+    }
+  }
+}
