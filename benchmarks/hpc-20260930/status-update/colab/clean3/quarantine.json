@@ -1,0 +1,1232 @@
+{
+  "diagnostic_sha256": "232630b189a4cd6264cdaadf69b5d119d25ae08103430c3a0a8aa094c6258897",
+  "source": {
+    "base_commit": "5f9efc07fa9530d351296b635918fb8d7c8543bc",
+    "shared_validation_patch_applied": true,
+    "files": [
+      {
+        "path": ".gitignore",
+        "sha256": "b48da16ab551e2a840bf31d124f6b532d0cb2bdeb088cbd3f0e4cc774073e105"
+      },
+      {
+        "path": ".pre-commit-config.yaml",
+        "sha256": "d5d1148f4f24933fb1e46cd6a375b9a8ef6cc955817181af55debaeabbf96419"
+      },
+      {
+        "path": "DATA.md",
+        "sha256": "9a91f58d121f7c072285be2bd3de855d017724d52e4be067a9af6078f91631e3"
+      },
+      {
+        "path": "README.md",
+        "sha256": "a1a35f6528c0e47a0628608dea4fc416bc9b127d19f19ddab6e26f84c0c8d8cb"
+      },
+      {
+        "path": "TASK.md",
+        "sha256": "bf605d381c8bdc7c077a7babbd41032d9f3c5505326de7ff3455ec74a2f67fb2"
+      },
+      {
+        "path": "configs/base.yaml",
+        "sha256": "3e42438f5fe1d59c1f5a5862c9442d81a490962f16ec4d1bac1457d343831e32"
+      },
+      {
+        "path": "configs/compute_assumptions.yaml",
+        "sha256": "2716ff11be85c19b51e4c4b054b844b437e6f5db15e1c8fd74af97f46cdf2468"
+      },
+      {
+        "path": "configs/pilot-A-200k.yaml",
+        "sha256": "73bde2db96b383a1bb6b9a3ea6432f48f643e51d49bbd37c0447f6a40d1c5cfb"
+      },
+      {
+        "path": "configs/pilot-C-200k.yaml",
+        "sha256": "292350180e03c26ba9a147e94aa288fcdee28f76ed176dcc3f08ff6144cf3f10"
+      },
+      {
+        "path": "configs/pilot-validation.yaml",
+        "sha256": "70f6b1a9188439c6d4d747c74145e35ccfc797daadf5e1e535c86b54803bf7fa"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0.05_s0.yaml",
+        "sha256": "dee1af0360324adbe8830f1f683712ce174fca82a1eb1b301b867389d86febb5"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0.05_s1.yaml",
+        "sha256": "8c00b657b62c4bff3d948dd59768338a86f419d004b20d557797cc498ca74dd3"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0.05_s2.yaml",
+        "sha256": "fbcdd7527c1072e3554ed265689ed4c7e9f273a1cd2f0976c32e1975442ee484"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0.1_s0.yaml",
+        "sha256": "9c0ac0df6c994b572dfcadd426786228e32923a03ed2836886e64a4ed431fe9e"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0.1_s1.yaml",
+        "sha256": "873b3be47dc677d1b4e47c40a25b169e0763e8fc489b293ebf96b23db904ca3f"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0.1_s2.yaml",
+        "sha256": "0cb5e56d607c8bb64f3b62f926d4e6edee65e5d2bd599765435bedbefd28945f"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0.25_s0.yaml",
+        "sha256": "bfa398fc2a4a22d7c5ee111323e8f324208b6101e6a0c168dad2ddd30040635b"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0.25_s1.yaml",
+        "sha256": "5b366b7d6479768d3e286a699195a06ca3c02d132b68beb48162ff7cabdec99a"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0.25_s2.yaml",
+        "sha256": "40880606a636d90b5405abe20b610eeac8c7ec3c1d66ebe743a53103e6a2963b"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0.5_s0.yaml",
+        "sha256": "0d43954a681588afac6507f884f8060f8c07a7f7192ed729a79abd7d2a052f99"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0.5_s1.yaml",
+        "sha256": "eec5b16d533dc5979c36433d49b1cf113ec517a823e8ed3d840be976c71f4024"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0.5_s2.yaml",
+        "sha256": "ec257f8bbe7ccb6cc15dfbba03d079a087beef4dedccdd1677b94407cc1cbb03"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0_s0.yaml",
+        "sha256": "2f1bf4a5b73eba58475ba5a19a824bbba6676439060550ecfccbfec9f48cb062"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0_s1.yaml",
+        "sha256": "b7043b4aa6d9de045aef28eafa21bd20b6fe1a31fb01f7d4d454d4bbacd405b6"
+      },
+      {
+        "path": "configs/sweep/A_n200k_f0_s2.yaml",
+        "sha256": "49215eeeca8cec52382f9e72fa28d5d017f2cf22ce75ae02a9d8de66ccc11118"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0.05_s0.yaml",
+        "sha256": "7e387331b734b29efe558e872ea671811a1e7749a5a326fa2a0348c1caf47625"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0.05_s1.yaml",
+        "sha256": "5bba862d31b40e394788ee325be9121d5a02c2d436cfddeea542ebc144d2a134"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0.05_s2.yaml",
+        "sha256": "61c1a2d0d6a199ff4c866fa43a2afee064c40acd739076a7746541f3345a31bc"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0.1_s0.yaml",
+        "sha256": "1e86b854ff9eada31e247bc2e14a9175f8c62417b10a08c7558eef55e7e528db"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0.1_s1.yaml",
+        "sha256": "5a75fc256de38ca0a7ce73b334825239b6ba69ee7e60fcb30eb3324cb21a1d7f"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0.1_s2.yaml",
+        "sha256": "799aebb34178616322584f1850218c904a692d8df9e0dcb5dadc2144ca095266"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0.25_s0.yaml",
+        "sha256": "75abe235237a4cc1a7a010dec102ec073a96147cdfe58bdc5f4a94a6ce3a4655"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0.25_s1.yaml",
+        "sha256": "196f4e51180858ace8b6c0f4b6fec08867beae0fd5c353cb1953d06c51cd92de"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0.25_s2.yaml",
+        "sha256": "a7412e96dc89c99fd5ab74c27b5d84324cda66e4b8d1d8389786664e7a84603b"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0.5_s0.yaml",
+        "sha256": "e4e3bb3d3a1ed7281637cbea93133bcfbf57307ca7c3db46c9db0ca7c4f1b41f"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0.5_s1.yaml",
+        "sha256": "c3d0789a0437c1d6e31503936bb840e8a9cb9c57db3bb547be815bf3c654ec43"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0.5_s2.yaml",
+        "sha256": "18bb9ee49967b1e3397c1ee91a929226081945b8cc46f15703b2b8893e13c208"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0_s0.yaml",
+        "sha256": "0f8f78a104232706cf5744745402249964e0e957dcc8c2cf9afcb0ab34c22d13"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0_s1.yaml",
+        "sha256": "97da953f6f737cb82e406747b6d89c8b5afc46b65c2af21717091ee5d18adece"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f0_s2.yaml",
+        "sha256": "9ac4e5d82c70056ba3f60897546ec5427403fe54c4483b7339d122181ad7394c"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f1_s0.yaml",
+        "sha256": "015cd115e1db4c05d77ae43b790344e5ed109f06912adf62f6e4319caddf2729"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f1_s1.yaml",
+        "sha256": "c60e3e7b51ccc952120f0f1cbe6ee788e0d600dc2ad0a778afc82e76da1f1405"
+      },
+      {
+        "path": "configs/sweep/A_n50k_f1_s2.yaml",
+        "sha256": "b77cdb38976f01e8bc139f5353057f4af0e3fd7e6bb0708401a04936dc371b24"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0.05_s0.yaml",
+        "sha256": "82e6406e0f945900049e0eb972a001316d07a05e975b148a53e4418521b1cb7a"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0.05_s1.yaml",
+        "sha256": "81a6b39b8ad658d976bac69279122c0a44d4b2e8cf48883e7dc6cba5554ab8a2"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0.05_s2.yaml",
+        "sha256": "5f97327f21c28c48cdb59413293431c2301d749a8194b6e57f1fda15bf6a6dcd"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0.1_s0.yaml",
+        "sha256": "d4c2f1411c2dd49da83a966d2355742312e24fa63070956209c48fee43e2a04b"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0.1_s1.yaml",
+        "sha256": "66d42bf325024f90c6ed44d7c4a410cbf188682f933be2a0a97b7c28b053f844"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0.1_s2.yaml",
+        "sha256": "87c1f5020876dae1998cb6894362cde076a2a5c6b672eb7f03218abab78bcc30"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0.25_s0.yaml",
+        "sha256": "468ded965d81081f67cac11f5faf93e9bbbea245f1ba966e56564d6372a4a450"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0.25_s1.yaml",
+        "sha256": "d6207a04e3076663aa0d3b20dc038a6f3a90054d2de91b402287def2c9ab7b50"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0.25_s2.yaml",
+        "sha256": "a3272848a27c76cc72840e4c85ad3ec572509c964a83e6c1df0a0fd5289752a8"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0.5_s0.yaml",
+        "sha256": "1ac2306fed1fdf7f11397dc6589a62ad2e00fb6f80268ac56fc3f0c6b9dd70ff"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0.5_s1.yaml",
+        "sha256": "b270df4fa1eef88344218a8f67bc863916f55bac14d2a9ab459c36b575f57026"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0.5_s2.yaml",
+        "sha256": "64dec09703784e0d4452ccafdbb8327f3abff1ad944a5ab4450c9649732759e1"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0_s0.yaml",
+        "sha256": "0935be1c4a1ee153bc970519f3d793dbe11f09857856c73565ec12af31bc07e1"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0_s1.yaml",
+        "sha256": "b77a2799b84f74bc65e07c6044088f19404bf2ba4607d5a68833b4c4930060c2"
+      },
+      {
+        "path": "configs/sweep/B_n200k_f0_s2.yaml",
+        "sha256": "0f72812c93da649b5429a68e7a44ccb2cdbaf9fc2ef3e7c847d272feea789f1b"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0.05_s0.yaml",
+        "sha256": "63c5192ab8b902af4cdbba0cf212127d6c1729cc1407193df5cc917f975cac28"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0.05_s1.yaml",
+        "sha256": "b5299d608dc645967fd12bd3711d6d7809b30672c70d750c5a1d46c22d0d227c"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0.05_s2.yaml",
+        "sha256": "574f4fe0c3384271b07613786912ece729342ad870695727204596b99f4ee90e"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0.1_s0.yaml",
+        "sha256": "f1295bb4c02aa08e65e7d551f7f6d3488118873bcfd71a499d9c42f1f53abf90"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0.1_s1.yaml",
+        "sha256": "90f9f664364be98a70fba4123899c5a0bdc6966d2145c9a53fc06e7d20c71013"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0.1_s2.yaml",
+        "sha256": "8af3aff68c7a182d6357d9a2464137ceb54af7028e60da9a6946516cb376cabd"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0.25_s0.yaml",
+        "sha256": "a46b2df82ef9868474dd8b97d7532349997a39999ede7dad890a07e45370394e"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0.25_s1.yaml",
+        "sha256": "8f245f0100b68383d70c4ca5304bbf5f79d288d1026e941d97e41ef9c84aaf45"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0.25_s2.yaml",
+        "sha256": "f3895541a8d163763adccaa94104471e22afd85630762fa2f0972339bd58b581"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0.5_s0.yaml",
+        "sha256": "07086ae8f1069b423140ad6a3d49992a6cd808f6b294402d28defb9033b5695d"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0.5_s1.yaml",
+        "sha256": "76a23ae3065726c45643d6237070161846146dc33317fdf165fbadb769601cea"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0.5_s2.yaml",
+        "sha256": "4fe31007f8295283006077a1e08edf66e3f614b41e6114195fd5695a495800ca"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0_s0.yaml",
+        "sha256": "e443601a48bb37c178fcd8c8df16bf3a38415e3061565efc1120596061a3d015"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0_s1.yaml",
+        "sha256": "1676c4483f25181c395bd184ba4d0ee70d188ad73bc6b591483970e9469105e4"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f0_s2.yaml",
+        "sha256": "28f6fa56be4ac853ec18dd64dc6f0cfc951d35de794faf747095843be516799b"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f1_s0.yaml",
+        "sha256": "2a3a01e4543fc4c712b2c3537f03780994d6e4709dab65967a00a049d7352e5d"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f1_s1.yaml",
+        "sha256": "c8b887daca9786ab313625c369485b2625e0edc42cf95957756568ed8496d6a0"
+      },
+      {
+        "path": "configs/sweep/B_n50k_f1_s2.yaml",
+        "sha256": "66cf159625518bcfcbef92aaca93148abe43b477a52fa9450445e202af489941"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0.05_s0.yaml",
+        "sha256": "2482e377c3bc0317b7087950d0f2cd474fb8325242bf68303dcd6773e884a44c"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0.05_s1.yaml",
+        "sha256": "544a6ac9d284eb303902852beaae5d422ea037758a263ce23236de8d8275dd08"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0.05_s2.yaml",
+        "sha256": "edc5a5deeb861853ae39e231c0eadab9ae51572df0a3cf80f58ed1c10fdc1020"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0.1_s0.yaml",
+        "sha256": "2b481c156562a01bebe3ffea19085a6dbb316e84345b2d0fbbee41029e98b48b"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0.1_s1.yaml",
+        "sha256": "6f884018e57d597072d866a4c5721e5428f34b3f159d3c5832d2c1c8de884424"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0.1_s2.yaml",
+        "sha256": "f592ab4b283a9e1e5e7b11ab91d9bcb1babd6c39a394b7027958296a953aaa15"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0.25_s0.yaml",
+        "sha256": "0a88f5b25418a289bb33de953fc8b6b6d25044e7a812a2a46a29c0ee85b025be"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0.25_s1.yaml",
+        "sha256": "55743b4501bfcd160a097c34f2bfccea76ff719b7d5c85c07e0640b5ef18fea6"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0.25_s2.yaml",
+        "sha256": "250cda60a7d702ef869860da8fc4826452b71f0906a1988b32b2d226c92a510a"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0.5_s0.yaml",
+        "sha256": "f4a4650e631e6e50b21a3215c841bc4f2a86ce4e2626c8542b1358bd1deaf953"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0.5_s1.yaml",
+        "sha256": "72740c0d525668b292e4b7283dd461e215a58bd9b458f7a6ae417717c8eef4c9"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0.5_s2.yaml",
+        "sha256": "a63fe6aebf80e2ddf4ad6ead5515e4eaf9b707247935a8954d14edb1a617df28"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0_s0.yaml",
+        "sha256": "d193dd4e37dee8979d6bc66a288e6428bd0b15b5ac200088aec3b7afd9ad3ddf"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0_s1.yaml",
+        "sha256": "956050e4121b84d3ab2114898525471c338385bb0103c84cf4e75bead3057b4a"
+      },
+      {
+        "path": "configs/sweep/C_n200k_f0_s2.yaml",
+        "sha256": "6834c177d630776d1bc87744dbadcd88bf7de3eb0e70e6848d3b75751e7fc274"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0.05_s0.yaml",
+        "sha256": "50ae4c9de8044d4029689889dfc1f0cf2d5b345b27b8630f2bf409cdced5b549"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0.05_s1.yaml",
+        "sha256": "db87698948e9ff7454f85d5fed9cb28d059481ac65d3072f53e398d8b41b5d25"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0.05_s2.yaml",
+        "sha256": "33c859f4bd8bc92f66f58471a6fdcf7294724ae03de71482adb5384093dc2b27"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0.1_s0.yaml",
+        "sha256": "d4aeaefc66341aaeb1c0255cdacd67c130b06d464e960b158f081132d534b40d"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0.1_s1.yaml",
+        "sha256": "f530c542c5223e6ca50b4e8dae8dc2eaed0de3c074e8ebe8f9d96d6549c0074d"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0.1_s2.yaml",
+        "sha256": "011315fb11e2306cfac3b714d8aaf3ff5968885b7476452860c8b11c931ebae1"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0.25_s0.yaml",
+        "sha256": "db7c0f125dc8201704fe3333f7c387809ab9983929f0d395607a43bedb88fdd9"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0.25_s1.yaml",
+        "sha256": "801f61cde4b671fe293f851a8f229c0c64511d72ea84ff7718105f0e5e8c50c1"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0.25_s2.yaml",
+        "sha256": "40e9f3e6f6e685921dc93081efc75f936902679c39d9ad8c95dc5462d667aa07"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0.5_s0.yaml",
+        "sha256": "6133339fb4591456d295b6e7f20598bea1834f0dc7fa8fd827aeb8f3fc6e1ce2"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0.5_s1.yaml",
+        "sha256": "3f6807ec90770d0e899e9a6a5e80b6399c8852189a8b85ee8c91163bf026fd1b"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0.5_s2.yaml",
+        "sha256": "cb266422d788b662fa0cd88bb4aecce65a4bd7c79d040a7160c36cc21d3e2b1a"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0_s0.yaml",
+        "sha256": "63411ebd2b6327f4e26a072c33103eb552241c3185fdab277a9e7d541b789de6"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0_s1.yaml",
+        "sha256": "35a091edb93ccc1d4cbe3fcea6f858f15b5ad42eb90ebaa1d0614430570cdb06"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f0_s2.yaml",
+        "sha256": "4cb9b605202d3c6ad572509c07fe48894563252afe6f20ae81e74c99ce11a6fa"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f1_s0.yaml",
+        "sha256": "1b9d15180e918bcf9f419b17c7ebdc124f63667c483e3c28489f51beda43e450"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f1_s1.yaml",
+        "sha256": "d0ec2b13ad90c1e91cc00d77319f8a14b5d1e955f0ca5924f75aa42038803193"
+      },
+      {
+        "path": "configs/sweep/C_n50k_f1_s2.yaml",
+        "sha256": "b2f38686d7b4890969038d3a41c86d43c417c21cc2f736a8ad0a29bc16cf71cf"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0.05_s0.yaml",
+        "sha256": "9b740755d4cc41ac5cc439072b5bb4a8ab9e3e17ac7b16306755ba08641ca367"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0.05_s1.yaml",
+        "sha256": "98304be20f52d7e1a60c97f477cd63e09fcd316f1df8022d2616c95d447d79e8"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0.05_s2.yaml",
+        "sha256": "d6523e186890ea8d66fa0db2eab0fe9ea31de180270dfbd733a51f66a375b1dc"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0.1_s0.yaml",
+        "sha256": "5e36733b27af4bfd6a33749d44a068e6079053eac34ea2b77986fd7a7b26a9ea"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0.1_s1.yaml",
+        "sha256": "2e583543f5720c620129c5367946dd5cd2cff22111ba388ed1c1648fac2dcd1b"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0.1_s2.yaml",
+        "sha256": "af3a9b3d8900238048afd39ee403c36418fe15836c19cc1aa973da2268453c81"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0.25_s0.yaml",
+        "sha256": "d58a745595525338618b07cac37adafb45d8c3df83735b0b6b10698e71166679"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0.25_s1.yaml",
+        "sha256": "360de3390579144da06570fe7ec5d378004e1c22af0febc96a00450e8841620d"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0.25_s2.yaml",
+        "sha256": "62195d877ad71ad529d192ccc0e57d0b22c288dd0c9891512efe7f6c8ba66ffb"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0.5_s0.yaml",
+        "sha256": "35f56b87da36bae617dbd1dc1abc006fab4c47b31bb5434d92718efb9cee5662"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0.5_s1.yaml",
+        "sha256": "5cdbe36a3a2d09b4ee7a4b7c6fe2ba4d8b09296e50df42c28fe891155d36bb3e"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0.5_s2.yaml",
+        "sha256": "08d36168bb904eb43a72e954e3dda76d836d7dc27e53a0a03e230a179ca4c604"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0_s0.yaml",
+        "sha256": "4e93e9c1f646824bb24922964c54b64a14596d03dd465124d69dcc7f7c47a9c7"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0_s1.yaml",
+        "sha256": "2208188f09b58bebec88a56448df32da24dfe069e51b7af906c5956e557d32b1"
+      },
+      {
+        "path": "configs/sweep/Cplus_n200k_f0_s2.yaml",
+        "sha256": "51b6e45bfe071df4158fe816995897f99e0d5315e2b52f1ca14b1cc2f520b20d"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0.05_s0.yaml",
+        "sha256": "45cf0540604b937fabc2fc47cbd6e9e9c824bc4858987e73aa6f75363c1aca95"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0.05_s1.yaml",
+        "sha256": "40b96067e35082f220cbdfb3000484c159b7587dcf49015e0fbfd1a30588d2e4"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0.05_s2.yaml",
+        "sha256": "52f3d11f890ffd189afd28c4142d67f1ebadef3c34096a30a81e59daf63ba693"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0.1_s0.yaml",
+        "sha256": "e5208b0e0356855f967fc1e36ce2d3fd41b3f25b521b2593cb88270e27e4e5df"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0.1_s1.yaml",
+        "sha256": "259e15e6742979018bbcc5b937f3cf3ec5695fa1ae2e8d928d566d18bde1c9cc"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0.1_s2.yaml",
+        "sha256": "3679198a6487569472ebde70f926f6f8944b77c5dc078ba0fced8af141f5a1c9"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0.25_s0.yaml",
+        "sha256": "9794219370f01251f66878092989e49a393e69817e0249f018a3a4f668960532"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0.25_s1.yaml",
+        "sha256": "361c5775b9d50f31ddf26b013887e79aba1a7908e88bbb54413df14955ba8f34"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0.25_s2.yaml",
+        "sha256": "53f3be2ffeed2f1b62baa07c316f6d8cae87b7988a8d74f2c713ff129902c4d3"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0.5_s0.yaml",
+        "sha256": "8a110fd8e3cce9adfeda5851c0726d4c93c6c1db07414ba002bb77b9afcee2b6"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0.5_s1.yaml",
+        "sha256": "07104847e664c56f4b45a5abf93f22bbf4e585ae24e979073485e3e099b16640"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0.5_s2.yaml",
+        "sha256": "5e20ee6253a6e3662ed61fef0c8c9afe1ac6b2dff738f9e4c95d44aac71a54c3"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0_s0.yaml",
+        "sha256": "68bf35926e76ac117f1432205721bba434ba04d21f7f293d7deb48f8af3c98b6"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0_s1.yaml",
+        "sha256": "e537fb09f9c00df7251531a745ba145a52a90a36b2d094876aa11c4b72b53935"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f0_s2.yaml",
+        "sha256": "939cbb130179fff06c8a33c7645c2f396623b8bb9b897f84cd242f1358ef411b"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f1_s0.yaml",
+        "sha256": "53bd38c7901b1e15c5958ca19d14ec7287cd5431571fbb35e9ee6c5700ec0e36"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f1_s1.yaml",
+        "sha256": "a96ded17bd95e064797e96e56589cc3e0d22a493df76b1dc7618d317d352a54f"
+      },
+      {
+        "path": "configs/sweep/Cplus_n50k_f1_s2.yaml",
+        "sha256": "559a4f5c15fd373194da2c81b7146d4b325d7dea65f1f53271e009e946c24501"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0.05_s0.yaml",
+        "sha256": "aa82afb92ba46315a1da36f4b8de26caa14fdab07aef20a9a8ffcf07c1e178e3"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0.05_s1.yaml",
+        "sha256": "fae92dc0dce7f5760b2dd0e7e903bb49192eceac8de93975c90ea994dea84c88"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0.05_s2.yaml",
+        "sha256": "d71c82342bae05ba678ad194f20eaf4caa5005a5d3fbd06cbbfd3a691672b7e3"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0.1_s0.yaml",
+        "sha256": "c7bcc2c168fcb0593144b155211db1e06580409ff2203c673041b9a4d0408a78"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0.1_s1.yaml",
+        "sha256": "64aa54f0cf4487be0ab6ac55180b1ea98a9351ece71877c3a51d25bbaa87e905"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0.1_s2.yaml",
+        "sha256": "4fab584dbec9846c8353183aefc99122f4fa84bb3e98f19298e8b20014402d73"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0.25_s0.yaml",
+        "sha256": "af5e1eaad6bc9a9be5673a9184a68a90044865a093cfe0f71c078196447736b6"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0.25_s1.yaml",
+        "sha256": "db66c59885fd459fd35301f8cb4958028485df9478493600b25d693e161d8f28"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0.25_s2.yaml",
+        "sha256": "6365d3a3a870e6c155e868c7d24f76f93daa652a20db60d5e14c9eaf19a50bc4"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0.5_s0.yaml",
+        "sha256": "3d91a5967b6ec81c14c99f711456f69eff5510f54d850eefdf1d29e52d059499"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0.5_s1.yaml",
+        "sha256": "f42a58cee0d7d06bcff192e7e531ff4fd4120073756c1b3b8c65f6ddd106da6f"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0.5_s2.yaml",
+        "sha256": "b92351f0b77ad470c767ee82254018602f9d40dcfffcfe7d723ddcd244a90e0d"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0_s0.yaml",
+        "sha256": "380fe01dc1017b5ec45d9e51936119ef13922d22a453e9857a2cb42d1afd8235"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0_s1.yaml",
+        "sha256": "484adbc80a4df581067c4646ddc8198cfa2f40eb81658aa10572be11fdded7b0"
+      },
+      {
+        "path": "configs/sweep/D_n200k_f0_s2.yaml",
+        "sha256": "88b0deab511a8ca6ea6b11d15b9a5610e635ea171c3a409db6e557fc5f54e689"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0.05_s0.yaml",
+        "sha256": "74262684325c0b79439af4483bb3e580bffb35c496be13ec60572e282e5e3b9e"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0.05_s1.yaml",
+        "sha256": "1728d569135001d65759edcde9d17436df28c721231631016d488d99c12c924b"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0.05_s2.yaml",
+        "sha256": "df8368c1fa3b54a9a57a474beec49594741699d70861bb944eae5f5162881638"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0.1_s0.yaml",
+        "sha256": "4071d4736357906d199e3091161e610278063447558dc2453effb101d1ada129"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0.1_s1.yaml",
+        "sha256": "6d69a175fb9e2f6da45c986bd2c957e71a7d4c67020516b6fd9fb8d230f2059b"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0.1_s2.yaml",
+        "sha256": "80ce8f755aad841e1379dfb14f0465951eab6d19ed8d7e6263c5937b3eb56bcd"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0.25_s0.yaml",
+        "sha256": "c464ae86fbbfc7d973758946ac8487a2f41faa1810ceddd7126196b1f851f222"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0.25_s1.yaml",
+        "sha256": "f1ebb1bd9b5d2b810e9a88a1b29fbd84feffa30af6fccca480651fc6e5c941bf"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0.25_s2.yaml",
+        "sha256": "d589f3eadaeadd55f243b9816bb5fee2af73d798252e9666c8f833b283055ae9"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0.5_s0.yaml",
+        "sha256": "53be0c85c7451aed11cb7b385a242a58f6557b9e98a1eb4f47c876184ddf09b7"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0.5_s1.yaml",
+        "sha256": "bb78688ff11329de3098473afdb3c064122f37e22028cb28f07089ae91e8a705"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0.5_s2.yaml",
+        "sha256": "047b65e5d27080065f24c45cd6a7b84621e5cac43d00cef00596e30c0e03547a"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0_s0.yaml",
+        "sha256": "b0af41678ade5942c0d9c449775e2569c29af902c8c92c50ac3f534799393156"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0_s1.yaml",
+        "sha256": "5e1d16c6d88c507dbf89a58d2f5ef736b454eb0c1053940bdc73daac095c5cae"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f0_s2.yaml",
+        "sha256": "cda6e2f3b3045cdde6733a18a0154c058bbe09ee9f64fdf5bcb4a3ae84adef93"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f1_s0.yaml",
+        "sha256": "01e8cab64fae4f02ddd109e96bfebfaeda1dd2db1b62609b9a52721af63d7a7b"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f1_s1.yaml",
+        "sha256": "02445d66df1e9497dfb931ba9a93560ef79e0b2b508278305696cce80b36c723"
+      },
+      {
+        "path": "configs/sweep/D_n50k_f1_s2.yaml",
+        "sha256": "0a169096dc76c720e26a11dfa8beefed35d7c65379820075dec8497536ada02a"
+      },
+      {
+        "path": "configs/sweep/index.csv",
+        "sha256": "2179738e7853e1c2c2e7deca812233b65804131d58b06675c2cf347e6a73847f"
+      },
+      {
+        "path": "configs/sweep.yaml",
+        "sha256": "7d3ec3727535d94758a894b1b5d792e8bbcdfa8dd51d30bdcdfc98d5cde15854"
+      },
+      {
+        "path": "configs/vocab.json",
+        "sha256": "8182da9317b8f8b69104aba23c8604f2611645bfe5bbf1a4fcd3409862b5955e"
+      },
+      {
+        "path": "docs/reliability.md",
+        "sha256": "de35e3c3a583d9ae89b3209762b5c4e6fe8b7295ad99102f2d6a771aa396c268"
+      },
+      {
+        "path": "docs/rotation-demo.md",
+        "sha256": "b83500a115b9aedbfe0bd64a0ea3e4d0208e908427a5792407060a0592d023c2"
+      },
+      {
+        "path": "notebooks/00_colab_setup.ipynb",
+        "sha256": "ed7df6842e170bcbf845f72726640caab056a04288aaf35e6442bd85ff60d1b0"
+      },
+      {
+        "path": "notebooks/01_generate_data.ipynb",
+        "sha256": "312cb8e3f97da4fd7bb54ccacaf53b845629b6eac4e2f853aad1c32d8ff001b4"
+      },
+      {
+        "path": "notebooks/02_train_eval.ipynb",
+        "sha256": "45bd5de54813861eddf79f704e165c73624cfd1957e013b17cf071f2bead2756"
+      },
+      {
+        "path": "notebooks/03_geometry.ipynb",
+        "sha256": "126d32eb4b4730d200d544a09ae1d9c40ff1467403b93854eae65dc3069fa0c2"
+      },
+      {
+        "path": "notebooks/04_real_data.ipynb",
+        "sha256": "eec425d2dbd81961be86d962610e4b6a6c34dde3ef4acdd615732228fb247501"
+      },
+      {
+        "path": "notebooks/05_rotation_demo.ipynb",
+        "sha256": "254160f5bd4166d6bd87f79bcf76de98b0a2f2891b5e5db19d6285f5261541d5"
+      },
+      {
+        "path": "ouroboros/__init__.py",
+        "sha256": "598851c0a6044c0022ecc171781f87c291b1abd5264bdaf9faa2f356e22b1759"
+      },
+      {
+        "path": "ouroboros/data/__init__.py",
+        "sha256": "bd1e26faba49a412862ac176ca720b67db417e7c7440a703ee1a5a5e64491ef5"
+      },
+      {
+        "path": "ouroboros/data/build.py",
+        "sha256": "2d774b6b1719c719eeb499a4e20093be54c06c776f7fd7346b8076dbd517e913"
+      },
+      {
+        "path": "ouroboros/data/chem.py",
+        "sha256": "4deebee099265e5b7a20c978674f817fae2d1b3e4f5268922eaf7a91c28a6430"
+      },
+      {
+        "path": "ouroboros/data/filter.py",
+        "sha256": "87942717ed5d5337cdc1546c9e262a63669743f93d2925949927f9e48c69496b"
+      },
+      {
+        "path": "ouroboros/data/hf_manifest.py",
+        "sha256": "0a329e1a50496adf56daa064eb0d824296f67ff35a4fb209944cb14adebf855a"
+      },
+      {
+        "path": "ouroboros/data/loader.py",
+        "sha256": "ce232e1072e58695412f21fe33281b2b12cce32a1a8b646dab8b80c49417378d"
+      },
+      {
+        "path": "ouroboros/data/mixture.py",
+        "sha256": "27a1cb503dba4ac324dd78cfc62e4b668392403494500a36c0c799557339a3ef"
+      },
+      {
+        "path": "ouroboros/data/pool_cache.py",
+        "sha256": "03008b14a321c93cc4a8fbc40df9a355759a5052a0054fb25221a712626c5076"
+      },
+      {
+        "path": "ouroboros/data/real.py",
+        "sha256": "3b3f1a8aa57477eba83a9b3183ffcb3af0771a423b0edebea17aae0e93be3977"
+      },
+      {
+        "path": "ouroboros/data/render.py",
+        "sha256": "0afac1824a035994bfe4ecf28a26c8050180b7eae154a66f30019dfe7a92a347"
+      },
+      {
+        "path": "ouroboros/data/sources.py",
+        "sha256": "b38f4549e3a70e8b73a42ba35a9380434263057ae21fd736e6a687ac4ca0b3e5"
+      },
+      {
+        "path": "ouroboros/data/stereo.py",
+        "sha256": "eb42b2660431dd9ca90ea573fcda90352a0701e0e2e4ab62a0bb56aeab15aa21"
+      },
+      {
+        "path": "ouroboros/decode/__init__.py",
+        "sha256": "4c323170fe16f4634a2f071907ba3d90e9a71c7c02a025060837a45db6baa0a9"
+      },
+      {
+        "path": "ouroboros/decode/decoder.py",
+        "sha256": "5c3c73ec21c6f584573d7e6865f41ad3556d029f243d494a3e26f7369d58b72d"
+      },
+      {
+        "path": "ouroboros/decode/tokenizer.py",
+        "sha256": "07c3de2d0e387d699d3435e319e6ae75b717e1f187abae339485ce0e07759d9b"
+      },
+      {
+        "path": "ouroboros/demo/__init__.py",
+        "sha256": "6cb669e970a105eec2ea6141a1f0322f84673194d38a2fd52e91d74942b077e9"
+      },
+      {
+        "path": "ouroboros/demo/__main__.py",
+        "sha256": "295fff652b5eab998d166549f3eb501e2982c0078f96a04af66fbb0efa913755"
+      },
+      {
+        "path": "ouroboros/demo/index.html",
+        "sha256": "0801284fab5eeb88bfbea8eb8cca44c4a779c2b35ac5be7fe2b9d8de3788578b"
+      },
+      {
+        "path": "ouroboros/demo/rotation.py",
+        "sha256": "a692f5711933491df8efdccd6647077c475ad6f5f12b5ca360a52d152839ffc5"
+      },
+      {
+        "path": "ouroboros/encoder/__init__.py",
+        "sha256": "2afbd5bc40731874ddffea970a0afcec7b1b3b465016043f0ffb69b5078b32b3"
+      },
+      {
+        "path": "ouroboros/encoder/base.py",
+        "sha256": "3dc0fddadc52c0693615945da7df356ba4502226b92a0e539a8f0bef79becfc9"
+      },
+      {
+        "path": "ouroboros/encoder/baseline.py",
+        "sha256": "a0a31dba59edd0b2a93b94f264d986287f3943ddcb1666b27df207ceac84daba"
+      },
+      {
+        "path": "ouroboros/encoder/canonicalize.py",
+        "sha256": "074c435dd00d7ca57825fa5805c16ca13cf71e643a4d9bd55695ffe6e6758a9f"
+      },
+      {
+        "path": "ouroboros/encoder/equiv_attention.py",
+        "sha256": "1e9ab77de120851e1afbc9d93422fbbccf240cbcda36fe63f48c4894e9de88f6"
+      },
+      {
+        "path": "ouroboros/encoder/steerable.py",
+        "sha256": "f3d99ad744218f7dd3c140804c476d613aad60205ec9d5ece69432b17364f230"
+      },
+      {
+        "path": "ouroboros/eval/__init__.py",
+        "sha256": "53954affdf771d789aa3f46003d8facaa9836efc8eb41223896e3b481a3b50ac"
+      },
+      {
+        "path": "ouroboros/eval/aggregate.py",
+        "sha256": "69838b58ab38ea2add27a39f4fa8b5647bca6e2407d2cf473e51421b1abcf1d2"
+      },
+      {
+        "path": "ouroboros/eval/evaluate.py",
+        "sha256": "1179b7e947edb699e9f6427597230b8063ee611b3dc7ed5a94508035e516a0bc"
+      },
+      {
+        "path": "ouroboros/eval/metrics.py",
+        "sha256": "a789f17bdf0f1b550199178b947fe5b84338a0a10e9ab35765c624cc460bb938"
+      },
+      {
+        "path": "ouroboros/eval/standardize.py",
+        "sha256": "88164186bb820e593262668f597412ca565ce0f3c48d4281190c46d35ed0cf2c"
+      },
+      {
+        "path": "ouroboros/geometry/__init__.py",
+        "sha256": "40d2586cefe34a20f393256b2336f092eb11e076a0034c1cea9ba4c00db40ad5"
+      },
+      {
+        "path": "ouroboros/geometry/cache.py",
+        "sha256": "e51e3db2ac8b3c3c92457592a6bdc5bdbff8dc28a5c09b37530f545ebccb2ce6"
+      },
+      {
+        "path": "ouroboros/geometry/conformers.py",
+        "sha256": "9a57a428fa06f4304d34ff9e223ae592315057ea223d8311f91c95d1d8304cc6"
+      },
+      {
+        "path": "ouroboros/geometry/propagation.py",
+        "sha256": "d41a6d47c48e4fd8b30bd124845bcfc9cb30dc4863c907d3fbc800de2740915d"
+      },
+      {
+        "path": "ouroboros/model.py",
+        "sha256": "f3c939efb0da146a6bc48bba5d68cb05bfcc077fa0c08bd4df8bbf882ebf5938"
+      },
+      {
+        "path": "ouroboros/provenance.py",
+        "sha256": "b95d11292836a1d8b9b068250810ef042ab57863c2529b8b4ad6348d5119615f"
+      },
+      {
+        "path": "ouroboros/train/__init__.py",
+        "sha256": "36bc0825295b689986dea22812e60950de3397bb6992d82204a98f66778312f1"
+      },
+      {
+        "path": "ouroboros/train/__main__.py",
+        "sha256": "ed59773c73967f289be2c79131e979f9dfa83883bd0914d93c16ed6b605d72ef"
+      },
+      {
+        "path": "ouroboros/train/benchmark.py",
+        "sha256": "59bc6333409360fd471da23ca41411f5e2283146cf11837dfd25d6e4f8721894"
+      },
+      {
+        "path": "ouroboros/train/config.py",
+        "sha256": "af5e9be172077564828b38751a7641891a0b772ecdb805c6fed3e0dc5ffcd160"
+      },
+      {
+        "path": "ouroboros/train/trainer.py",
+        "sha256": "951ee4b7b42e61834ec6003323b2da8c3336a2991bdf6158b6e252cfaaea6781"
+      },
+      {
+        "path": "pyproject.toml",
+        "sha256": "9d2e17890bc6100131b403663df018e8421a21fede07bebd491e929b788de063"
+      },
+      {
+        "path": "requirements-demo.txt",
+        "sha256": "da30b65652a3112b9804ba45ef76687b1793e998fdc6ecf21eb92d81a91e9ff0"
+      },
+      {
+        "path": "requirements.txt",
+        "sha256": "4dadfe928867f70a0864999edb40c1c46e7131accf88bb1356534184759af88e"
+      },
+      {
+        "path": "scripts/aggregate.py",
+        "sha256": "104ec76dc2de5c88fa3bf03bd0c9ce43fafd997e9e29f407c8c5b18ed4f13019"
+      },
+      {
+        "path": "scripts/bench_export.py",
+        "sha256": "65fd0aee6b9a887cd719a2e0720b359d1c63e6b6f3e57d282d09d30c29a15d6a"
+      },
+      {
+        "path": "scripts/bench_geometry.py",
+        "sha256": "e1d712f4218f7684c3420c8fb1aa94f84f54aee3c9fd8ec52e998a4f6a67db0b"
+      },
+      {
+        "path": "scripts/benchmark_cuda.py",
+        "sha256": "e795f425f93f1946dfff783d080b81c42d3284a4993060577c1a3a4e8af17c46"
+      },
+      {
+        "path": "scripts/benchmark_cuda_resume.py",
+        "sha256": "3aa95fb3d5a7185240b1960aba334eaf747409ad76d1e7ae8896354df81fb37c"
+      },
+      {
+        "path": "scripts/build_dataset.py",
+        "sha256": "0c48e646e5fb1f6266c5932600a8de8af5f8f180531a53e796e29f60218b548c"
+      },
+      {
+        "path": "scripts/check_leakage.py",
+        "sha256": "943cda232468c9870e068714ba7fbfcb7e7c7ac8da5e535ee462441641726004"
+      },
+      {
+        "path": "scripts/check_no_data.py",
+        "sha256": "85e26f79f390e8833771fd50f791b626cde1c241e6dd8890b328349027a1c545"
+      },
+      {
+        "path": "scripts/colab_mplbackend.pth",
+        "sha256": "387c7e4b169813f494f3ea77f8a26c0e0e701b44b61e782c6b40db9506f28893"
+      },
+      {
+        "path": "scripts/dry_run_sweep.py",
+        "sha256": "f021562969d49f6d73155144933408709d46333d1e308841f7d896a57c754f8b"
+      },
+      {
+        "path": "scripts/error_propagation.py",
+        "sha256": "ed5ae1c3076ea5ec7e6ad45bf06515c777a62d6786dc3eacfc5ac9705665aea1"
+      },
+      {
+        "path": "scripts/estimate_compute.py",
+        "sha256": "0f8e5578ae501eb7902fd42dad3198a881407eb06ae84196960775e5ef2164b2"
+      },
+      {
+        "path": "scripts/evaluate.py",
+        "sha256": "c9748ec6c41b4b4152c52fa0bfa24ad5d6d9972d1ce055af49f8bc56598ff32a"
+      },
+      {
+        "path": "scripts/hf_to_manifest.py",
+        "sha256": "bf2f3aee756afd8f7c41c34b56373c26c079b6cd9322ffec840f66084928fdd6"
+      },
+      {
+        "path": "scripts/hpc/audit_pilot.py",
+        "sha256": "740134b4587b6d207583361ce7a3a4e73676022559f7b615788f89a3b86561de"
+      },
+      {
+        "path": "scripts/hpc/colab_run.py",
+        "sha256": "1048a5de3939650f114cc4118b41c18e4a698af6be78d0c6039da6c112110fd9"
+      },
+      {
+        "path": "scripts/hpc/enantiomers.sh",
+        "sha256": "269dbe8d3357e697ed3bca2f5ef382906c37b8847676be9376880da5805cb238"
+      },
+      {
+        "path": "scripts/hpc/expanse_hardware.sbatch",
+        "sha256": "53a3aaaf4077e972252056e12e8e1bace1f4b22c469f977d65d43ae2a0139525"
+      },
+      {
+        "path": "scripts/hpc/geometry.sbatch",
+        "sha256": "afe36201856aeed1d73a5f68c8a49aecc8ffd37f16591cef95f5075154c5d936"
+      },
+      {
+        "path": "scripts/hpc/geometry_batch.py",
+        "sha256": "737c16fd86b9414a8a9c9fcf1d7bfab9d119f075e4b18cbbcc52ae8b48843679"
+      },
+      {
+        "path": "scripts/hpc/geometry_prepare.sh",
+        "sha256": "eabf3e1c67bf6fb8c9b804070c8bfd93f677739602b391a914d64e81e48239e9"
+      },
+      {
+        "path": "scripts/hpc/geometry_probe.sh",
+        "sha256": "8873bd8c91b644eedc2aa76dde16ed5920890e8556d7fddd69e31c6a426cf2fd"
+      },
+      {
+        "path": "scripts/hpc/hoffman2_hardware.sge",
+        "sha256": "2387b8d4a9541281baecb712c2a42a01a17cc1815d493b47fb2e83d8a9e9dcf1"
+      },
+      {
+        "path": "scripts/hpc/probe_hoffman2_container.sh",
+        "sha256": "947bc10e38a53e05f96e9581d067d1e09109b7e47d4bbf7ddc9c47b8cf3dcc5a"
+      },
+      {
+        "path": "scripts/hpc/repair_hoffman2.sh",
+        "sha256": "e15165171e40975f293fab80b0be922716657c611b5def984c8f092dfce69304"
+      },
+      {
+        "path": "scripts/hpc/setup.sh",
+        "sha256": "273b9ea98482d69700c8fc52ed2d9c8f815870fd09d999513af025ceb3227a17"
+      },
+      {
+        "path": "scripts/hpc/work.sh",
+        "sha256": "890af4469bc910c8cdc9c7978a5fd8b331278f4ed6d29fdf54eb672d6d659a21"
+      },
+      {
+        "path": "scripts/ingest_real.py",
+        "sha256": "e96c96e711359482e2b399ecdf4b1d9b8d95961e2492b69895610117ae93d7fc"
+      },
+      {
+        "path": "scripts/install_git_hooks.sh",
+        "sha256": "63a5042d4d396ac6fd2424d93e0e97b67f327328114025f85ef7791adfbae7f6"
+      },
+      {
+        "path": "scripts/make_colab_nbs.py",
+        "sha256": "57757b68eb5a57096c7271272a540f8b893d7868022d1f9ff2b7bea66e36c617"
+      },
+      {
+        "path": "scripts/make_rotation_demo_nb.py",
+        "sha256": "86f727d8dc2d1bd8c35c0723bcfd737c512f26df925c5fa5308e8b7ff474fa80"
+      },
+      {
+        "path": "scripts/make_standin_real.py",
+        "sha256": "fcd5b308b19ff75a1f5e99bdb9bf7559809c204afcc6d6ff97b47226358fc2a7"
+      },
+      {
+        "path": "scripts/make_sweep.py",
+        "sha256": "1e8567e6429ed6be3db515753ed65a4361c23c1926483c61de256b2c3c3be087"
+      },
+      {
+        "path": "scripts/make_vocab.py",
+        "sha256": "e953333b4dd7933dd187235238b4fd2bb238287d262829331187c175fc6d3640"
+      },
+      {
+        "path": "scripts/measure_equivariance.py",
+        "sha256": "b746e8a85b9ffdf212a72331b67a7213f2cebca7df36eafacbad24f48a974d83"
+      },
+      {
+        "path": "scripts/memory_estimate.py",
+        "sha256": "e6ebc5a8110a13a92399fcda7ed4f8f2fb2a1855f75c630fa57e180ea7e60e1f"
+      },
+      {
+        "path": "scripts/overfit.py",
+        "sha256": "13289ddc08cf557a7dfe5a7bad707823a659529d5f47a1a055f7de1c5d0e336f"
+      },
+      {
+        "path": "scripts/profile_encoders.py",
+        "sha256": "104f55e59a31a4bc4341da08145176988158d8b937477b111b97aac0462e720e"
+      },
+      {
+        "path": "scripts/resume_test.py",
+        "sha256": "e797c0bf40ac36dfc351b3a47565df7ddb5aa766e808798a3949f2d4b83e1dde"
+      },
+      {
+        "path": "scripts/verify_data.py",
+        "sha256": "1bddff453f209adc80e0b0b663ecf6469fba82e481a16f315927e413fe95eaa2"
+      },
+      {
+        "path": "tests/conftest.py",
+        "sha256": "a871ac69ddff114185451b5ad2f6c733ef0869d62681104b5b5abbf145e11243"
+      },
+      {
+        "path": "tests/fixtures/propagation_pairs.tsv",
+        "sha256": "8c8fcfcdb5e206cd5023e42c562dc638e30bc8fad5e03dd980e0881cb82f5843"
+      },
+      {
+        "path": "tests/test_aggregate.py",
+        "sha256": "21c56042860b1ba4dfac2791282fa9ed09d0222f25a0a92b7591411793e481c2"
+      },
+      {
+        "path": "tests/test_benchmarks.py",
+        "sha256": "4bd726decb7497093d62b1f438488bf88359c88cfcb042ef4cfae628f49e9191"
+      },
+      {
+        "path": "tests/test_canonicalize.py",
+        "sha256": "f33e3fbb04be8257e2df9f2e924cc86cccee3a20b0c14d3c2143435479e9ff07"
+      },
+      {
+        "path": "tests/test_data.py",
+        "sha256": "8f5127d8afe717b63057950c842793b0034060fb607d3e38c92833cbbcf93556"
+      },
+      {
+        "path": "tests/test_equiv_attention.py",
+        "sha256": "57de71e0bee1b4b59ea93dcc0fe4469080233edf6061c6d5f5882916f61c9176"
+      },
+      {
+        "path": "tests/test_equivariance.py",
+        "sha256": "b4bf5aba213fcd39069b6322a3be94eb355f34417a147f54103624424d860757"
+      },
+      {
+        "path": "tests/test_geometry.py",
+        "sha256": "484ef576320cc92dfe6381c6033eaa1db08fa27b706a41ceb489827e84f40ce8"
+      },
+      {
+        "path": "tests/test_hf_manifest.py",
+        "sha256": "b40f4c5b1b44747334c733c23edd6e627873b463ad2e924625425690c72facb3"
+      },
+      {
+        "path": "tests/test_metrics.py",
+        "sha256": "64277e9ddfa6c04c61f5c8a4b362435f2a983a770957c5260e3b4482e6209e6e"
+      },
+      {
+        "path": "tests/test_mixture.py",
+        "sha256": "e2681cffe099dea825653545520f45cf9f5b0e209bd4c194d04d00ebeecc107e"
+      },
+      {
+        "path": "tests/test_persistent_eval.py",
+        "sha256": "d18f2cd2911dfdaa181bcbdb639ce5bbbca742e7c24ea9e7c015aa9046aafa88"
+      },
+      {
+        "path": "tests/test_real.py",
+        "sha256": "d7b23d7b9015a21656eb829c62f54ac3aeab597d4bad0283e5f0657a76bd318a"
+      },
+      {
+        "path": "tests/test_rotation_demo.py",
+        "sha256": "a7a34d1b4445a88853610605f867eb59f141782d007027d42714135de9164cb3"
+      },
+      {
+        "path": "tests/test_rotation_sweep.py",
+        "sha256": "1ab1de33f09203c42bb57e762ac4d9f3fd603fe28cfc76c3dfe79226f568b350"
+      },
+      {
+        "path": "tests/test_shard_integrity.py",
+        "sha256": "956d349f72575263c9847f409c81c6572454c40edaeeac857b429371593c06de"
+      },
+      {
+        "path": "tests/test_smoke.py",
+        "sha256": "f606993252f7db893ad13ce391a3a71c1b94053b1b8a6c470a46047d884ca4a3"
+      },
+      {
+        "path": "tests/test_source_cache.py",
+        "sha256": "70495054faf030fe2aa7b5de11b7ccfcf01e6c6046b1cf45e8cf24feb97e5511"
+      },
+      {
+        "path": "tests/test_train.py",
+        "sha256": "0a709ed60af1422df6103fbe5c60955b4dfeb5e78040624e8da5cb8b976c85dc"
+      },
+      {
+        "path": "tests/test_validation_stop.py",
+        "sha256": "7172b946a09a41d20b97ba9db3df6d0d48ad689d33df44ebb488dbf4849a3035"
+      },
+      {
+        "path": "colab-data-receipts.json",
+        "sha256": "32c048e233ad55f03d31c0308b6dae1c6d0584017e4952818f175c0986b3d6a0"
+      }
+    ]
+  },
+  "excluded_records": [
+    {
+      "assigned": "O=C1CCCN1[C@H]1[C@H]2C[C@H]3C[C@@H]1C[C@@H](C2)[C@H]3N1CCCC1=O",
+      "key": "train_00011370",
+      "split": "train",
+      "stored": "O=C1CCCN1[C@H]1[C@@H]2C[C@@H]3C[C@H]1C[C@H](C2)[C@H]3N1CCCC1=O"
+    },
+    {
+      "assigned": "CC[C@]12CN(C(C)=O)C[C@](CC)(CN(C(C)=O)C1)[C@@H]2O",
+      "key": "train_00057670",
+      "split": "train",
+      "stored": "CC[C@]12CN(C(C)=O)C[C@](CC)(CN(C(C)=O)C1)[C@H]2O"
+    },
+    {
+      "assigned": "Cc1ccc([C@H]2[N@@]3C[C@@]4(C)C[N@]2C[C@@](C)(C3)[C@H]4O)o1",
+      "key": "train_00167450",
+      "split": "train",
+      "stored": "Cc1ccc([C@H]2[N@@]3C[C@@]4(C)C[N@]2C[C@@](C)(C3)[C@@H]4O)o1"
+    }
+  ],
+  "affected_shards": [
+    {
+      "path": "shards/train-000011.tar",
+      "removed_members": [
+        "train_00011370.png",
+        "train_00011370.json"
+      ],
+      "original_sha256": "a6fb1b1a4ca0d87af27288a0dd0a0db07c103890fc1a51a4123699cc8f580963",
+      "derived_sha256": "e8569c3f70c636b338478f0773a3af98cd22198abd42427b524eea32ba5d244d"
+    },
+    {
+      "path": "shards/train-000057.tar",
+      "removed_members": [
+        "train_00057670.png",
+        "train_00057670.json"
+      ],
+      "original_sha256": "bdbfc66488ebaad93944610fbf041b604740423993a40c138c6b2337a9f6e992",
+      "derived_sha256": "fa824686bfd3a46ae999b2c3d56d2b66809c1972633bb2cba18792519180b56f"
+    },
+    {
+      "path": "shards/train-000167.tar",
+      "removed_members": [
+        "train_00167450.png",
+        "train_00167450.json"
+      ],
+      "original_sha256": "fc8d92e9cd9a46bd0076bc8358aada6826d88c022c8404e475d48cab58f30d30",
+      "derived_sha256": "5eebad97cde55b58f056572e00853ecc0ddd8b432da00faa7a2a4920e8c19a99"
+    }
+  ],
+  "original_preserved": true,
+  "validation_and_test_unchanged": true
+}

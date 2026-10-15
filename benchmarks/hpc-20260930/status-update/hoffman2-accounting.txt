@@ -1,0 +1,72 @@
+==============================================================
+qname        gpu_a100.q          
+hostname     g13                 
+group        sautet              
+owner        yaniguan            
+project      sautet_prj          
+department   defaultdepartment   
+jobname      ouro_setup          
+jobnumber    14974162            
+taskid       undefined
+pe_taskid    NONE                
+account      sge                 
+priority     0                   
+cwd          /u/scratch/y/yaniguan/ouroboros-20260930
+submit_host  login2              
+submit_cmd   qsub -cwd -S /bin/bash -N ouro_setup -l gpu,L40S,cuda=1,h_rt=02:00:00,h_data=4G -pe shared 4 -j y -o reports -v OURO_ROOT=/u/scratch/y/yaniguan/ouroboros-20260930 code/scripts/hpc/setup.sh
+qsub_time    09/30/2026 00:25:42.758
+start_time   09/30/2026 10:33:52.985
+end_time     09/30/2026 10:33:53.019
+granted_pe   shared              
+slots        4                   
+failed       0    
+deleted_by   NONE
+exit_status  141                 
+ru_wallclock 0.034        
+ru_utime     0.008        
+ru_stime     0.009        
+ru_maxrss    1928                
+ru_ixrss     0                   
+ru_ismrss    0                   
+ru_idrss     0                   
+ru_isrss     0                   
+ru_minflt    2056                
+ru_majflt    0                   
+ru_nswap     0                   
+ru_inblock   0                   
+ru_oublock   24                  
+ru_msgsnd    0                   
+ru_msgrcv    0                   
+ru_nsignals  0                   
+ru_nvcsw     38                  
+ru_nivcsw    9                   
+wallclock    0.223        
+cpu          0.017        
+mem          0.000             
+io           0.000             
+iow          0.000             
+ioops        0                   
+maxvmem      0.000
+maxrss       0.000
+maxpss       0.000
+arid         undefined
+jc_name      NONE
+bound_cores  NONE
+taskid       1                   
+start_time   09/30/2026 10:42:29.946
+end_time     09/30/2026 10:42:29.960
+failed       0    
+exit_status  1                   
+taskid       2                   
+start_time   09/30/2026 10:43:16.156
+end_time     09/30/2026 10:43:16.171
+failed       0    
+exit_status  1                   
+bash: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)

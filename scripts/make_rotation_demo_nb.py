@@ -34,13 +34,16 @@ def notebook():
 
                 **Drag a slider to rotate a molecule and measure the network's response.**
                 The default is a small random C4 model on CPU: no dataset, training, GPU or
-                checkpoint is required. Recognition stays off until you load your own weights.
+                checkpoint is required. Recognition stays off until you load a trained checkpoint.
+                Release A/B/C weights are available.
 
                 **How to run locally** (from the repository root, Python 3.11 recommended):
                 ```bash
                 python3.11 -m venv .venv
                 source .venv/bin/activate
                 pip install -r requirements-demo.txt
+                python scripts/prepare_inference.py
+                python -m ouroboros.weights fetch --arm all
                 python -m jupyterlab notebooks/05_rotation_demo.ipynb
                 ```
                 If `py3nj` needs to compile, install `gfortran` first (`brew install gcc` on
@@ -48,8 +51,8 @@ def notebook():
                 existing project environment. See [the guide](../docs/rotation-demo.md).
 
                 **Colab:** first run `00_colab_setup.ipynb` in the same runtime, then open this
-                notebook. Ensure that checkout contains this demo (merged `main`, or the demo
-                branch). The UI uses Colab's kernel, while calculations run in `/content/venv`;
+                notebook. For this release use tag `v0.1.0-alpha`.
+                The UI uses Colab's kernel, while calculations run in `/content/venv`;
                 do not install escnn into Colab's system Python. No GPU is needed by default.
 
                 Run the cells below in order, then use the embedded UI or its full-page link.
@@ -74,7 +77,8 @@ def notebook():
                     str(next((p for p in candidates if p.is_file()), Path(sys.executable))),
                 )
                 PORT = 0  # choose an available local port
-                CHECKPOINT = ""  # optional: /path/to/runs/my_run/ckpt/last.pt
+                # Set an absolute path to checkpoints/ouroboros-C.pt for trained recognition.
+                CHECKPOINT = ""
                 DEVICE = "cpu"  # set to "cuda" only for a trained model on a CUDA host
                 print("Repository:", REPO_ROOT)
                 print("Model interpreter:", MODEL_PYTHON)

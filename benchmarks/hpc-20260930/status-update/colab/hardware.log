@@ -1,0 +1,4 @@
+
+START Wed Sep 30 19:03:35 2026 ['nvidia-smi', '--query-gpu=name,memory.total,driver_version', '--format=csv']
+name, memory.total [MiB], driver_version
+NVIDIA A100-SXM4-40GB, 40960 MiB, 580.82.07

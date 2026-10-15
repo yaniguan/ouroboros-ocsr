@@ -30,7 +30,7 @@ def validate_device(device, precision):
             raise RuntimeError(
                 "CUDA unavailable; CPU smoke checks require --device cpu --precision fp32"
             )
-        if precision == "bf16" and not torch.cuda.is_bf16_supported():
+        if precision == "bf16" and not torch.cuda.is_bf16_supported(including_emulation=False):
             raise RuntimeError("CUDA device does not support bf16")
     elif precision != "fp32":
         raise ValueError("CPU smoke checks require fp32")

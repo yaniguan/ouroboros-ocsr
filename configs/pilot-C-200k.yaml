@@ -1,0 +1,6 @@
+base: pilot-validation.yaml
+model:
+  encoder:
+    type: steerable
+    N: 8
+    fields: [7, 14, 27, 55]

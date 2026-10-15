@@ -1,0 +1,44 @@
+{
+  "job_id": "14988962",
+  "started": 1790878482.8408506,
+  "stages": [
+    {
+      "stage": "native-bf16",
+      "exit_code": 0,
+      "seconds": 3.2797415256500244
+    },
+    {
+      "stage": "tests",
+      "exit_code": 0,
+      "seconds": 41.27751398086548
+    },
+    {
+      "stage": "audit",
+      "exit_code": 0,
+      "seconds": 132.6459665298462
+    },
+    {
+      "stage": "capacity-B",
+      "exit_code": 0,
+      "seconds": 21.338082551956177
+    },
+    {
+      "stage": "resume-B",
+      "exit_code": 0,
+      "seconds": 113.46488285064697
+    },
+    {
+      "stage": "train-B",
+      "exit_code": 0,
+      "seconds": 834.4941155910492
+    },
+    {
+      "stage": "evaluate-B",
+      "exit_code": 0,
+      "seconds": 537.3208446502686
+    }
+  ],
+  "stage": "B-pilot",
+  "status": "complete",
+  "updated": 1790880263.1791708
+}

@@ -13,6 +13,8 @@ Use Python 3.11 (3.13 is incompatible with the escnn dependency stack). From the
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-demo.txt
+python scripts/prepare_inference.py
+python -m ouroboros.weights fetch --arm all
 python -m jupyterlab notebooks/05_rotation_demo.ipynb
 ```
 
@@ -40,7 +42,7 @@ demo. Then run `05_rotation_demo.ipynb`. It launches calculations using `/conten
 and embeds the UI using Colab's
 [official iframe helper](https://github.com/googlecolab/colabtools/blob/main/google/colab/output/_util.py).
 The default example needs only CPU.
-The existing setup notebook's branch selection must point to the demo branch until it is merged.
+Set the setup notebook branch to `v0.1.0-alpha` for a reproducible release checkout.
 For other remote Jupyter servers, forward the printed local port with SSH; the notebook iframe
 assumes a local browser unless it detects Colab.
 
@@ -54,7 +56,8 @@ assumes a local browser unless it detects Colab.
   interpolation otherwise. Shortcuts provide 0°, 45°, 90°, 180° and 270°.
 - **Random demo network / Use random demo:** select C4, C8 or C16. These small seeded networks
   demonstrate architectural symmetry, never trained recognition. Recognition is disabled.
-- **Load checkpoint:** read the configuration, vocabulary and weights from a trusted training
+- **Load checkpoint:** use the absolute path to a downloaded `checkpoints/ouroboros-{A,B,C}.pt`
+  file, or another trusted training checkpoint. Read the configuration, vocabulary and weights from a trusted training
   checkpoint. Choose CPU or CUDA. No training datasets or external vocabulary files are needed.
 
 The original image's features and prediction are cached while rotating the same molecule.
@@ -81,8 +84,8 @@ and the same standardization as evaluation (including neutral largest-fragment s
 Prediction-to-prediction agreement compares full canonical isomeric SMILES; invalid predictions
 have no identity-agreement result. Two matching predictions can still both be wrong.
 
-This synthetic single-molecule demonstration is not a real-document evaluation. No trained OCSR
-weights are bundled. Scoring parity with the motivating paper remains unverified, as in the
+This synthetic single-molecule demonstration is not a real-document evaluation. Trained A/B/C weights are separate release assets; fetch them with
+`python -m ouroboros.weights fetch --arm all`. They are not embedded in the code package. Scoring parity with the motivating paper remains unverified, as in the
 repository's evaluation reports. The downstream RDKit conformer/MACE stage is outside this demo.
 
 ## Development

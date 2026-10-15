@@ -87,3 +87,12 @@ def test_capacity_never_labels_cpu_as_cuda(monkeypatch):
         validate_device("cuda", "bf16")
     with pytest.raises(ValueError, match="CPU smoke"):
         validate_device("cpu", "bf16")
+
+
+def test_capacity_rejects_emulated_bf16(monkeypatch):
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(
+        torch.cuda, "is_bf16_supported", lambda including_emulation=True: including_emulation
+    )
+    with pytest.raises(RuntimeError, match="does not support bf16"):
+        validate_device("cuda", "bf16")

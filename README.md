@@ -1,183 +1,83 @@
-# Ouroboros — rotation-equivariant OCSR with stereochemistry → 3D energy
+# Ouroboros — rotate the drawing, compare the recognition
 
-**Try the interactive rotation lab:** [notebook](notebooks/05_rotation_demo.ipynb) ·
-[setup and guide](docs/rotation-demo.md). Drag a slider to rotate a molecule and measure
-equivariance on CPU, without training or datasets. Load your own checkpoint to compare
-original/rotated predictions, molecule redraws and stereo-aware ground-truth scores.
+Ouroboros is a research preview of rotation-aware optical chemical structure recognition
+(OCSR): molecule drawing → SMILES with stereochemistry. The local rotation lab compares
+predictions before and after rotating a synthetic drawing.
 
-Optical Chemical Structure Recognition (OCSR) pipeline:
+**v0.1.0-alpha:** trained A/B/C checkpoints, a shared evaluation protocol, and a local demo.
+This is a synthetic-data, single-seed pilot. Real-document accuracy has not been established.
+See [results](docs/v0-results.md), [model card](MODEL_CARD.md), and
+[release acceptance](docs/v0-release.md). The original hypotheses remain in the
+[research plan](docs/research-plan.md); they are not rewritten to fit observations.
 
-```
-2D structure drawing (image) ──► SMILES with stereo ──► ETKDG 3D conformers ──► MACE-OFF energy / forces
-        image encoder + shared decoder                  RDKit                    E(3)-equivariant MLIP
-```
+| Arm | Image encoder | Random rotation in training |
+| --- | --- | --- |
+| A | ResNet-style CNN + absolute positions + Transformer mixer | No |
+| B | Same as A | Yes, uniform 0–360° |
+| C | C8 steerable CNN + invariant token-set mixer | No |
 
-## Research question
+All arms use the same six-layer decoder, 200,000 training examples, batch 32,
+10,000 maximum steps, and the same 1,000 validation examples. C uses the FLOP-matched
+configuration; parameter counts are **not** matched.
 
-> Does an architectural symmetry prior (SE(2)-equivariant vision encoder) narrow the
-> synthetic-to-real gap in OCSR, or — like augmentation-based substitutes — does it help only
-> under the rendered conditions it models? And how does it interact with real-data supervision?
+## How to run
 
-Motivation: arXiv:2608.09100 found that synthetic scale, renderer diversity, degradation
-augmentation and a verifiable RL objective are lower-cost substitutes for real labeled depictions,
-but representative real supervision is what closes the gap on real documents, and that large
-real-document gains were obtained with a frozen vision encoder (locating the bottleneck in
-supervision rather than visual representation). Ouroboros changes only the vision encoder, so it
-tests a different kind of intervention — a built-in symmetry prior — against that finding.
-
-To our knowledge, the first systematic study of group-equivariant vision encoders for OCSR,
-evaluated against both augmentation and real-data supervision.
-
-### Pre-registered hypotheses (registered 2026-09-25, before any training result existed)
-
-These are not edited after results arrive; outcomes are reported in a separate results section.
-
-- **H1**: With synthetic-only training, equivariant encoders beat augmentation on rendered and
-  rotated test sets.
-- **H2**: With synthetic-only training, the equivariant advantage on real-document test sets is
-  smaller than on rendered sets, and may be zero.
-- **H3**: When real data is mixed in, the equivariant advantage on real documents either persists
-  (complementary) or vanishes (subsumed). Either outcome is reported.
-
-Every outcome, including a null result, is a valid result. Metrics, test sets and reporting rules
-are fixed in advance (below); they are not tuned after seeing results.
-
-### Measurements
-
-1. exact match (full stereochemistry) on **rendered** and **real-document** test sets, always
-   reported as separate columns with per-set counts and bootstrap 95% CIs — never averaged
-   together;
-2. rotation robustness — accuracy vs. input rotation angle (0–360°, 15° steps, on-grid vs.
-   off-grid angles) on both kinds of test set;
-3. stereo recognition — stereo-aware exact match and per-stereocenter accuracy;
-4. dependence on training-set size and on the fraction of real training data.
-
-Only the encoder changes between experimental arms; the SMILES decoder is identical.
-
-| Arm | Encoder | Rotation augmentation |
-|-----|---------|-----------------------|
-| A   | standard CNN baseline | no |
-| B   | standard CNN baseline | yes |
-| C   | steerable CNN, C_N (N ∈ {4, 8, 16}) | no |
-| C+  | steerable CNN, C_N | yes |
-| D   | steerable stem + group-equivariant self-attention | no |
-| E (optional) | canonicalization network + standard encoder | no |
-
-Each arm is crossed with the fraction of real labeled depictions in the training mixture.
-
-## Geometry / MACE stage
-
-The 3D stage (ETKDG conformers → MACE-OFF relaxation) is an **error-propagation analysis**, not a
-novel pipeline: it measures how recognition errors (enantiomer, diastereomer, constitutional)
-propagate into downstream 3D energies, relative to the energy of the ground-truth molecule.
-
-## Symmetry per stage
-
-| Stage | Input → output | Symmetry group | Property |
-|-------|----------------|----------------|----------|
-| Image encoder (equivariant arms) | image → feature maps | C_N ⊂ SE(2), discrete rotations only | equivariant (exact for on-grid 90° rotations of the pixel grid; approximate for other angles) |
-| Group pooling + relative-position token mixer | feature maps → memory tokens | C_N | invariant token *set* (up to permutation) |
-| Image encoder (baseline arms) | image → tokens | none (absolute 2D positional embeddings) | not invariant; rotation robustness only via augmentation |
-| SMILES decoder (all arms) | tokens → SMILES | none needed | inherits invariance from the token set |
-| Conformer generation | SMILES → 3D coordinates | — | stereo preserved from SMILES |
-| MACE-OFF | 3D coordinates → energy, forces | E(3) | energy invariant, forces equivariant |
-
-**Why no reflections in the image encoder.** Mirroring a drawing that contains wedge/hash bonds
-turns each stereocenter into its opposite configuration. An encoder invariant to reflections
-(D_N or O(2)) would therefore map a molecule and its enantiomer to the same output and could not
-recognize chirality. The image encoder uses rotation groups C_N only.
-
-**Why stereo is not evaluated through energy.** Enantiomers have identical MACE energies, so
-energy error cannot detect a wrong chirality. Stereo recognition is scored separately with
-stereo-aware exact match and per-stereocenter accuracy; the energy stage reports errors by
-category (correct / enantiomer / diastereomer / constitutional).
-
-E(3) equivariance appears **only** in the 3D stage (MACE). The image encoder is not E(3)-equivariant.
-
-## Layout
-
-```
-ouroboros/
-  data/      molecule filtering, rendering with style randomization, WebDataset shards
-  encoder/   baseline CNN, escnn steerable C_N encoders, equivariant attention
-  decode/    SMILES tokenizer, shared Transformer decoder
-  train/     training loop, resumable checkpoints, YAML configs
-  eval/      metrics, rotation sweep
-  geometry/  ETKDG conformers, MACE-OFF relaxation, error propagation
-configs/     experiment configs (generated from one sweep definition)
-notebooks/   Colab notebooks (A100 runs)
-tests/       pytest suite
-benchmarks/  measured throughput / equivariance numbers and figures
-TASK.md      live project status, decisions and deviations
-```
-
-## Setup
+Use **Python 3.11** and C/Fortran compilers. On macOS install `gcc` with Homebrew;
+on Ubuntu install `gfortran` and `build-essential`. No GPU or dataset is needed for the demo.
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt   # exact pins (tested with Python 3.11)
-pip install -e .
-pytest -q && ruff check .
+git clone --branch v0.1.0-alpha https://github.com/yaniguan/ouroboros-ocsr.git
+cd ouroboros-ocsr
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-inference.txt
+python scripts/prepare_inference.py
+python -m pip install --no-deps -e .
+python -m ouroboros.weights fetch --arm all
+python -m ouroboros.demo --checkpoint checkpoints/ouroboros-C.pt
 ```
 
-`escnn` depends on `py3nj`, which needs a Fortran compiler (`apt-get install gfortran`) when no
-wheel is available. The pinned stack needs Python ≤ 3.12 (`lie_learn`, required by escnn at import
-time, has no 3.13 build, and `numpy<2` has none either). Colab's system Python is 3.13, so the
-notebooks create a Python 3.11 virtualenv with `uv` (`/content/venv`) and install exactly
-`requirements.txt` there, including the torch 2.10.0 CUDA wheel.
+Open the session URL printed in the terminal. Draw a molecule, move the angle slider,
+and compare predictions with the reference. To switch models, enter the absolute path to
+`checkpoints/ouroboros-A.pt`, `ouroboros-B.pt`, or `ouroboros-C.pt` in **Load checkpoint**.
+CUDA users can add `--device cuda` to the launch command.
 
-## Pipeline commands
+The downloader checks release SHA256 hashes. `prepare_inference.py` restores two upstream
+data tables omitted from macOS source-built `lie-learn` wheels, using pinned, verified files.
+For a notebook interface, see the [rotation lab guide](docs/rotation-demo.md).
+
+For an architecture-only demonstration without downloading weights:
 
 ```bash
-# data (Phase 1): pool -> stereo-controlled composition -> shards (200k/50k/10k = prefixes of 1M)
-python scripts/build_dataset.py --out data/full --preset 1m
-python scripts/verify_data.py {splits,labels,mirror,sheet,render-speed,loader-speed} --root data/full
-# real documents (Am1-A): manifest (image, smiles, source, split) -> shards; leakage check
-python scripts/hf_to_manifest.py inspect --repo yaniguan/ocsr-dataset --local hf/ocsr  # HF corpus
-python scripts/hf_to_manifest.py convert --local hf/ocsr --out hf_real  # -> hf_real/manifests/*.csv
-python scripts/ingest_real.py --manifest M.csv --out real/<name>
-python scripts/check_leakage.py --eval uspto=real/uspto:test --train synth=data/full/manifests/train.tsv
-# experiment grid (Phase 4 / Am1-E): one sweep file -> one config per run
-python scripts/make_sweep.py && python scripts/estimate_compute.py
-# train (resumes automatically from <out>/ckpt/last.pt), evaluate, aggregate
-python -m ouroboros.train --config configs/sweep/A_n200k_f0_s0.yaml --out runs/A_n200k_f0_s0
-python scripts/evaluate.py --run runs/A_n200k_f0_s0
-python scripts/aggregate.py --runs runs/* --out results/
-# 3D stage (Phase 6): energies of predicted vs true molecules by error category
-python scripts/error_propagation.py --predictions runs/X/eval/predictions.jsonl --out results/X_energy
+python -m ouroboros.demo
 ```
 
-Colab notebooks (`notebooks/`, generated by `scripts/make_colab_nbs.py`): `00_colab_setup`,
-`01_generate_data`, `02_train_eval`, `03_geometry`, `04_real_data`. Data handling rules: `DATA.md`. Live status: `TASK.md`.
+That mode uses a random network and disables recognition. A loaded model can produce
+matching but incorrect predictions; the UI distinguishes correctness from consistency.
 
-## Related work (TODO: write up and position against)
+## Reproduce and extend
 
-Motivating prior work:
-- [ ] arXiv:2608.09100 — "Real Data Closes Synthetic-to-Real Gap in Optical Chemical Structure
-  Recognition": real labeled depictions, not synthetic scale/augmentation, close the gap on real
-  documents; gains with a frozen vision encoder.
-- [ ] VERDICT (Guan, 2026; arXiv:2608.22183) — companion paper on real-document OCSR.
+Summaries and per-angle metrics are in `benchmarks/v0.1.0-alpha/`. Regenerate the report:
 
-OCSR systems:
-- [ ] DECIMER (Rajan et al.) — transformer-based image-to-SMILES
-- [ ] MolScribe (Qian et al., 2023) — atom/bond graph prediction with coordinates
-- [ ] MolNexTR (Chen et al., 2024)
-- [ ] MolGrapher
-- [ ] MolSight
-- [ ] MolParser
+```bash
+python -m pip install matplotlib
+python scripts/report_v0.py
+```
 
-Adjacent tasks:
-- [ ] DeepMoLM — image + 3D-geometry grounding (adjacent but different task)
-- [ ] Auto3D — SMILES → 3D with a neural potential (adjacent to the geometry stage)
+For training, use the Linux CUDA pins in `requirements.txt`,
+`configs/pilot-{A,B,C}-200k.yaml`, and the [reproduction protocol](docs/v0-release.md).
+Training requires the synthetic corpus, which is not bundled. Selected-data hashes and
+three quarantined train records are documented.
 
-Methods used here:
-- [ ] Steerable CNNs / escnn (Weiler & Cesa, 2019); group-equivariant self-attention (Romero et al.)
-- [ ] MACE / MACE-OFF (Batatia et al.; Kovács et al.)
+## Scope
 
-## Reliable restarts and GPU probes
+- No established accuracy on journal pages, patents, handwriting or arbitrary uploaded images.
+  The demo renders examples from reference SMILES.
+- C8 is a discrete rotation prior. Rasterization, interpolation and numerical precision mean
+  predictions need not be identical at every angle.
+- Stereochemistry remains an error source. A valid SMILES is not proof of correct recognition.
+- The older baseline ≥70% target is not marked complete by this preview release.
+- Optional 3D/MACE research tools are outside the demo acceptance criteria; see [DATA.md](DATA.md).
 
-See [reliable runs](docs/reliability.md) for checkpoint/data identity checks, verified shard
-reuse, transactional filtering, resumable evaluation/energy caches and current-model CUDA
-capacity/resume commands. Legacy outputs without provenance require new output directories;
-old checkpoints remain usable for evaluation. Historical local A100 reports are explicitly
-separated in `benchmarks/legacy-local/` and are not measurements of this implementation.
+Code is MIT-licensed. Weights and dependency provenance: [MODEL_CARD.md](MODEL_CARD.md).
+Experiment history: [TASK.md](TASK.md).

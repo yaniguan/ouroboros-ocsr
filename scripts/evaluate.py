@@ -39,10 +39,30 @@ class _Prefix:
         return {"dataset": self.ds.identity(), "prefix": self.n}
 
 
+def select_checkpoint(run: Path, cfg: dict, explicit: str | None = None) -> Path:
+    if explicit:
+        return Path(explicit)
+    last = run / "ckpt" / "last.pt"
+    if not cfg.get("validation", {}).get("enabled", False):
+        return last
+    state = torch.load(last, map_location="cpu", weights_only=False)
+    best_step = (state.get("early_stop") or {}).get("best_step")
+    if best_step is None:
+        raise ValueError("No committed validation checkpoint; run validation before evaluation")
+    best = run / "ckpt" / f"best-step-{best_step:08d}.pt"
+    if not best.is_file():
+        raise ValueError("Best validation checkpoint is missing")
+    return best
+
+
 def main(argv=None) -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", required=True)
-    ap.add_argument("--ckpt", default=None, help="default: <run>/ckpt/last.pt")
+    ap.add_argument(
+        "--ckpt",
+        default=None,
+        help="default: committed validation best, or last.pt for legacy runs",
+    )
     ap.add_argument("--set", nargs="*", default=[])
     ap.add_argument("--no-sweep", action="store_true")
     a = ap.parse_args(argv)
@@ -51,7 +71,7 @@ def main(argv=None) -> None:
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tok = SmilesTokenizer.load(cfg["data"]["vocab"])
     model = build_model(cfg, tok)
-    checkpoint = Path(a.ckpt) if a.ckpt else run / "ckpt" / "last.pt"
+    checkpoint = select_checkpoint(run, cfg, a.ckpt)
     st = torch.load(checkpoint, map_location="cpu", weights_only=False)
     if "vocab" in st and st["vocab"] != tok.itos:
         raise ValueError("Evaluation vocabulary differs from checkpoint")

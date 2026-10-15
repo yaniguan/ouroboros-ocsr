@@ -1,0 +1,10 @@
+# Inference/demo environment. Python 3.11, gfortran and a C compiler required.
+torch==2.10.0
+numpy==1.26.4
+rdkit==2026.3.6
+pillow==12.3.0
+PyYAML==6.0.3
+escnn==1.0.11
+py3nj==0.2.1
+lie-learn==0.0.2; sys_platform == "linux"
+lie-learn @ git+https://github.com/AMLab-Amsterdam/lie_learn.git@edf012f5f60af320175d2e6269db78b984b5bfc3 ; sys_platform == "darwin"

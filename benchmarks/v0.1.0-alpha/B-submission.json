@@ -1,0 +1,17 @@
+{
+  "cluster": "hoffman2",
+  "job_id": 14988962,
+  "root": "/u/scratch/y/yaniguan/ouroboros-v0-20261001",
+  "source_sha256": "1d5bda895362a08adfad2068cff326bcef06097e5bc0af2d23b86e3c6a54e75f",
+  "change": "same A source/config + train.rotation_aug=true",
+  "status": "resubmitted",
+  "previous_jobs": [
+    {
+      "job_id": 14986604,
+      "status": "failed before training",
+      "reason": "EXDEV across container bind mounts; native bf16 and 182 tests passed"
+    }
+  ],
+  "queue": "gpu_a6000.q",
+  "fix": "EXDEV-only fallback to checksum-verified copy; source/config/data unchanged"
+}

@@ -1,0 +1,19 @@
+bash: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+pilot-data.tar: OK
+removed user hold of job 14974183
+  14974099 0.50000 ouroboros_ yaniguan     qw    09/30/2026 00:19:32                                                                   1        
+  14974162 0.50000 ouro_setup yaniguan     qw    09/30/2026 00:25:42                                                                   4        
+  14974182 0.00000 ouro_tests yaniguan     hqw   09/30/2026 00:28:13                                                                   4        
+  14974183 0.00000 ouro_audit yaniguan     hqw   09/30/2026 00:28:13                                                                   4        
+  14974185 0.00000 ouro_capac yaniguan     hqw   09/30/2026 00:28:14                                                                   4 1-5:1
+  14974186 0.00000 ouro_resum yaniguan     hqw   09/30/2026 00:28:15                                                                   4 1,2
+  14974187 0.00000 ouro_pilot yaniguan     hqw   09/30/2026 00:28:16                                                                   4 1,2
+  14974188 0.00000 ouro_train yaniguan     hqw   09/30/2026 00:28:17                                                                   4 1-4:1
+  14974189 0.00000 ouro_evalu yaniguan     hqw   09/30/2026 00:28:17                                                                   4 1-6:1

@@ -1,0 +1,20 @@
+
+START Wed Sep 30 19:08:15 2026 ['bash', 'scripts/hpc/work.sh']
+train train-000000.tar 1000
+train train-000001.tar 2000
+train train-000002.tar 3000
+train train-000003.tar 4000
+train train-000004.tar 5000
+train train-000005.tar 6000
+train train-000006.tar 7000
+train train-000007.tar 8000
+train train-000008.tar 9000
+train train-000009.tar 10000
+train train-000010.tar 11000
+Traceback (most recent call last):
+  File "/content/ouroboros-20260930/code/scripts/hpc/audit_pilot.py", line 98, in <module>
+    main()
+  File "/content/ouroboros-20260930/code/scripts/hpc/audit_pilot.py", line 65, in main
+    raise ValueError(f"Assigned/stored stereo mismatch {key}")
+ValueError: Assigned/stored stereo mismatch train_00011370
+ERROR task=audit job=local array=1 line=23 exit=1

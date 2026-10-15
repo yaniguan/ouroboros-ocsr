@@ -1,0 +1,6 @@
+{
+  "scripts/hpc/setup.sh": "273b9ea98482d69700c8fc52ed2d9c8f815870fd09d999513af025ceb3227a17",
+  "scripts/hpc/work.sh": "890af4469bc910c8cdc9c7978a5fd8b331278f4ed6d29fdf54eb672d6d659a21",
+  "scripts/hpc/repair_hoffman2.sh": "e15165171e40975f293fab80b0be922716657c611b5def984c8f092dfce69304",
+  "scripts/hpc/probe_hoffman2_container.sh": "947bc10e38a53e05f96e9581d067d1e09109b7e47d4bbf7ddc9c47b8cf3dcc5a"
+}

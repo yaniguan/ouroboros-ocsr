@@ -6,7 +6,7 @@ Symmetry per stage (see README):
   3D stage      : E(3) via MACE (the only E(3)-equivariant component)
 """
 
-__version__ = "0.0.1"
+__version__ = "0.1.0a1"
 
 
 def _sanitize_mpl_backend() -> None:
