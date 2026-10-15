@@ -11,8 +11,10 @@ or changed are tagged **(Am1-A … Am1-F)**.
   10k-step train and full eval all exit 0, 182 tests passed). B test exact **64.41%**, rotation
   mean 65.7% (C 65.8%, A 25.4%). A/B/C inference exports regenerated from step-10000 best
   checkpoints; A export hash matches the earlier receipt. See `docs/v0-results.md`.
-  Remaining for the tag: upload weights to a GitHub release and add URLs/SHA256 to
-  `ouroboros/weights.json`, verify the published install path, rerun lint and wheel build.
+  Release verified: weights published at the v0.1.0-alpha GitHub prerelease (fetch + SHA256 verified);
+  full regression on Hoffman2 (job 15177820): 185 passed; ruff clean (archived run evidence under
+  benchmarks/hpc-20260930 excluded); wheel builds with weights.json. Remaining: merge to main,
+  re-point the tag, fresh-venv install check.
 
 - User authorizes autonomous completion of a research preview and existing GPU credits only.
   Target tag `v0.1.0-alpha`; release remains pending B and final published-install verification.

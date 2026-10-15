@@ -46,7 +46,8 @@ filterwarnings = [
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-extend-exclude = ["notebooks"]
+# archived run evidence is kept byte-for-byte, so it is not linted
+extend-exclude = ["notebooks", "benchmarks/hpc-20260930"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]
