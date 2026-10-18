@@ -1,0 +1,4 @@
+base: pilot-validation.yaml
+model:
+  encoder:
+    type: baseline

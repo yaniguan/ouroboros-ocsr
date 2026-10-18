@@ -1,0 +1,38 @@
+{
+  "run_id": "colab-20260930-ac-s0",
+  "pid": 4243,
+  "started": 1790795015.1060588,
+  "persistent": "/content/drive/MyDrive/ouroboros/colab-20260930-ac-s0",
+  "stages": [
+    {
+      "stage": "hardware",
+      "exit_code": 0,
+      "seconds": 0.0298459529876709
+    },
+    {
+      "stage": "setup",
+      "exit_code": 0,
+      "seconds": 112.17380976676941
+    },
+    {
+      "stage": "native-bf16",
+      "exit_code": 0,
+      "seconds": 3.1832005977630615
+    },
+    {
+      "stage": "tests",
+      "exit_code": 0,
+      "seconds": 59.2759575843811
+    },
+    {
+      "stage": "data-audit",
+      "exit_code": 1,
+      "seconds": 21.282434701919556
+    }
+  ],
+  "stage": "data-audit",
+  "status": "failed",
+  "updated": 1790795316.390059,
+  "copied_files": 220,
+  "error": "data-audit exited 1; see logs/data-audit.log"
+}

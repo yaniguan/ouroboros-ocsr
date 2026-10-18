@@ -5,7 +5,133 @@ Local dev machine: 4 CPU cores, 15 GB RAM, no GPU, Python 3.11.15.
 Amendment 1 (2026-09-25, real data / synthetic-to-real framing) is merged below; items it added
 or changed are tagged **(Am1-A … Am1-F)**.
 
+## v0 release continuation — 2026-10-01
+
+- **2026-10-15 update:** B had already finished on Hoffman2 (job 14988962: audit, capacity, resume,
+  10k-step train and full eval all exit 0, 182 tests passed). B test exact **64.41%**, rotation
+  mean 65.7% (C 65.8%, A 25.4%). A/B/C inference exports regenerated from step-10000 best
+  checkpoints; A export hash matches the earlier receipt. See `docs/v0-results.md`.
+  Release verified: weights published at the v0.1.0-alpha GitHub prerelease (fetch + SHA256 verified);
+  full regression on Hoffman2 (job 15177820): 185 passed; ruff clean (archived run evidence under
+  benchmarks/hpc-20260930 excluded); wheel builds with weights.json. Remaining: merge to main,
+  re-point the tag, fresh-venv install check.
+
+- User authorizes autonomous completion of a research preview and existing GPU credits only.
+  Target tag `v0.1.0-alpha`; release remains pending B and final published-install verification.
+- A/C full-test and rotation results are copied to `benchmarks/v0.1.0-alpha/`.
+  A/C inference exports preserve every model tensor and pass actual trained demo HTTP requests.
+  A fresh Python 3.11 inference install also loads C and recognizes the aspirin smoke example.
+- B adds uniform rotation to A with the same archived source, data selections and stopping rule.
+  Hoffman2 job **14986604** passed native bf16 and 182 tests, then failed before training because
+  hard links cannot cross the two container bind mounts. Added an EXDEV-only copy fallback with
+  the same SHA256 checks; resubmitted as **14988962**, `gpu_a6000.q`, one GPU, four-hour limit.
+  No unrelated jobs were changed. B hardware and time will be reported separately from A/C A100.
+- Expanse access/allocation were verified; accessible V100s do not meet this native-bf16 protocol,
+  and A100 reservation access is unavailable. No reservation bypass or resource purchase.
+- Official Colab CLI scopes approved by the user. Manual browser login is still pending because
+  native computer control is unavailable; credentials must stay in the user's terminal.
+- Release tooling, model card, lightweight installation and checksum downloader are implemented.
+  Code lint and preliminary wheel/sdist build pass. Final full regression and B manifest pending.
+  Acceptance checklist: `docs/v0-release.md`.
+
 ## Needs user
+
+### Cluster continuation — 2026-09-30
+- **Evaluation completed (supersedes pending status below):** recovery/evaluation
+  PID 2727 passed fresh setup, native bf16 and tests; A/C evaluation both exit 0.
+  Held-out rendered test (10,000): A exact **68.69%**, C **67.08%**;
+  invalid rates 2.44% / 2.56%. Fixed 2,000-example rotation sweep, 24 angles:
+  A at 90/270 degrees **7.55% / 7.30%**, C **67.10% / 66.85%**.
+  Single seed only; no augmentation baseline B or real-document result yet.
+  Scoring parity with the external paper remains unverified. Summaries:
+  `benchmarks/hpc-20260930/status-update/colab/evaluation/`.
+- **Latest verified status (21:34 PDT):** Colab A/C seed-0 pilots both completed
+  10,000 steps, exit 0. Shared 1,000-example validation exact match: **A 66.8%**,
+  **C 63.5%**; both best checkpoints are step 10,000 and persist in Drive.
+  Training stages took 959.95 s and 3688.91 s respectively. These are single-seed
+  validation results; held-out test and rotation evaluation have not run yet.
+  Full logs/configs and completed status copied to `status-update/colab/clean3/`.
+  Colab replacement A100 runtime allocated at 21:37 PDT; original ephemeral
+  environment is gone. Recovery/evaluation PID **2727** launched using the
+  archived source and checkpoints, with fresh setup/tests and test-shard hashes
+  gating A/C full-test + 24-angle evaluation. Status persists separately at
+  `MyDrive/ouroboros/colab-20260930-ac-s0/eval-20261001/status.json`.
+  Hoffman2 container setup **14981448** and GPU probe **14981450** completed
+  exit 0; full training has not been resubmitted. Expanse's authenticated SSH
+  control session expired; fresh SSH is denied, so current geometry job status
+  is unknown. Entries below are chronological historical observations.
+- **Colab formal training started:** clean pilot PID **8579** passed both A/C
+  resume comparisons (100 steps each, mean relative loss difference **0**;
+  identical training/validation data identities). **A seed 0 reached step 1,000**,
+  latest training loss 0.86136 and recent training throughput about 452 images/s.
+  These are training metrics, not held-out accuracy. C seed 0 runs automatically
+  after A finishes. Current status/logs/checkpoints are under Drive
+  `MyDrive/ouroboros/colab-20260930-ac-s0/clean3/`. Local evidence includes
+  `status-update/colab/clean3/train-A-initial.jsonl` and both resume reports.
+- **Clean Colab pilot (latest, 12:22 local):** full transferred-pair scan found
+  exactly three assigned/stored stereo mismatches, all in train: 11370, 57670,
+  167450. Original shards/manifests preserved; a derived view quarantines those
+  three pairs and fills the training prefix back to 200,000 samples. All val/test
+  bytes and selected identities are unchanged. Strict audit of the derived view
+  **passes** in 258 s. Run `colab-20260930-ac-s0-clean3`, PID **8579**, is running
+  A resume parity, then C resume parity, then A/C seed-0 training. Persistence:
+  `MyDrive/ouroboros/colab-20260930-ac-s0/clean3/`. Quarantine and hash receipts:
+  `benchmarks/hpc-20260930/status-update/colab/clean3/`.
+- **Colab preflight update:** pinned setup passes (112 s), native CUDA/bf16
+  verified, **182/182 tests pass** (56.79 s), all 220 transferred files match
+  SHA256 receipts. Data audit stopped on assigned/stored stereo disagreement
+  `train_00011370`; formal training has NOT started. Separate 50-step A/C bf16
+  capacity tests both completed successfully, peak reserved 3.053/4.886 GB,
+  synthetic kernel throughput 518.17/100.60 images/s (not end-to-end training).
+  Diagnostic scan PID **6589** collects every mismatch without emitting a
+  passing data-audit marker; independent capacity process **6590** exited 0.
+  Evidence: `benchmarks/hpc-20260930/status-update/colab/`.
+- **Colab continuation (12:03 local):** existing Colab Pro A100-SXM4-40GB
+  allocated and verified; user explicitly approved Drive access. Current source
+  plus shared-validation patch uploaded and archive SHA256 checked. Pipeline
+  `colab-20260930-ac-s0`, PID **4243**, started setup. It gates A/C seed-0
+  training on pinned environment, full tests, transferred-data audit, native bf16
+  capacity and resume comparisons. Outputs persist in Drive
+  `MyDrive/ouroboros/colab-20260930-ac-s0/{reports,logs,runs}`. This launch is
+  not a completed training result. Source receipt and launch cell are in
+  `benchmarks/hpc-20260930/status-update/colab-*`.
+- **Latest status check (later on 2026-09-30):** Expanse pinned environment completed;
+  geometry tests 31/31 pass; V100 MACE CUDA probe passes; 20/20 enantiomer pairs
+  converge, max |delta E| 6.475602276623249e-10 eV. Geometry array has one task
+  running and 19 queued; 3/1,000 molecule records processed at inspection.
+- **Hoffman2 failure:** setup 14974162 exited 141 at `ldd --version | head -1`
+  under pipefail; dependent jobs exited at prerequisite guards. No training or
+  model-capacity result was produced. The script is fixed and error logging added.
+  A100 node g13 reports glibc 2.17, so modern pinned wheels require a container.
+  Container compatibility/setup repair **14981448** and dependent single-A100
+  probe **14981450** are submitted; full training is not yet resubmitted.
+  Raw accounting and new result reports: `benchmarks/hpc-20260930/status-update/`.
+- SSH verified on both clusters using existing authenticated sessions. No purchases.
+- Hoffman2: writable `/u/scratch/y/yaniguan`, resource group `sautet`, scheduler
+  project `sautet_prj`. Single-A100, 5-minute hardware probe **14974099** submitted;
+  latest observed state `qw`. Submission requires `LC_ALL=C LANG=C` to avoid a
+  remote job-submission verifier failure on unsupported `C.UTF-8`.
+- Expanse: writable `/expanse/lustre/scratch/yguan1/temp_project` (no leading
+  `/scratch`), verified GPU allocation `cla175` / `TG-CHE170060`. Single-GPU,
+  5-minute hardware probe **54534179** completed in 1 second, exit `0:0`, with
+  Tesla V100-SXM2-32GB on `exp-1-58`. This establishes hardware access only.
+- Shared-validation patch applied to code/config/tests at HEAD `5f9efc0`; its stale
+  TASK.md hunk was excluded. Fresh focused regression: 14 passed in 10.48 s;
+  native-bf16 rejection regression added afterward, benchmark tests 4 passed in
+  10.90 s. Changed Python files pass Ruff. No new pinned-Linux pass claimed yet.
+- User authorizes broad GPU use on both clusters without conserving existing
+  quota; no purchases. Submitted 41 single-GPU work tasks: Hoffman2 A100 capacity
+  (5), resume (2), A/C training at seeds 0/1/2 (6), evaluation/rotation sweeps (6);
+  Expanse MACE CUDA probe (1), 1,000-molecule geometry in 20 disjoint batches,
+  and 20 enantiomer pairs (1). Resource/dependency waits are not completed work.
+- Pilot corpus: first 201 train tar shards plus all val/test and original manifests
+  staged on Hoffman2, archive SHA256 verified; semantic audit remains a dependency.
+  This is not the full 1M corpus audit. GPU training requires audit + tests + native
+  bf16 capacity + resume checks. Expanse geometry requires a successful CUDA probe.
+- Current job IDs, prerequisites, repair history and commands:
+  `benchmarks/hpc-20260930/gpu-wave.md` and `submitted-jobs.json`.
+- Submission receipts, job scripts, status and follow-up commands:
+  `benchmarks/hpc-20260930/README.md`.
 
 ### U0 — Phase 0 Colab smoke run  *(blocks: Phase 0 [colab] item only; nothing else waits on it)*
 1. Open `notebooks/00_colab_setup.ipynb` in Colab (File → Open notebook → GitHub →

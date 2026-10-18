@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ouroboros-ocsr"
-version = "0.0.1"
+version = "0.1.0a1"
 description = "Rotation-equivariant OCSR with stereochemistry, followed by a 3D MACE energy stage"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11,<3.13"
 license = { text = "MIT" }
 # Exact pins live in requirements.txt; these are the direct dependencies only.
 dependencies = [
@@ -24,6 +24,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "ruff"]
+demo = ["jupyterlab>=4,<5"]
+
+[tool.setuptools.package-data]
+"ouroboros" = ["weights.json"]
+"ouroboros.demo" = ["index.html"]
 
 [tool.setuptools.packages.find]
 include = ["ouroboros*"]
@@ -41,7 +46,8 @@ filterwarnings = [
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-extend-exclude = ["notebooks"]
+# archived run evidence is kept byte-for-byte, so it is not linted
+extend-exclude = ["notebooks", "benchmarks/hpc-20260930"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]

@@ -1,0 +1,50 @@
+{
+  "date": "2026-09-30",
+  "gpu_work_tasks": 41,
+  "hoffman2": {
+    "root": "/u/scratch/y/yaniguan/ouroboros-20260930",
+    "gpu": "A100",
+    "setup": 14974162,
+    "tests": 14974182,
+    "data_audit": 14974183,
+    "capacity": {
+      "id": 14974185,
+      "tasks": "1-5"
+    },
+    "resume": {
+      "id": 14974186,
+      "tasks": "1-2"
+    },
+    "pilot": {
+      "id": 14974187,
+      "tasks": "1-2"
+    },
+    "extra_seeds": {
+      "id": 14974188,
+      "tasks": "1-4"
+    },
+    "evaluate": {
+      "id": 14974189,
+      "tasks": "1-6"
+    },
+    "original_wave_status": "setup failed exit 141; downstream prerequisite exits; no training",
+    "container_repair": 14981448,
+    "container_probe": 14981450
+  },
+  "expanse": {
+    "root": "/expanse/lustre/scratch/yguan1/temp_project/ouroboros-20260930",
+    "account": "cla175",
+    "geometry_prepare": 54534185,
+    "geometry_cuda_probe": 54534192,
+    "geometry": {
+      "id": 54534186,
+      "tasks": "0-19"
+    },
+    "enantiomers": 54534193,
+    "superseded_setup_jobs": {
+      "54534182": "cancelled: managed Python network download",
+      "54534188": "failed: system Python development headers missing"
+    },
+    "setup": 54534206
+  }
+}

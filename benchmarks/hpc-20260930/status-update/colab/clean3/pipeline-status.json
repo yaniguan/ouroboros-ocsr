@@ -1,0 +1,40 @@
+{
+  "run_id": "colab-20260930-ac-s0-clean3",
+  "pid": 8579,
+  "stages": [
+    {
+      "stage": "data-audit",
+      "exit_code": 0,
+      "seconds": 258.1166980266571
+    },
+    {
+      "stage": "resume-A",
+      "exit_code": 0,
+      "seconds": 95.57145547866821
+    },
+    {
+      "stage": "resume-C",
+      "exit_code": 0,
+      "seconds": 176.36279225349426
+    },
+    {
+      "stage": "train-A-s0",
+      "exit_code": 0,
+      "seconds": 959.9525883197784
+    },
+    {
+      "stage": "train-C-s0",
+      "exit_code": 0,
+      "seconds": 3688.9112200737
+    }
+  ],
+  "started": 1790795865.9545946,
+  "excluded": [
+    "train_00011370",
+    "train_00057670",
+    "train_00167450"
+  ],
+  "stage": "training",
+  "status": "complete",
+  "updated": 1790801061.5536034
+}

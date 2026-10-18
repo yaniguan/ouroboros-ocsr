@@ -1,0 +1,11 @@
+{
+  "pipeline_pid": 4243,
+  "pipeline_status": "stopped at data audit",
+  "diagnostic_pid": 6589,
+  "capacity_pid": 6590,
+  "capacity_arms": [
+    "A",
+    "C"
+  ],
+  "formal_training_started": false
+}

@@ -1,0 +1,16 @@
+
+ Resource  expanse_gpu 
+
+╭───┬────────┬───────┬─────────┬──────────────┬──────┬───────────┬─────────────────╮
+│   │ NAME   │ STATE │ PROJECT │ TG PROJECT   │ USED │ AVAILABLE │ USED BY PROJECT │
+├───┼────────┼───────┼─────────┼──────────────┼──────┼───────────┼─────────────────┤
+│ 1 │ yguan1 │ allow │ cla175  │ TG-CHE170060 │    3 │    155000 │           47019 │
+╰───┴────────┴───────┴─────────┴──────────────┴──────┴───────────┴─────────────────╯
+drwxr-x--T 4 yguan1 cla175 229376 Sep 30 00:19 /expanse/lustre/scratch/yguan1/temp_project
+JobID|Account|State|Elapsed|ExitCode|AllocTRES
+54534179|cla175|COMPLETED|00:00:01|0:0|billing=3600,cpu=1,gres/gpu=1,mem=2G,node=1
+job_id=54534179
+exp-1-58
+Wed Sep 30 07:19:23 UTC 2026
+name, memory.total [MiB], driver_version
+Tesla V100-SXM2-32GB, 32768 MiB, 580.82.07

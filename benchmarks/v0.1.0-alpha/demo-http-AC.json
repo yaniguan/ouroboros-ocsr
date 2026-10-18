@@ -1,0 +1,72 @@
+[
+  {
+    "arm": "C",
+    "angle": 0,
+    "seconds": 2.7897741249762475,
+    "original": "CC(=O)Oc1ccccc1C(=O)O",
+    "rotated": "CC(=O)Oc1ccccc1C(=O)O"
+  },
+  {
+    "arm": "C",
+    "angle": 45,
+    "seconds": 0.3426617500372231,
+    "original": "CC(=O)Oc1ccccc1C(=O)O",
+    "rotated": "CC(=O)Oc1ccccc1C(=O)O"
+  },
+  {
+    "arm": "C",
+    "angle": 90,
+    "seconds": 0.23328041599597782,
+    "original": "CC(=O)Oc1ccccc1C(=O)O",
+    "rotated": "CC(=O)Oc1ccccc1C(=O)O"
+  },
+  {
+    "arm": "C",
+    "angle": 180,
+    "seconds": 0.23091995797585696,
+    "original": "CC(=O)Oc1ccccc1C(=O)O",
+    "rotated": "CC(=O)Oc1ccccc1C(=O)O"
+  },
+  {
+    "arm": "C",
+    "angle": 270,
+    "seconds": 0.22378508397378027,
+    "original": "CC(=O)Oc1ccccc1C(=O)O",
+    "rotated": "CC(=O)Oc1ccccc1C(=O)O"
+  },
+  {
+    "arm": "A",
+    "angle": 0,
+    "seconds": 0.3687287080101669,
+    "original": "CC(=O)Oc1ccccc1C(=O)O",
+    "rotated": "CC(=O)Oc1ccccc1C(=O)O"
+  },
+  {
+    "arm": "A",
+    "angle": 45,
+    "seconds": 0.1496406669029966,
+    "original": "CC(=O)Oc1ccccc1C(=O)O",
+    "rotated": "CC(=O)Oc1ccccc1C(=O)Br"
+  },
+  {
+    "arm": "A",
+    "angle": 90,
+    "seconds": 0.15203779202420264,
+    "original": "CC(=O)Oc1ccccc1C(=O)O",
+    "rotated": "CC(=O)Oc1ccccc1C(=O)Br"
+  },
+  {
+    "arm": "A",
+    "angle": 180,
+    "seconds": 0.15283387491945177,
+    "original": "CC(=O)Oc1ccccc1C(=O)O",
+    "rotated": "CC(=O)Oc1ccccc1C(=O)O"
+  },
+  {
+    "arm": "A",
+    "angle": 270,
+    "seconds": 0.15300833294168115,
+    "original": "CC(=O)Oc1ccccc1C(=O)O",
+    "rotated": "CC(=O)Oc1ccccc1C(=O)Cl"
+  }
+]

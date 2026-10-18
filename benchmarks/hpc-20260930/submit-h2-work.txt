@@ -1,0 +1,15 @@
+bash: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/bin/sh: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (C.UTF-8)
+tests	14974182
+audit	14974183
+capacity	14974185.1-5:1
+resume	14974186.1-2:1
+pilot	14974187.1-2:1
+train	14974188.1-4:1
+evaluate	14974189.1-6:1

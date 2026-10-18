@@ -1,0 +1,36 @@
+{
+  "pid": 2727,
+  "started": 1790829569.5061288,
+  "stages": [
+    {
+      "stage": "setup",
+      "exit_code": 0,
+      "seconds": 49.151020765304565
+    },
+    {
+      "stage": "native-bf16",
+      "exit_code": 0,
+      "seconds": 2.076266050338745
+    },
+    {
+      "stage": "tests",
+      "exit_code": 0,
+      "seconds": 58.422460079193115
+    },
+    {
+      "stage": "evaluate-A",
+      "exit_code": 0,
+      "seconds": 990.6937880516052
+    },
+    {
+      "stage": "evaluate-C",
+      "exit_code": 0,
+      "seconds": 992.8363118171692
+    }
+  ],
+  "stage": "evaluation",
+  "status": "complete",
+  "updated": 1790831681.5989335,
+  "training_audit_sha256": "fb7de544735bc43f726d2d55ca7e56ae2d63ed0073d07ee5cc71326c77207123",
+  "source_sha256": "1d5bda895362a08adfad2068cff326bcef06097e5bc0af2d23b86e3c6a54e75f"
+}

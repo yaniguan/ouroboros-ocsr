@@ -32,6 +32,7 @@ from torch.utils.data import ConcatDataset, DataLoader
 from ouroboros.data.loader import ShardDataset, collate, rotate_batch
 from ouroboros.data.mixture import MixtureSampler
 from ouroboros.decode.tokenizer import SmilesTokenizer
+from ouroboros.eval.standardize import standardize
 from ouroboros.model import OCSRModel, build_model, count_params, load_model_state
 from ouroboros.provenance import json_sha256
 
@@ -181,6 +182,41 @@ class Trainer:
             "synthetic": self.synth.identity(),
             "real": [ds.identity() for ds in self.real.datasets] if self.real else [],
         }
+        self.validation = None
+        self.early_stop = None
+        self.validation_cfg = cfg.get("validation", {})
+        if self.validation_cfg.get("enabled", False):
+            v = self.validation_cfg
+            for key in ("samples", "every", "patience", "batch_size"):
+                if not isinstance(v.get(key), int) or isinstance(v[key], bool) or v[key] < 1:
+                    raise ValueError(f"validation.{key} must be a positive integer")
+            if not math.isfinite(v.get("min_delta", 0.0)) or v.get("min_delta", 0.0) < 0:
+                raise ValueError("validation.min_delta must be finite and nonnegative")
+            if v.get("split", "val") != "val":
+                raise ValueError("Early stopping must use the val split, never train or test")
+            self.validation = ShardDataset(
+                v["root"],
+                "val",
+                image_size=cfg["data"]["image_size"],
+                max_samples=v["samples"],
+            )
+            if len(self.validation) != v["samples"]:
+                raise ValueError("Insufficient fixed validation samples")
+            self.validation_truths = []
+            for i in range(len(self.validation)):
+                truth = standardize(self.validation.meta(i)["smiles"])
+                if not truth.valid:
+                    raise ValueError(f"Invalid validation label at index {i}")
+                self.validation_truths.append(truth.smiles)
+            self.identity["validation"] = self.validation.identity()
+            self.early_stop = {
+                "best_score": None,
+                "best_step": None,
+                "progress_score": None,
+                "bad_checks": 0,
+                "last_step": None,
+                "stopped": False,
+            }
         if previous is not None:
             self._resume(previous)
         if not config_path.exists():
@@ -199,6 +235,7 @@ class Trainer:
             "rng": rng_state(),
             "config": self.cfg,
             "vocab": self.tok.itos,
+            "early_stop": copy.deepcopy(self.early_stop),
         }
 
     def _resume(self, st: dict) -> None:
@@ -206,6 +243,13 @@ class Trainer:
             raise ValueError("Checkpoint dataset content or sample order mismatch")
         if st["sampler_position"] != st["step"] * self.cfg["train"]["batch_size"]:
             raise ValueError("Checkpoint sampler position is inconsistent")
+        if self.validation is not None:
+            if st.get("early_stop") is None:
+                raise ValueError("Checkpoint lacks validation/early-stop state")
+            self.early_stop = copy.deepcopy(st["early_stop"])
+            best_step = self.early_stop["best_step"]
+            if best_step is not None and not self.best_checkpoint_path(best_step).is_file():
+                raise ValueError("Best validation checkpoint is missing; restore the run bundle")
         load_model_state(self.model, st["model"])
         self.opt.load_state_dict(st["opt"])
         self.sched.load_state_dict(st["sched"])
@@ -221,6 +265,79 @@ class Trainer:
 
     def save(self) -> float:
         return save_checkpoint(self.ckpt_path, self.state())
+
+    def best_checkpoint_path(self, step):
+        return self.out / "ckpt" / f"best-step-{step:08d}.pt"
+
+    @torch.no_grad()
+    def validate(self) -> float:
+        """Score a fixed, unaugmented val prefix without consuming training RNG."""
+        if self.validation is None:
+            raise ValueError("Validation is not configured")
+        rng, was_training = rng_state(), self.model.training
+        correct, consumed = 0, 0
+        try:
+            self.model.eval()
+            loader = DataLoader(
+                self.validation,
+                batch_size=self.validation_cfg["batch_size"],
+                shuffle=False,
+                num_workers=0,
+                generator=torch.Generator().manual_seed(12345),
+            )
+            for batch in loader:
+                images = batch["image"].to(self.dev)
+                with torch.autocast(
+                    self.dev.type,
+                    dtype=torch.bfloat16,
+                    enabled=self.cfg["train"].get("amp", "bf16") == "bf16",
+                ):
+                    predictions = self.model.generate(images)
+                if len(predictions) != len(images):
+                    raise ValueError("Validation predictions do not match batch size")
+                for prediction in predictions:
+                    pred = standardize(prediction)
+                    correct += pred.valid and pred.smiles == self.validation_truths[consumed]
+                    consumed += 1
+        finally:
+            self.model.train(was_training)
+            set_rng_state(rng)
+        if consumed != len(self.validation):
+            raise ValueError("Validation did not score the full fixed prefix")
+        return correct / consumed
+
+    def check_validation(self) -> None:
+        """Commit a validation boundary; strict best score and patience have separate rules."""
+        score = self.validate()
+        if not math.isfinite(score) or not 0 <= score <= 1:
+            raise ValueError("Validation exact match must be finite and in [0, 1]")
+        state = self.early_stop
+        improved = state["best_score"] is None or score > state["best_score"]
+        if improved:
+            state["best_score"], state["best_step"] = score, self.step
+        # Small gains may update the best checkpoint without resetting patience.
+        if state["progress_score"] is None or score > (
+            state["progress_score"] + self.validation_cfg.get("min_delta", 0.0)
+        ):
+            state["progress_score"], state["bad_checks"] = score, 0
+        else:
+            state["bad_checks"] += 1
+        state["last_step"] = self.step
+        state["stopped"] = state["bad_checks"] >= self.validation_cfg["patience"]
+        if improved:
+            # Publish best first. last.pt then commits its pointer and patience state.
+            # A crash in between leaves an unreferenced candidate; evaluation follows last.pt.
+            save_checkpoint(self.best_checkpoint_path(self.step), self.state())
+        self.save()
+        self.log(
+            {
+                "step": self.step,
+                "event": "validation",
+                "exact": score,
+                "count": len(self.validation),
+                "early_stop": copy.deepcopy(state),
+            }
+        )
 
     # ------------------------------------------------------------------ loop
     def loader(self) -> DataLoader:
@@ -277,6 +394,10 @@ class Trainer:
         """Train until ``train.steps`` (or ``stop_at``, used to simulate a disconnect)."""
         t = self.cfg["train"]
         end = min(t["steps"], stop_at) if stop_at is not None else t["steps"]
+        if self.early_stop is not None and self.early_stop["stopped"]:
+            return
+        if self.step >= end:
+            return
         if self.step == 0:
             self.log(
                 {
@@ -308,5 +429,11 @@ class Trainer:
                 t0, n_img = time.perf_counter(), 0
             if callback is not None:
                 callback(self, loss)
-            if self.step % t.get("ckpt_every", 1000) == 0 or self.step == t["steps"]:
+            if self.validation is not None and (
+                self.step % self.validation_cfg["every"] == 0 or self.step == t["steps"]
+            ):
+                self.check_validation()
+                if self.early_stop["stopped"]:
+                    break
+            elif self.step % t.get("ckpt_every", 1000) == 0 or self.step == t["steps"]:
                 self.log({"step": self.step, "event": "ckpt", "save_sec": self.save()})

@@ -1,0 +1,8 @@
+{
+  "arm": "C",
+  "filename": "ouroboros-C.pt",
+  "bytes": 129796507,
+  "sha256": "c889aea292756bf57fe2023089c53b9ec9fa4b37c080b291c7b7acdb96390a08",
+  "step": 10000,
+  "source_checkpoint_sha256": "08cb1142c710ca5825a4127c59266018b54ccd95ee826db8c7a5b1ed44817412"
+}

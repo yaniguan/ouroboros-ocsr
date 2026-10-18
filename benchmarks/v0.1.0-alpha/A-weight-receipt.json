@@ -1,0 +1,8 @@
+{
+  "arm": "A",
+  "filename": "ouroboros-A.pt",
+  "bytes": 172824785,
+  "sha256": "34961cab27b1f9f8b9487c0a03d4f3ddb3c601356217a81e6b35817d78bb837b",
+  "step": 10000,
+  "source_checkpoint_sha256": "3b7396364323246945932748eae79dd4f6c322532e120e50d7c46f2dbd942153"
+}

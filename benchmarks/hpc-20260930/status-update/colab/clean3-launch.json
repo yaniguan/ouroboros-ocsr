@@ -1,0 +1,15 @@
+{
+  "run_id": "colab-20260930-ac-s0-clean3",
+  "pid": 8579,
+  "helper_sha256": "cdefaa2431da942f2b85899dc4f11b03bd8c6c821c1f67dfb9d8c012b128fed9",
+  "excluded_train_records": [
+    "train_00011370",
+    "train_00057670",
+    "train_00167450"
+  ],
+  "original_files_preserved": true,
+  "persistent": "/content/drive/MyDrive/ouroboros/colab-20260930-ac-s0/clean3",
+  "planned_train_samples": 200000,
+  "validation_samples": 1000,
+  "status_at_launch": "derive and audit; training not yet started"
+}

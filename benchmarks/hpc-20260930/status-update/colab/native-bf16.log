@@ -1,0 +1,3 @@
+
+START Wed Sep 30 19:05:27 2026 ['/content/ouroboros-20260930/venv/bin/python', '-c', 'import torch,escnn,mace; assert torch.cuda.is_available(); assert torch.cuda.is_bf16_supported(including_emulation=False); print(torch.__version__,torch.cuda.get_device_name())']
+2.10.0+cu128 NVIDIA A100-SXM4-40GB
