@@ -1,0 +1,3 @@
+base: pilot-C-200k.yaml
+train:
+  rotation_aug: true

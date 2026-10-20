@@ -1,0 +1,33 @@
+{
+ "policy": "test=published validation; dev=5% train articles by md5(pmcid); train minus connectivity blocks of dev+test",
+ "rows": {
+  "train": 15692,
+  "val": 520,
+  "test": 1193
+ },
+ "articles": {
+  "train": 999,
+  "val": 63,
+  "test": 125
+ },
+ "removed_from_train_for_overlap": 1011,
+ "removed_from_dev_for_overlap": 26,
+ "n_agree": {
+  "train": {
+   "2": 5883,
+   "3": 5200,
+   "4": 4609
+  },
+  "val": {
+   "2": 191,
+   "3": 151,
+   "4": 178
+  },
+  "test": {
+   "2": 451,
+   "3": 406,
+   "4": 336
+  }
+ },
+ "eval_connectivity_blocks": 1462
+}

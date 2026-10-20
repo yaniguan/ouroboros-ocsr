@@ -1,0 +1,23 @@
+{
+ "eval_blocks": 1462,
+ "splits": {
+  "train": {
+   "samples": 200996,
+   "no_key": 0,
+   "overlap_samples": 0,
+   "overlap_blocks": 0
+  },
+  "val": {
+   "samples": 5000,
+   "no_key": 0,
+   "overlap_samples": 0,
+   "overlap_blocks": 0
+  },
+  "test": {
+   "samples": 10000,
+   "no_key": 0,
+   "overlap_samples": 0,
+   "overlap_blocks": 0
+  }
+ }
+}
