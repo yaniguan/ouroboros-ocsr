@@ -1,0 +1,68 @@
+{
+ "description": "v0.1.0-alpha A/B/C (synthetic-only, seed 0) evaluated zero-shot on the v1 real test split (1,193 crops, 125 articles, molecule-disjoint from real train/dev). Weak labels. n_agree>=3 is the stricter-label subset. CPU, greedy decoding, no rotation.",
+ "arms": {
+  "A": {
+   "seconds": 500,
+   "all": {
+    "n": 1193,
+    "exact": 0.0704,
+    "exact_flat": 0.0771,
+    "valid": 0.5574
+   },
+   "n_agree>=3": {
+    "n": 742,
+    "exact": 0.1051,
+    "exact_flat": 0.1159,
+    "valid": 0.5728
+   },
+   "n_agree==2": {
+    "n": 451,
+    "exact": 0.0133,
+    "exact_flat": 0.0133,
+    "valid": 0.5322
+   }
+  },
+  "B": {
+   "seconds": 460,
+   "all": {
+    "n": 1193,
+    "exact": 0.0545,
+    "exact_flat": 0.0562,
+    "valid": 0.5633
+   },
+   "n_agree>=3": {
+    "n": 742,
+    "exact": 0.0782,
+    "exact_flat": 0.0809,
+    "valid": 0.6173
+   },
+   "n_agree==2": {
+    "n": 451,
+    "exact": 0.0155,
+    "exact_flat": 0.0155,
+    "valid": 0.4745
+   }
+  },
+  "C": {
+   "seconds": 720,
+   "all": {
+    "n": 1193,
+    "exact": 0.0637,
+    "exact_flat": 0.0679,
+    "valid": 0.5951
+   },
+   "n_agree>=3": {
+    "n": 742,
+    "exact": 0.0903,
+    "exact_flat": 0.097,
+    "valid": 0.6509
+   },
+   "n_agree==2": {
+    "n": 451,
+    "exact": 0.02,
+    "exact_flat": 0.02,
+    "valid": 0.5033
+   }
+  }
+ }
+}
