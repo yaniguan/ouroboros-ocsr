@@ -1,8 +1,14 @@
-"""v1 experiment grid: arm x real-data fraction x seed. Task ids are 1-based and stable.
+"""v1 experiment grid: arm x real-label budget K x seed. Task ids are 1-based and stable.
 
-Order is seed-major so the headline comparison (all arms, seed 0) finishes first. Seed-0
-synthetic-only A/B/C already exist from v0 and are not rerun (their real-document evaluation is a
-separate task).
+Arms (one question per contrast; every arm shares trunk depth, decoder, optimizer rules, data,
+selection rule and training budget):
+  Babs  plain CNN, absolute 2-D position table, rotation augmentation   (the v0 "B")
+  Brel  plain CNN, the same rotation-invariant distance mixer as C, rotation augmentation
+  C     C8 steerable CNN + group pooling + distance mixer, no augmentation
+Babs -> Brel isolates the position representation; Brel -> C isolates the equivariant convolutions
+(against augmentation). K is the number of independent real labels in the training pool (nested,
+article-sampled); every K > 0 run mixes real data at the same ratio (REAL_FRACTION) and the same
+total step budget, so K changes label count, not exposure.
 
     python scripts/hpc/v1_grid.py            # print the grid
     python scripts/hpc/v1_grid.py --task 7   # print one task as JSON
@@ -13,34 +19,28 @@ from __future__ import annotations
 import argparse
 import json
 
-ARMS = ("A", "B", "C", "Cplus")
-FRACTIONS = (0.0, 0.1, 0.5)
+ARMS = ("Babs", "Brel", "C")
+BUDGETS = (0, 128, 512, 2048)
 SEEDS = (0, 1, 2)
-DONE_IN_V0 = {("A", 0.0, 0), ("B", 0.0, 0), ("C", 0.0, 0)}
+REAL_FRACTION = 0.1
 
-CONFIGS = {
-    "A": "pilot-A-200k.yaml",
-    "B": "pilot-B-200k.yaml",
-    "C": "pilot-C-200k.yaml",
-    "Cplus": "pilot-Cplus-200k.yaml",
-}
+CONFIGS = {"Babs": "pilot-B-200k.yaml", "Brel": "pilot-Brel-200k.yaml", "C": "pilot-C-200k.yaml"}
 
 
 def grid() -> list[dict]:
     tasks = []
     for seed in SEEDS:
-        for fraction in FRACTIONS:
+        for k in BUDGETS:
             for arm in ARMS:
-                if (arm, fraction, seed) in DONE_IN_V0:
-                    continue
                 tasks.append(
                     {
                         "id": len(tasks) + 1,
                         "arm": arm,
-                        "fraction": fraction,
+                        "budget": k,
+                        "fraction": REAL_FRACTION if k else 0.0,
                         "seed": seed,
                         "config": CONFIGS[arm],
-                        "run_id": f"{arm}_n200k_f{fraction:g}_s{seed}",
+                        "run_id": f"{arm}_K{k}_s{seed}",
                     }
                 )
     return tasks

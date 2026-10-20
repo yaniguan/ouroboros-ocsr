@@ -15,6 +15,7 @@ from __future__ import annotations
 import io
 import json
 import math
+import os
 import tarfile
 from pathlib import Path
 
@@ -125,8 +126,9 @@ class ShardDataset(Dataset):
         fh = self._fh.get(shard)
         if fh is None:  # opened lazily per worker process
             fh = self._fh[shard] = open(shard, "rb")  # noqa: SIM115
-        fh.seek(off_size[0])
-        return fh.read(off_size[1])
+        # pread has no shared file position, so a handle inherited through fork() by several
+        # DataLoader workers cannot interleave seek/read calls.
+        return os.pread(fh.fileno(), off_size[1], off_size[0])
 
     def __getstate__(self):
         d = self.__dict__.copy()

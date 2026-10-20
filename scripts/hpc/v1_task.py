@@ -2,13 +2,15 @@
 
     python scripts/hpc/v1_task.py --task 3 --original $OURO_ROOT --v0 $V0 --root $V1
 
-Layout: ``$V1/code`` (this repository at the release commit), ``$V1/data/real`` (ingested real
-shards: train/val/test), ``$V1/data/eval_keys.txt``; synthetic shards come from the audited v0 view
-``$V0/data/full/shards``. Training is resumable: rerunning a task continues from ``last.pt``.
+Layout: ``$V1/code`` (this repository at the release commit), ``$V1/data/real_v2/{eval,pool128,
+pool512,pool2048}`` (ingested real shards), ``$V1/data/eval_keys_v2.txt``; synthetic shards come
+from the audited v0 view ``$V0/data/full/shards``. Training is resumable: rerunning a task
+continues from ``last.pt``.
 
-Checkpoint selection: synthetic-only tasks (fraction 0) use the synthetic validation set, exactly as
-in v0; mixed tasks use the real dev split (article-disjoint from real train and test). The real test
-split is never used for selection. Every task evaluates the rendered test set and the real test set.
+Checkpoint selection uses the *synthetic* validation set for every task, so the only real labels
+a run ever sees are its K pool labels (no hidden extra labels in model selection). Every task
+evaluates the rendered test set, the real test split and the real dev split, with the rotation
+sweep.
 """
 
 from __future__ import annotations
@@ -35,26 +37,30 @@ def main() -> None:
     t = grid()[a.task - 1]
     root, code = a.root, a.root / "code"
     synth = a.v0 / "data/full/shards"
-    real = root / "data/real"
     run = root / "runs" / t["run_id"]
     reports = root / "reports"
     reports.mkdir(exist_ok=True)
-    mixed = t["fraction"] > 0
+    mixed = t["budget"] > 0
+    pool = root / f"data/real_v2/pool{t['budget']}"
+    real_eval = root / "data/real_v2/eval"
     overrides = [
         f"seed={t['seed']}",
         f"data.synthetic_root={synth}",
-        f"data.exclude_keys={root / 'data/eval_keys.txt'}",
+        f"data.exclude_keys={root / 'data/eval_keys_v2.txt'}",
         f"data.real_fraction={t['fraction']}",
-        f"data.real_roots=[{real}]" if mixed else "data.real_roots=[]",
+        f"data.real_roots=[{pool}]" if mixed else "data.real_roots=[]",
         "data.num_workers=4",
         "train.device=cuda",
-        f"validation.root={real if mixed else synth}",
+        f"validation.root={synth}",
         "validation.split=val",
-        f"validation.samples={500 if mixed else 1000}",
+        "validation.samples=1000",
         f"eval.sets.rendered_test.root={synth}",
-        f"eval.sets.real_test.root={real}",
+        f"eval.sets.real_test.root={real_eval}",
         "eval.sets.real_test.split=test",
         "eval.sets.real_test.kind=real",
+        f"eval.sets.real_dev.root={real_eval}",
+        "eval.sets.real_dev.split=val",
+        "eval.sets.real_dev.kind=real",
         "eval.batch_size=32",
     ]
     py = str(a.original / "venv/bin/python")

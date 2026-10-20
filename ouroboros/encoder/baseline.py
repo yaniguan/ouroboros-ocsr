@@ -16,6 +16,7 @@ import torch
 from torch import nn
 
 from ouroboros.encoder.base import EncoderOutput, ImageEncoder
+from ouroboros.encoder.relpos import RelDistMixer, grid_coords
 
 
 @dataclass
@@ -29,6 +30,7 @@ class BaselineConfig:
     mixer_ff: int = 2048
     dropout: float = 0.1
     image_size: int = 384  # sets the size of the positional-embedding grid
+    position: str = "absolute"  # "absolute" (learned 2D table) | "relative" (distance bias)
 
 
 class BasicBlock(nn.Module):
@@ -84,14 +86,27 @@ class BaselineEncoder(ImageEncoder):
         self.stages = nn.Sequential(*stages)
         self.proj = nn.Conv2d(cin, c.d_model, 1)
         g = c.image_size // 32
-        # Absolute 2D positional embedding: BREAKS rotation equivariance on purpose (baseline).
-        self.pos = nn.Parameter(torch.zeros(1, g * g, c.d_model))
-        nn.init.trunc_normal_(self.pos, std=0.02)
-        self.mixer = TokenMixer(c.d_model, c.mixer_layers, c.mixer_heads, c.mixer_ff, c.dropout)
+        if c.position == "absolute":
+            # Absolute 2D positional embedding: BREAKS rotation equivariance on purpose (baseline).
+            self.pos = nn.Parameter(torch.zeros(1, g * g, c.d_model))
+            nn.init.trunc_normal_(self.pos, std=0.02)
+            self.mixer = TokenMixer(c.d_model, c.mixer_layers, c.mixer_heads, c.mixer_ff, c.dropout)
+        elif c.position == "relative":
+            # Same distance-bias mixer as the steerable arms: isolates position representation
+            # from the equivariant convolutions (control arm B_rel).
+            self.pos = None
+            self.mixer = RelDistMixer(
+                c.d_model, c.mixer_layers, c.mixer_heads, c.mixer_ff, c.dropout
+            )
+        else:
+            raise ValueError(f"position must be 'absolute' or 'relative', got {c.position!r}")
 
     def forward(self, images: torch.Tensor) -> EncoderOutput:
         f = self.proj(self.stages(self.stem(images)))  # [B, D, g, g]
         tokens = f.flatten(2).transpose(1, 2)
+        if self.pos is None:
+            h, w = f.shape[-2:]
+            return EncoderOutput(tokens=self.mixer(tokens, grid_coords(h, w, tokens.device)))
         if tokens.shape[1] != self.pos.shape[1]:
             raise ValueError(
                 f"image size gives {tokens.shape[1]} tokens, pos-embedding has {self.pos.shape[1]}"
