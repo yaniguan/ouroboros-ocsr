@@ -1,0 +1,25 @@
+#!/bin/bash
+#$ -S /bin/bash
+#$ -cwd
+#$ -N ouro_v1
+#$ -l gpu,A6000,cuda=1,h_rt=06:00:00,h_data=8G
+#$ -pe shared 4
+# One v1 grid task per array index: qsub -t 1-33 -hold_jid <prep job id> scripts/hpc/v1_array.sge
+set -euo pipefail
+export LC_ALL=C LANG=C
+O=/u/scratch/y/yaniguan/ouroboros-20260930
+V0=/u/scratch/y/yaniguan/ouroboros-v0-20261001
+V1=/u/scratch/y/yaniguan/ouroboros-v1-20261019
+source /u/local/Modules/default/init/modules.sh
+module load apptainer/1.2.2
+export PATH="$O/container-bin:$PATH"
+export APPTAINER_CACHEDIR="$O/cache/apptainer" APPTAINER_TMPDIR="${TMPDIR:-$O/cache/apptainer}"
+test -f "$V1/reports/prep.ok"
+task_gpu=${CUDA_VISIBLE_DEVICES:-${SGE_HGR_cuda:-}}
+test -n "$task_gpu"
+task_gpu=${task_gpu// /,}
+image=$(cat "$O/reports/container-image.txt")
+apptainer exec --cleanenv --nv --bind "$O:$O" --bind "$V0:$V0" --bind "$V1:$V1" \
+  --env "CUDA_VISIBLE_DEVICES=$task_gpu,JOB_ID=$JOB_ID,MPLBACKEND=Agg,OMP_NUM_THREADS=4" \
+  "$image" "$O/venv/bin/python" -u "$V1/code/scripts/hpc/v1_task.py" \
+  --task "$SGE_TASK_ID" --original "$O" --v0 "$V0" --root "$V1"
