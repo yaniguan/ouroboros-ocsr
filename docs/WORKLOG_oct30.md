@@ -76,3 +76,32 @@ selection program compile.
 ## Not measured
 
 No GPU run. A100 runtime in the notebook header/report is a planning estimate.
+
+## Colab `python -m ouroboros.train` exit status 1 (finetune_real_pmc) — root cause and fix
+
+Reproduced on CPU (2-vCPU box, Python 3.11 venv, torch 2.10.0+cpu) with the notebook's exact
+sequence: `prepare_real_finetune.py ... --set ... data.num_workers=8 train.device=cpu` on
+`runs/real-aug-smoke/shards` + `real/pmc_smoke`, then `python -m ouroboros.train`. It exited 1
+after ~12 s with:
+
+    RuntimeError: Caught UnicodeDecodeError in DataLoader worker process 1.
+      File "ouroboros/data/loader.py", line 145, in __getitem__
+        meta = json.loads(self._read(shard, s["json"]))
+    UnicodeDecodeError: 'utf-8' codec can't decode byte 0x89 in position 512
+
+Cause: `ShardDataset` opens shard file handles lazily in `_read`, and with `data.exclude_keys`
+set its `__init__` reads every sample's metadata, so handles are already open in the parent.
+DataLoader workers are forked on Linux (no pickling, so `__getstate__` never resets `_fh`) and
+inherit those file objects; all workers then share one OS file offset, and concurrent
+`seek()` + `read()` return bytes of other members (PNG magic `0x89` parsed as JSON). Earlier
+smoke runs and the tests used `num_workers=0`, which hid it.
+
+Fix: handles are keyed to the opening PID (inherited ones are dropped in a child) and reads use
+`os.pread` (explicit offset, no shared position); short reads raise. After the fix the same
+command completed 5 steps with validation at steps 0/2/4/5 (exit 0, 39.8 s), and re-running it
+resumed at step 5 and returned (3.0 s). Regression test `tests/test_loader_workers.py` fails on
+the old loader and passes on the new one.
+
+Notebook: `run()` now streams merged stdout+stderr, reprints the last 80 lines on failure and
+keeps the full log on Drive (`<run>/train_stderr.log` for training, `logs/` otherwise); the
+train cell skips runs whose `train/ckpt/last.pt` reached `train.steps` or early-stopped.

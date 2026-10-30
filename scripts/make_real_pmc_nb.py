@@ -78,11 +78,43 @@ PY = '/content/venv-real-pmc/bin/python'
 os.environ.update(OMP_NUM_THREADS='2', MKL_NUM_THREADS='2', OPENBLAS_NUM_THREADS='2',
                   MPLBACKEND='Agg', MPLCONFIGDIR='/tmp/mpl-real-pmc', PYTHONUNBUFFERED='1')
 
-def shell(args, cwd=None, check=True):
-    return subprocess.run([str(x) for x in args], cwd=str(cwd) if cwd else None, check=check)
+def shell(args, cwd=None, check=True, log=None, tail=80):
+    \"\"\"Run a command, streaming its merged stdout+stderr live. The full output goes to ``log``
+    (default ``DRIVE_ROOT/logs/<cmd>-<time>.log``, kept only on failure; an explicit ``log`` is
+    appended to and always kept);
+    on a nonzero exit the last ``tail`` lines are printed again and the log path is shown.\"\"\"
+    import collections
+    args = [str(x) for x in args]
+    keep = log is not None
+    if log is None:
+        stem = Path(args[2] if len(args) > 2 and args[1] == '-m' else args[1] if len(args) > 1
+                    else args[0]).name.replace('.py', '')
+        log = DRIVE_ROOT / 'logs' / f"{{stem.lstrip('-')}}-{{time.strftime('%Y%m%d-%H%M%S')}}-{{time.time_ns() % 10**9:09d}}.log"
+    log = Path(log)
+    log.parent.mkdir(parents=True, exist_ok=True)
+    last = collections.deque(maxlen=tail)
+    with open(log, 'a' if keep else 'w') as stream:  # explicit logs accumulate across sessions
+        stream.write(time.strftime('[%Y-%m-%dT%H:%M:%S] $ ') + ' '.join(args) + '\\n')
+        proc = subprocess.Popen(args, cwd=str(cwd) if cwd else None, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, text=True, errors='replace', bufsize=1)
+        for line in proc.stdout:
+            print(line, end='')
+            stream.write(line)
+            last.append(line)
+        proc.wait()
+        stream.write(f'\\n[exit status {{proc.returncode}}]\\n')
+    if proc.returncode != 0:
+        print(f'\\n===== FAILED (exit {{proc.returncode}}): last {{len(last)}} lines; full log: {{log}} =====')
+        print(''.join(last), end='')
+        print('=====')
+        if check:
+            raise subprocess.CalledProcessError(proc.returncode, args)
+    elif not keep:
+        log.unlink(missing_ok=True)
+    return subprocess.CompletedProcess(args, proc.returncode)
 
-def run(*args, check=True):
-    return shell([PY, *args], cwd=REPO, check=check)
+def run(*args, check=True, log=None):
+    return shell([PY, *args], cwd=REPO, check=check, log=log)
 
 def sha256(path):
     h = hashlib.sha256()
@@ -305,9 +337,33 @@ Re-running this cell after a disconnect resumes exactly; finished runs return im
 """)
 
 code("""
+DONE_CHECK = r\"\"\"
+import sys, torch, yaml
+from pathlib import Path
+d = Path(sys.argv[1])
+last = d / 'train/ckpt/last.pt'
+if not last.is_file():
+    sys.exit(1)
+st = torch.load(last, map_location='cpu', weights_only=False)
+steps = yaml.safe_load((d / 'finetune.yaml').read_text())['train']['steps']
+es = st.get('early_stop') or {}
+sys.exit(0 if st['step'] >= steps or es.get('stopped') else 1)
+\"\"\"
+
+def train_done(run_dir):
+    \"\"\"True if train/ckpt/last.pt reached train.steps or early-stopped (finished run).\"\"\"
+    if not (run_dir / 'train/ckpt/last.pt').is_file():
+        return False
+    return subprocess.run([PY, '-c', DONE_CHECK, str(run_dir)], cwd=REPO).returncode == 0
+
 for name, r in RUNS.items():
+    if train_done(r['dir']):
+        print(name, 'already finished (train/ckpt/last.pt complete): skipping')
+        continue
     t0 = time.perf_counter()
-    run('-m', 'ouroboros.train', '--config', r['dir'] / 'finetune.yaml', '--out', r['dir'] / 'train')
+    # stdout+stderr of the trainer are streamed here and saved to <run>/train_stderr.log on Drive
+    run('-m', 'ouroboros.train', '--config', r['dir'] / 'finetune.yaml', '--out', r['dir'] / 'train',
+        log=r['dir'] / 'train_stderr.log')
     wall = time.perf_counter() - t0
     timing_file = r['dir'] / 'train_wall_s.json'
     prev = json.loads(timing_file.read_text()) if timing_file.exists() else []
