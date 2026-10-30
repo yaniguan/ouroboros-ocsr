@@ -21,9 +21,10 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from rdkit import Chem, DataStructs
+from rdkit import DataStructs
 from rdkit.Chem import rdFingerprintGenerator
 
+from ouroboros.labels import labelled_smiles
 from ouroboros.eval import standardize as _std
 from ouroboros.eval.metrics import PairScore, aggregate, score_pair
 
@@ -37,7 +38,7 @@ def _prep(smiles: str | None, standardize: bool) -> _std.Std:
     if mol is None:
         empty = smiles is None or not smiles.strip()
         return _std.Std(None, None, "empty" if empty else "unparsable")
-    return _std.Std(mol, Chem.MolToSmiles(mol), "ok")
+    return _std.Std(mol, labelled_smiles(mol), "ok")
 
 
 def is_valid(smiles: str | None, *, standardize: bool = True) -> bool:

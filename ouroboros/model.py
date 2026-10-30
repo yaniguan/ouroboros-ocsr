@@ -107,3 +107,24 @@ def load_model_state(model: nn.Module, state: dict) -> None:
 
 def count_params(module: nn.Module) -> int:
     return sum(p.numel() for p in module.parameters())
+
+
+def initialize_finetune(model: OCSRModel, checkpoint: dict) -> None:
+    """Load pretrained weights into an explicitly append-only expanded vocabulary.
+
+    Optimizer/scheduler/step are intentionally fresh; exact resume remains the
+    Trainer's separate last.pt path. Only tied token/output rows may grow.
+    """
+    old_vocab = checkpoint['vocab']
+    if model.tokenizer.itos[:len(old_vocab)] != old_vocab:
+        raise ValueError('Fine-tuning vocabulary must preserve the checkpoint vocabulary prefix')
+    state = dict(checkpoint['model'])
+    current = model.state_dict()
+    for key in ('decoder.tok.weight', 'decoder.head.weight'):
+        old, new = state[key], current[key]
+        if old.shape[1:] != new.shape[1:] or old.shape[0] != len(old_vocab):
+            raise ValueError(f'Incompatible pretrained token matrix: {key}')
+        expanded = new.clone()
+        expanded[:len(old_vocab)].copy_(old)
+        state[key] = expanded
+    load_model_state(model, state)

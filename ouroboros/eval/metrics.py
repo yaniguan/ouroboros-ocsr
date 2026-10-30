@@ -170,7 +170,7 @@ def score_pair(pred: str | None, ref: str) -> PairScore:
         valid=p.valid,
         exact=p.valid and p.smiles == r.smiles,
         exact_flat=p.valid and flat_smiles(p) == flat_smiles(r),
-        inchikey=p.valid and standard_inchikey(p) == standard_inchikey(r),
+        inchikey=bool(standard_inchikey(p)) and standard_inchikey(p) == standard_inchikey(r),
         tanimoto=tanimoto(p, r),
         stereo_total=total,
         stereo_correct=correct,

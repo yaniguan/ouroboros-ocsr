@@ -70,10 +70,10 @@ def sample_key14(meta: dict) -> str | None:
     """InChIKey connectivity block of a sample (stored for synthetic data, computed for real)."""
     if meta.get("key14"):
         return meta["key14"]
-    from rdkit import Chem
+    from ouroboros.eval.standardize import leakage_key, standardize
 
-    mol = Chem.MolFromSmiles(meta["smiles"])
-    return Chem.MolToInchiKey(mol)[:14] if mol is not None else None
+    key = leakage_key(standardize(meta["smiles"]))
+    return key[:14] if key else None
 
 
 class ShardDataset(Dataset):

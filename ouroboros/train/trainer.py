@@ -33,7 +33,7 @@ from ouroboros.data.loader import ShardDataset, collate, rotate_batch
 from ouroboros.data.mixture import MixtureSampler
 from ouroboros.decode.tokenizer import SmilesTokenizer
 from ouroboros.eval.standardize import standardize
-from ouroboros.model import OCSRModel, build_model, count_params, load_model_state
+from ouroboros.model import OCSRModel, build_model, count_params, load_model_state, initialize_finetune
 from ouroboros.provenance import json_sha256
 
 
@@ -168,6 +168,12 @@ class Trainer:
         if previous is not None and previous["vocab"] != self.tok.itos:
             raise ValueError("Checkpoint vocabulary mismatch")
         self.model: OCSRModel = build_model(cfg, self.tok).to(self.dev)
+        if previous is None and t.get("init_checkpoint"):
+            pretrained = load_checkpoint(Path(t["init_checkpoint"]))
+            if pretrained["config"]["model"] != cfg["model"]:
+                raise ValueError("Fine-tuning model config must match the pretrained architecture")
+            initialize_finetune(self.model, pretrained)
+            del pretrained
         self.opt = build_optimizer(self.model, t)
         self.sched = build_scheduler(self.opt, t)
         self.step = 0
@@ -342,7 +348,10 @@ class Trainer:
     # ------------------------------------------------------------------ loop
     def loader(self) -> DataLoader:
         self.sampler.set_position(self.step * self.cfg["train"]["batch_size"])
-        nw = int(self.cfg["data"].get("num_workers", 4))
+        # Runtime resource override for constrained CPU/sandbox environments.
+        nw = int(os.environ.get("OUROBOROS_NUM_WORKERS", self.cfg["data"].get("num_workers", 4)))
+        if nw < 0:
+            raise ValueError("OUROBOROS_NUM_WORKERS must be nonnegative")
         return DataLoader(
             self.dataset,
             batch_size=self.cfg["train"]["batch_size"],

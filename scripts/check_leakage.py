@@ -4,6 +4,10 @@ A set is given as ``NAME=SPEC`` where SPEC is one of
   * ``path/to/manifest.tsv[:N]``   synthetic manifest (``smiles`` column), optional first-N prefix
   * ``path/to/shards_dir:SPLIT[:N]`` WebDataset shards (synthetic or real), optional prefix
 
+Labelled dummy molecules use canonical-label SHA256 identities because InChI cannot
+represent them; these are overlap keys only, never InChI metric values. Their first
+14 characters are digest prefixes, not connectivity layers.
+
 Prints a table of overlap counts (full standard InChIKey, and connectivity block for
 information) and exits with status 1 if ANY full-InChIKey overlap is > 0.
 
@@ -24,13 +28,13 @@ from pathlib import Path
 
 from rdkit import RDLogger
 
-from ouroboros.eval.standardize import standard_inchikey, standardize
+from ouroboros.eval.standardize import leakage_key, standardize
 
 RDLogger.DisableLog("rdApp.*")
 
 
 def _key(smiles: str) -> str | None:
-    return standard_inchikey(standardize(smiles))
+    return leakage_key(standardize(smiles))
 
 
 def load_keys(spec: str) -> set[str]:

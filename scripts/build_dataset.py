@@ -63,6 +63,10 @@ def main(argv=None) -> None:
         "molecules of real eval sets (produced by scripts/check_leakage.py --dump-eval-keys)",
     )
     ap.add_argument("--stages", nargs="+", default=["pool", "compose", "render"])
+    ap.add_argument("--rgroup-probability", type=float, default=0.0)
+    ap.add_argument("--real-style", action="store_true")
+    ap.add_argument("--max-tokens", type=int, default=None,
+                    help="drop labels whose decoder input exceeds this length (counted)")
     args = ap.parse_args(argv)
 
     out = Path(args.out)
@@ -107,6 +111,9 @@ def main(argv=None) -> None:
                 size=args.image_size,
                 seed=args.seed,
                 workers=args.workers,
+                rgroup_probability=args.rgroup_probability,
+                real_style=args.real_style,
+                max_tokens=args.max_tokens,
             )
             print("render:", json.dumps(st))
     print(f"total wall time {time.time() - t_all:.1f}s")

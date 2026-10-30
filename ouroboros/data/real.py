@@ -101,6 +101,8 @@ def ingest(
     written: Counter = Counter()
     for split in SPLITS:
         split_rows = [r for r in rows if r["split"] == split]
+        for old in out_dir.glob(f"{split}-*.idx.json"):
+            old.unlink()
         if not split_rows:
             continue
         tar = None
