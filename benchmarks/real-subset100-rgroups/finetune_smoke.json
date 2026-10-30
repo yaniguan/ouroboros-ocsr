@@ -1,0 +1,53 @@
+{
+  "scope": "functional CPU smoke only; four synthetic examples, two steps; no accuracy claim",
+  "checkpoint": "checkpoints/ouroboros-A.pt",
+  "init_seconds": 1.0521373480005423,
+  "fit_seconds": 3.3441247070004465,
+  "steps": 2,
+  "batch_size": 2,
+  "image_size": 384,
+  "vocab_size": 267,
+  "labels": [
+    "[R2]Oc1ccc(CC)cc1",
+    "[R1]C(C)(C)OC(=O)NCC",
+    "[R4]COc1ccccc1",
+    "[Et]OC(=O)c1ccc(CC)cc1"
+  ],
+  "log": [
+    {
+      "step": 0,
+      "event": "start",
+      "params": 43239872,
+      "params_encoder": 17812416,
+      "params_decoder": 25427456,
+      "n_synth": 4,
+      "n_real": 0
+    },
+    {
+      "step": 1,
+      "loss": 2.803884744644165,
+      "lr": 3e-05,
+      "img_per_s": 2.7838284521174157
+    },
+    {
+      "step": 2,
+      "loss": 2.432187557220459,
+      "lr": 0.0,
+      "img_per_s": 3.218022480842456
+    },
+    {
+      "step": 2,
+      "event": "validation",
+      "exact": 0.0,
+      "count": 2,
+      "early_stop": {
+        "best_score": 0.0,
+        "best_step": 2,
+        "progress_score": 0.0,
+        "bad_checks": 0,
+        "last_step": 2,
+        "stopped": false
+      }
+    }
+  ]
+}
