@@ -355,7 +355,11 @@ Chrome traces, operator tables and GPU samples are saved alongside the JSON meas
 code("""
 PROFILING = DRIVE_ROOT / 'profiling'
 PROFILING.mkdir(parents=True, exist_ok=True)
-from scripts.profile_train import start_nvidia_smi, stop_nvidia_smi, parse_nvidia_smi_csv
+import importlib.util as _ilu
+_spec = _ilu.spec_from_file_location('profile_train', REPO / 'scripts/profile_train.py')
+_pt = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_pt)
+start_nvidia_smi, stop_nvidia_smi, parse_nvidia_smi_csv = (
+    _pt.start_nvidia_smi, _pt.stop_nvidia_smi, _pt.parse_nvidia_smi_csv)
 for arm in ARMS:
     r = next(r for r in RUNS.values() if r['arm'] == arm)
     if not (PROFILING / f'train_{arm}.json').exists():
@@ -439,7 +443,7 @@ print(json.dumps(out))
 """
 Path('/content/select_ckpt.py').write_text(select_src)
 
-def evaluate(ckpts, prefix, beam=1):
+def evaluate(ckpts, prefix, beam=1, tta=None):
     report = Path(f'{prefix}-report.json')
     if report.exists():
         print('evaluation already finished:', report)
@@ -452,6 +456,8 @@ def evaluate(ckpts, prefix, beam=1):
     args.extend(['--beam', str(beam), '--shards', TEST, '--out', preds, '--batch-size', '32'])
     if beam > 1:
         args.extend(['--nbest-out', f'{prefix}-nbest.jsonl'])
+    if tta:
+        args.extend(['--tta', tta])
     run(*args)
     run('scripts/eval_predictions.py', preds, '--json', report, '--md', f'{prefix}-report.md')
     TIMINGS[Path(prefix).name + '_eval_s'] = round(time.perf_counter() - t0, 1)
@@ -500,6 +506,9 @@ for arm in ARMS:
     variant = f'{arm}-selected-beam5'
     record_decoding(variant, evaluate([DRIVE_ROOT / f'{arm}-selected.pt'],
                                      DRIVE_ROOT / variant, beam=5))
+    variant = f'{arm}-selected-beam5-ttapad'  # CPU on released A: 20.13% -> 23.49%
+    record_decoding(variant, evaluate([DRIVE_ROOT / f'{arm}-selected.pt'],
+                                     DRIVE_ROOT / variant, beam=5, tta='pad'))
     rel, tun = overall(released), overall(tuned)
     ref_k, ref_n = RELEASED_TARGET[arm]
     SUMMARY['arms'][arm] = {
@@ -518,6 +527,9 @@ if 'A' in ARMS and 'C' in ARMS:
     variant = 'AC-ensemble-beam5'
     record_decoding(variant, evaluate([DRIVE_ROOT / 'A-selected.pt', DRIVE_ROOT / 'C-selected.pt'],
                                      DRIVE_ROOT / variant, beam=5))
+    variant = 'AC-ensemble-beam5-ttapad'
+    record_decoding(variant, evaluate([DRIVE_ROOT / 'A-selected.pt', DRIVE_ROOT / 'C-selected.pt'],
+                                     DRIVE_ROOT / variant, beam=5, tta='pad'))
 SUMMARY['timings_s']['total_notebook_s_this_session'] = round(time.perf_counter() - T_START, 1)
 (DRIVE_ROOT / 'summary.json').write_text(json.dumps(SUMMARY, indent=1, default=str))
 for arm, s in SUMMARY['arms'].items():
