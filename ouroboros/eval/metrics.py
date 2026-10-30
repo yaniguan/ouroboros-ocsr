@@ -12,6 +12,8 @@ Per-sample metrics (``score_pair``):
 
 Aggregate (``aggregate``): means of the above plus
   invalid_rate                 = 1 - mean(valid)
+  tanimoto_1                   = fraction with Tanimoto 1.0 ("Tanimoto@1.0"; the fingerprint
+                                 ignores chirality, so an enantiomer still counts)
   stereo_elem_acc_strict       = sum(stereo_correct) / sum(stereo_total)
   stereo_elem_acc_given_flat   = same, restricted to constitution-correct predictions
 """
@@ -187,6 +189,7 @@ def aggregate(scores: Sequence[PairScore]) -> dict:
         "exact_flat": arr["exact_flat"].mean(),
         "inchikey": arr["inchikey"].mean(),
         "tanimoto": arr["tanimoto"].mean(),
+        "tanimoto_1": float((arr["tanimoto"] >= 1.0 - 1e-9).mean()),
         "valid": arr["valid"].mean(),
         "invalid_rate": 1.0 - arr["valid"].mean(),
         "n_stereo_elements": int(tot.sum()),
