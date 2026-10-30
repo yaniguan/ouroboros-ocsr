@@ -59,6 +59,14 @@ unlabelled row is never trained on. Snapshot, extracted images and manifests sta
 disk / Drive; `hf/`, `hf_real/`, `*.parquet`, `*.arrow` are git-ignored and refused by the
 pre-commit guard.
 
+### VERDICT-PMC real training data (Oct 30)
+
+`colab/finetune_real_pmc.ipynb` downloads the public parquet of `yaniguan/ocsr-dataset` at a pinned
+commit, runs `scripts/prepare_pmc.py` (removes every row whose molecule's connectivity block matches a
+held-out test molecule, from train AND val; drops overlong labels; makes val molecule-disjoint from
+train) and ingests it with `scripts/ingest_real.py`. Train rows are used for training, val rows only for
+checkpoint selection. Images, parquet and shards stay on the Colab disk / Drive.
+
 ## Leakage control
 
 `scripts/check_leakage.py` compares standard InChIKeys of every real-document eval set with every

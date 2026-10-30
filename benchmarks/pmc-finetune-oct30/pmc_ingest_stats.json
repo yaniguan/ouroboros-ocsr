@@ -1,0 +1,11 @@
+{
+ "manifest": "real_data/pmc_full/manifest.csv",
+ "n_rows": 18183,
+ "written": {
+  "train": 17220,
+  "val": 963
+ },
+ "n_failures": 0,
+ "failure_reasons": {},
+ "label_parse_rate": 1.0
+}

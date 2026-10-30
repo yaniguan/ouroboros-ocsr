@@ -1,0 +1,133 @@
+{
+ "log": [
+  {
+   "step": 0,
+   "event": "start",
+   "params": 43239872,
+   "params_encoder": 17812416,
+   "params_decoder": 25427456,
+   "n_synth": 4,
+   "n_real": 48,
+   "real_fraction": 0.6,
+   "n_validation": 8
+  },
+  {
+   "step": 0,
+   "event": "validation",
+   "exact": 0.125,
+   "count": 8,
+   "early_stop": {
+    "best_score": 0.125,
+    "best_step": 0,
+    "progress_score": 0.125,
+    "bad_checks": 0,
+    "last_step": 0,
+    "stopped": false
+   }
+  },
+  {
+   "step": 1,
+   "loss": 1.2965894937515259,
+   "lr": 1.5e-05,
+   "img_per_s": 3.323809508384602
+  },
+  {
+   "step": 2,
+   "loss": 1.7687289714813232,
+   "lr": 1.125e-05,
+   "img_per_s": 3.6361802208274088
+  },
+  {
+   "step": 2,
+   "event": "validation",
+   "exact": 0.125,
+   "count": 8,
+   "early_stop": {
+    "best_score": 0.125,
+    "best_step": 0,
+    "progress_score": 0.125,
+    "bad_checks": 1,
+    "last_step": 2,
+    "stopped": false
+   }
+  },
+  {
+   "step": 3,
+   "loss": 1.4717395305633545,
+   "lr": 3.750000000000002e-06,
+   "img_per_s": 0.7304580576385034
+  },
+  {
+   "step": 4,
+   "loss": 1.7948836088180542,
+   "lr": 0.0,
+   "img_per_s": 4.874587977587657
+  },
+  {
+   "step": 4,
+   "event": "validation",
+   "exact": 0.125,
+   "count": 8,
+   "early_stop": {
+    "best_score": 0.125,
+    "best_step": 0,
+    "progress_score": 0.125,
+    "bad_checks": 2,
+    "last_step": 4,
+    "stopped": false
+   }
+  }
+ ],
+ "prepare_summary": {
+  "vocab_size": 267,
+  "vocab_base": 133,
+  "vocab_added_labels": 134,
+  "vocab_added_observed": 0,
+  "added_tokens": [],
+  "n_synthetic_labels_scanned": 6,
+  "n_real_train_labels_scanned": 48,
+  "n_real_val_available": 15,
+  "validation_samples": 8,
+  "amp": "none",
+  "lr": 1.5e-05,
+  "steps": 4,
+  "batch_size": 4,
+  "real_fraction": 0.6
+ },
+ "selection": {
+  "best_step": 0,
+  "best_val_exact": 0.125,
+  "stopped_early": false,
+  "last_step": 4,
+  "val_exact_step0": 0.125,
+  "val_curve": [
+   [
+    0,
+    0.125
+   ],
+   [
+    2,
+    0.125
+   ],
+   [
+    4,
+    0.125
+   ]
+  ],
+  "n_val": 8,
+  "start": {
+   "step": 0,
+   "event": "start",
+   "params": 43239872,
+   "params_encoder": 17812416,
+   "params_decoder": 25427456,
+   "n_synth": 4,
+   "n_real": 48,
+   "real_fraction": 0.6,
+   "n_validation": 8
+  },
+  "img_per_s_median": 3.6361802208274088
+ },
+ "data": "48 PMC train rows + 15 PMC val rows (first rows of train-00000 / validation parquet), 4 synthetic real-aug smoke samples; CPU fp32, 2 threads, OUROBOROS_NUM_WORKERS=0",
+ "wall_s_train_cmd": 19.9
+}

@@ -80,6 +80,12 @@ def main(argv=None) -> int:
     ap.add_argument("--eval", nargs="+", required=True, metavar="NAME=SPEC")
     ap.add_argument("--train", nargs="*", default=[], metavar="NAME=SPEC")
     ap.add_argument("--dump-eval-keys", default=None)
+    ap.add_argument(
+        "--fail-on-connectivity",
+        action="store_true",
+        help="also exit 1 on any connectivity-block (first 14 chars) overlap, i.e. stereoisomers",
+    )
+    ap.add_argument("--json", default=None, help="write the overlap table to this JSON file")
     a = ap.parse_args(argv)
     evals = {s.split("=", 1)[0]: load_keys(s.split("=", 1)[1]) for s in a.eval}
     trains = {s.split("=", 1)[0]: load_keys(s.split("=", 1)[1]) for s in a.train}
@@ -95,10 +101,24 @@ def main(argv=None) -> int:
             f"{r['eval']:<16}{r['train']:<16}{r['n_eval']:>9}{r['n_train']:>10}"
             f"{r['overlap_inchikey']:>10}{r['overlap_connectivity']:>10}"
         )
+    if a.json:
+        import json
+
+        Path(a.json).write_text(json.dumps(rows, indent=1))
     bad = [r for r in rows if r["overlap_inchikey"] > 0]
     if bad:
         print(f"LEAKAGE: {len(bad)} eval/train pair(s) share InChIKeys", file=sys.stderr)
         return 1
+    if a.fail_on_connectivity:
+        bad = [r for r in rows if r["overlap_connectivity"] > 0]
+        if bad:
+            print(
+                f"LEAKAGE: {len(bad)} eval/train pair(s) share connectivity blocks",
+                file=sys.stderr,
+            )
+            return 1
+        print("OK: 0 InChIKey and 0 connectivity-block overlap for every eval/train pair")
+        return 0
     print("OK: 0 InChIKey overlap for every eval/train pair")
     return 0
 

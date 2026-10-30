@@ -335,6 +335,11 @@ class Trainer:
             # A crash in between leaves an unreferenced candidate; evaluation follows last.pt.
             save_checkpoint(self.best_checkpoint_path(self.step), self.state())
         self.save()
+        if improved and self.validation_cfg.get("keep_only_best", False):
+            # last.pt now points at the new best; superseded best files are never needed again.
+            for old in (self.out / "ckpt").glob("best-step-*.pt"):
+                if old != self.best_checkpoint_path(self.step):
+                    old.unlink(missing_ok=True)
         self.log(
             {
                 "step": self.step,
@@ -417,8 +422,21 @@ class Trainer:
                     "params_decoder": count_params(self.model.decoder),
                     "n_synth": len(self.synth),
                     "n_real": len(self.real) if self.real else 0,
+                    "real_fraction": float(self.cfg["data"].get("real_fraction", 0.0)),
+                    "n_validation": len(self.validation) if self.validation is not None else 0,
                 }
             )
+        if (
+            self.validation is not None
+            and self.validation_cfg.get("at_start", False)
+            and self.step == 0
+            and self.early_stop["last_step"] is None
+        ):
+            # Score the initial (e.g. released) weights first: if fine-tuning never beats them on
+            # validation, the selected checkpoint is the step-0 initialization, not a regression.
+            self.check_validation()
+            if self.early_stop["stopped"]:
+                return
         it = iter(self.loader())
         t0, n_img = time.perf_counter(), 0
         while self.step < end:
