@@ -18,6 +18,9 @@ SPECIALS = [PAD, BOS, EOS, UNK]
 
 
 def tokenize(smiles: str) -> list[str]:
+    from ouroboros.labels import normalize_labels
+
+    smiles = normalize_labels(smiles)
     tokens = SMILES_REGEX.findall(smiles)
     if "".join(tokens) != smiles:
         raise ValueError(f"SMILES not fully tokenized: {smiles!r}")
@@ -38,6 +41,20 @@ class SmilesTokenizer:
             for t in tokenize(s):
                 seen.setdefault(t, None)
         return cls(SPECIALS + sorted(seen))
+
+    def extend(self, tokens: Iterable[str]) -> list[str]:
+        """Append tokens explicitly; loading a released vocabulary never changes its IDs."""
+        added = []
+        for token in tokens:
+            if token not in self.stoi:
+                self.stoi[token] = len(self.itos)
+                self.itos.append(token)
+                added.append(token)
+        return added
+
+    def add_label_tokens(self) -> list[str]:
+        from ouroboros.labels import LABELS
+        return self.extend(['*', *[f'[{label}]' for label in LABELS]])
 
     pad_id = property(lambda self: self.stoi[PAD])
     bos_id = property(lambda self: self.stoi[BOS])

@@ -1,0 +1,7 @@
+{
+  "path": "colab/finetune_real_aug.ipynb",
+  "nbformat": 4,
+  "cells": 16,
+  "python_cells": 8,
+  "validation": "nbformat.validate + code compilation"
+}

@@ -1,0 +1,12 @@
+{
+ "manifest": "real_data/subset100/manifest.csv",
+ "n_rows": 300,
+ "written": {
+  "test": 278
+ },
+ "n_failures": 22,
+ "failure_reasons": {
+  "label_unparsable": 22
+ },
+ "label_parse_rate": 0.9266666666666666
+}

@@ -27,6 +27,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ouroboros.labels import parse_labelled, labelled_smiles
 from rdkit import Chem, RDLogger
 from rdkit.Chem.MolStandardize import rdMolStandardize
 
@@ -53,7 +54,7 @@ def parse(smiles: str | None) -> Chem.Mol | None:
     """RDKit parse; empty strings and zero-atom molecules count as unparsable."""
     if smiles is None or not smiles.strip():
         return None
-    mol = Chem.MolFromSmiles(smiles.strip())
+    mol = parse_labelled(smiles.strip())
     if mol is None or mol.GetNumAtoms() == 0:
         return None
     return mol
@@ -72,12 +73,12 @@ def standardize(smiles: str | None) -> Std:
         return Std(None, None, "standardize_failed")
     if parent is None or parent.GetNumAtoms() == 0:
         return Std(None, None, "standardize_failed")
-    return Std(parent, Chem.MolToSmiles(parent), "ok")
+    return Std(parent, labelled_smiles(parent), "ok")
 
 
 def standard_inchikey(std: Std) -> str | None:
     """Standard InChIKey of a standardized molecule (keeps tetrahedral and E/Z stereo layers)."""
-    if not std.valid:
+    if not std.valid or any(a.GetAtomicNum() == 0 for a in std.mol.GetAtoms()):
         return None
     key = Chem.MolToInchiKey(std.mol)
     return key or None
@@ -89,4 +90,19 @@ def flat_smiles(std: Std) -> str | None:
         return None
     m = Chem.Mol(std.mol)
     Chem.RemoveStereochemistry(m)
-    return Chem.MolToSmiles(m)
+    return labelled_smiles(m)
+
+
+def leakage_key(std: Std) -> str | None:
+    """Standard InChIKey, or a namespaced canonical-label digest for pseudo-atoms.
+
+    This fallback is only for dataset overlap detection, never an InChI metric.
+    Canonical labels include stereo and alias identities; the first 14 characters
+    of a labelled key are a digest prefix, not an InChI connectivity layer.
+    """
+    if not std.valid:
+        return None
+    if any(a.GetAtomicNum() == 0 for a in std.mol.GetAtoms()):
+        import hashlib
+        return 'L' + hashlib.sha256(std.smiles.encode()).hexdigest()
+    return standard_inchikey(std)

@@ -114,6 +114,7 @@ def test_aggregate_and_bootstrap():
     agg = aggregate(scores)
     assert agg["n"] == 4
     assert agg["exact"] == 0.5 and agg["invalid_rate"] == 0.25
+    assert agg["tanimoto_1"] == 0.75  # the one-centre-wrong prediction keeps Tanimoto 1.0
     assert agg["stereo_elem_acc_strict"] == 3 / 4
     assert agg["stereo_elem_acc_given_flat"] == 3 / 4
     assert agg["n_with_stereo"] == 2 and agg["exact_on_stereo_subset"] == 0.5

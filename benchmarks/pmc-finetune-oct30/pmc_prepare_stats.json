@@ -1,0 +1,36 @@
+{
+ "parquets": [
+  "train-0.parquet",
+  "train-1.parquet",
+  "train-2.parquet",
+  "train-3.parquet",
+  "validation.parquet"
+ ],
+ "n_exclude_key14": 295,
+ "max_len": 128,
+ "min_agree_open": 0,
+ "val_disjoint": true,
+ "rows_read": {
+  "train": 17249,
+  "val": 1193
+ },
+ "kept": {
+  "train": 17220,
+  "val": 963
+ },
+ "kept_unique_key14": {
+  "train": 12637,
+  "val": 840
+ },
+ "dropped": {
+  "train": {
+   "label_too_long": 16,
+   "eval_overlap": 12,
+   "label_unparsable": 1
+  },
+  "val": {
+   "label_too_long": 6,
+   "val_in_train": 224
+  }
+ }
+}

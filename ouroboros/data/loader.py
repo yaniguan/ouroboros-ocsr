@@ -15,6 +15,7 @@ from __future__ import annotations
 import io
 import json
 import math
+import os
 import tarfile
 from pathlib import Path
 
@@ -70,10 +71,10 @@ def sample_key14(meta: dict) -> str | None:
     """InChIKey connectivity block of a sample (stored for synthetic data, computed for real)."""
     if meta.get("key14"):
         return meta["key14"]
-    from rdkit import Chem
+    from ouroboros.eval.standardize import leakage_key, standardize
 
-    mol = Chem.MolFromSmiles(meta["smiles"])
-    return Chem.MolToInchiKey(mol)[:14] if mol is not None else None
+    key = leakage_key(standardize(meta["smiles"]))
+    return key[:14] if key else None
 
 
 class ShardDataset(Dataset):
@@ -93,6 +94,7 @@ class ShardDataset(Dataset):
         ``max_samples`` is taken AFTER exclusion."""
         self.entries: list[tuple[Path, dict]] = []
         self._fh: dict[Path, io.BufferedReader] = {}
+        self._fh_pid: int | None = os.getpid()
         self.n_excluded = 0
         for shard in list_shards(root, split):
             for s in index_shard(shard):
@@ -122,15 +124,33 @@ class ShardDataset(Dataset):
         return len(self.entries)
 
     def _read(self, shard: Path, off_size) -> bytes:
+        # Handles are per process. DataLoader workers are *forked* on Linux (no pickling, so
+        # __getstate__ is not called) and would otherwise inherit the parent's open file
+        # objects, which share one OS file offset across all workers: concurrent seek()+read()
+        # then returns bytes from another sample (e.g. PNG bytes parsed as JSON). Handles
+        # opened in the parent (exclude_key14 filtering, validation truths) are therefore never
+        # reused in a child, and os.pread reads at an explicit offset without touching the
+        # shared position at all.
+        pid = os.getpid()
+        if self._fh_pid != pid:
+            self._fh, self._fh_pid = {}, pid  # inherited handles belong to the parent
         fh = self._fh.get(shard)
-        if fh is None:  # opened lazily per worker process
+        if fh is None:  # opened lazily per process
             fh = self._fh[shard] = open(shard, "rb")  # noqa: SIM115
-        fh.seek(off_size[0])
-        return fh.read(off_size[1])
+        offset, size = off_size
+        if hasattr(os, "pread"):
+            data = os.pread(fh.fileno(), size, offset)
+        else:  # pragma: no cover - Windows
+            fh.seek(offset)
+            data = fh.read(size)
+        if len(data) != size:
+            raise OSError(f"short read from {shard} at {offset}: {len(data)} of {size} bytes")
+        return data
 
     def __getstate__(self):
         d = self.__dict__.copy()
         d["_fh"] = {}
+        d["_fh_pid"] = None
         return d
 
     def _meta_of(self, shard: Path, s: dict) -> dict:

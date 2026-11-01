@@ -1,0 +1,14 @@
+{
+  "previous_failures": 22,
+  "recovered": 20,
+  "remaining_failures": [
+    {
+      "row": 20,
+      "reason": "unparsable"
+    },
+    {
+      "row": 32,
+      "reason": "unparsable"
+    }
+  ]
+}

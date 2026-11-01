@@ -1,0 +1,31 @@
+# The notebook replaces model with the selected released checkpoint's exact config,
+# and writes the append-only vocabulary before invoking the training entry point.
+base: base.yaml
+seed: 29
+data:
+  synthetic_root: /content/data/real-aug/shards
+  synthetic_max_samples: 10000
+  real_roots: []
+  real_fraction: 0.0
+  image_size: 384
+  vocab: /content/data/real-aug/vocab.json
+  num_workers: 2
+train:
+  init_checkpoint: /content/ouroboros-ocsr/checkpoints/ouroboros-A.pt
+  batch_size: 8
+  steps: 2000
+  lr: 0.00003
+  warmup: 100
+  amp: none  # portable on T4; optionally use bf16 on L4/A100
+  rotation_aug: true
+  log_every: 20
+  ckpt_every: 200
+validation:
+  enabled: true
+  root: /content/data/real-aug/shards
+  split: val
+  samples: 200
+  batch_size: 8
+  every: 200
+  patience: 5
+  min_delta: 0.001

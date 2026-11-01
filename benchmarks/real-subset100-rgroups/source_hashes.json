@@ -1,0 +1,6 @@
+{
+  "real_data/subset100/manifest.csv": "957f0042825dab214aad2463de2974d7b4f23a1fcbf5d52ab78be2526cc3fc61",
+  "real_data/subset100/parquet/USPTO.parquet": "d367462f1ab2285f86c9c2548d488d5b18d67b2bb88df056381ebfa29ade91af",
+  "real_data/subset100/parquet/UOB.parquet": "7fc976bbe9c7bebc10d9ebc6569cdbaf6934f79a9d0cf04eee2cfff59cbbc57e",
+  "real_data/subset100/parquet/ACS.parquet": "b16857a4accba1d3d991113257d216cb1a086cc4fd130b7dcaa42392b29c9227"
+}

@@ -1,0 +1,27 @@
+{
+ "A": {
+  "n": 400,
+  "exact": 0.09,
+  "exact_flat": 0.0925,
+  "valid": 0.5675,
+  "tanimoto": 0.25570870084506614,
+  "exact_ci95": [
+   0.0625,
+   0.11756249999999993
+  ],
+  "correct": 36
+ },
+ "C": {
+  "n": 400,
+  "exact": 0.0775,
+  "exact_flat": 0.08,
+  "valid": 0.61,
+  "tanimoto": 0.26087288839084194,
+  "exact_ci95": [
+   0.0525,
+   0.10256249999999993
+  ],
+  "correct": 31
+ },
+ "note": "released checkpoints, CPU fp32 greedy, first 400 rows of the prepared PMC val split (= Trainer validation prefix), harness exact"
+}
