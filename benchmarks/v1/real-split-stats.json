@@ -1,0 +1,77 @@
+{
+ "scope_filter": {
+  "max_tokens": 128,
+  "vocab": "configs/vocab.json"
+ },
+ "dropped_by_scope": {
+  "train_published": {
+   "out_of_vocabulary": 134,
+   "over_length": 16,
+   "label_unparseable": 1
+  },
+  "test_published": {
+   "out_of_vocabulary": 17,
+   "over_length": 6
+  }
+ },
+ "rows": {
+  "train_all": 15440,
+  "dev": 514,
+  "test": 1170
+ },
+ "articles": {
+  "train_all": 979,
+  "dev": 63,
+  "test": 124
+ },
+ "removed_from_train_for_overlap": 1118,
+ "removed_from_dev_for_overlap": 26,
+ "n_agree": {
+  "train_all": {
+   "2": 5701,
+   "3": 5145,
+   "4": 4594
+  },
+  "dev": {
+   "2": 186,
+   "3": 150,
+   "4": 178
+  },
+  "test": {
+   "2": 436,
+   "3": 403,
+   "4": 331
+  }
+ },
+ "pools": {
+  "128": {
+   "rows": 128,
+   "articles": 24,
+   "n_agree": {
+    "2": 49,
+    "3": 46,
+    "4": 33
+   }
+  },
+  "512": {
+   "rows": 512,
+   "articles": 99,
+   "n_agree": {
+    "2": 207,
+    "3": 155,
+    "4": 150
+   }
+  },
+  "2048": {
+   "rows": 2048,
+   "articles": 389,
+   "n_agree": {
+    "2": 772,
+    "3": 636,
+    "4": 640
+   }
+  }
+ },
+ "per_article_cap": 10,
+ "eval_connectivity_blocks": 1424
+}

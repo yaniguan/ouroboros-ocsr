@@ -1,0 +1,45 @@
+#!/bin/bash
+#$ -S /bin/bash
+#$ -cwd
+#$ -N ouro_v1_prep
+#$ -l gpu,A6000,cuda=1,h_rt=01:30:00,h_data=8G
+#$ -pe shared 4
+# Gate for the v1 array: tests, native bf16, C+ capacity, and exact-resume parity for C+ with a
+# real-data mixture. The array jobs are held on this job, so a failure here stops them.
+set -euo pipefail
+export LC_ALL=C LANG=C
+O=/u/scratch/y/yaniguan/ouroboros-20260930
+V0=/u/scratch/y/yaniguan/ouroboros-v0-20261001
+V1=/u/scratch/y/yaniguan/ouroboros-v1-20261019
+source /u/local/Modules/default/init/modules.sh
+module load apptainer/1.2.2
+export PATH="$O/container-bin:$PATH"
+export APPTAINER_CACHEDIR="$O/cache/apptainer" APPTAINER_TMPDIR="${TMPDIR:-$O/cache/apptainer}"
+task_gpu=${CUDA_VISIBLE_DEVICES:-${SGE_HGR_cuda:-}}
+test -n "$task_gpu"
+task_gpu=${task_gpu// /,}
+image=$(cat "$O/reports/container-image.txt")
+cat > $V1/reports/prep_inner.sh <<'IN'
+set -euo pipefail
+cd $V1/code
+export PYTHONPATH=$V1/code
+PY=$O/venv/bin/python
+$PY -c 'import torch; assert torch.cuda.is_bf16_supported(including_emulation=False); print(torch.cuda.get_device_name())'
+$PY -m pytest -q
+SYN=$V0/data/full/shards; REAL=$V1/data/real_v2
+for ARM in Brel C; do
+  $PY scripts/benchmark_cuda.py --config configs/pilot-$ARM-200k.yaml --steps 50 --warmup 5 \
+    --batch 32 --sequence-length 128 --output $V1/reports/capacity-$ARM.json
+  # exact-resume parity with a real-data mixture, the v1 selection rule and the label-scope filter
+  $PY scripts/benchmark_cuda_resume.py --config configs/pilot-$ARM-200k.yaml \
+    --output $V1/reports/resume-$ARM-mixed --checkpoint-step 25 --compared-steps 100 --set \
+    data.synthetic_root=$SYN "data.real_roots=[$REAL/pool512]" data.real_fraction=0.1 \
+    data.exclude_keys=$V1/data/eval_keys_v2.txt validation.root=$SYN validation.split=val \
+    validation.samples=64 validation.every=25 validation.patience=20 \
+    eval.sets.rendered_test.root=$SYN data.num_workers=4 train.device=cuda eval.batch_size=32
+done
+touch $V1/reports/prep.ok
+IN
+apptainer exec --cleanenv --nv --bind "$O:$O" --bind "$V0:$V0" --bind "$V1:$V1" \
+  --env "CUDA_VISIBLE_DEVICES=$task_gpu,O=$O,V0=$V0,V1=$V1,MPLBACKEND=Agg,OMP_NUM_THREADS=4" \
+  "$image" bash $V1/reports/prep_inner.sh > $V1/reports/prep.log 2>&1

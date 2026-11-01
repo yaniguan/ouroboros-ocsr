@@ -12,6 +12,8 @@ A CSV (``.csv``) or JSON-lines (``.jsonl``) file with one row per image:
     source   no        dataset name, e.g. "USPTO", "ACS", "CLEF-IP" (default: manifest stem)
     split    no        "train" | "val" | "test" (default: "test")
     id       no        original identifier, kept in the sample metadata
+    pmcid, n_agree, n_agree_open, inchikey
+             no        provenance / label-quality columns, copied to the sample metadata
 
 Output (per ``out_dir``): ``{split}-{i:06d}.tar`` WebDataset shards with ``{key}.png`` and
 ``{key}.json`` exactly like synthetic shards, so ``ShardDataset(out_dir, split)`` reads them.
@@ -43,6 +45,7 @@ from ouroboros.data.render import encode_png
 from ouroboros.eval.standardize import standardize
 
 SPLITS = ("train", "val", "test")
+EXTRA_COLUMNS = ("pmcid", "n_agree", "n_agree_open", "inchikey")
 
 
 def read_real_manifest(path: str | Path) -> list[dict]:
@@ -148,6 +151,9 @@ def ingest(
                 "real": 1,
                 "orig_size": list(orig_size),
             }
+            for extra in EXTRA_COLUMNS:  # optional provenance / label-quality columns
+                if r.get(extra) not in (None, ""):
+                    meta[extra] = r[extra]
             _add(tar, f"{key}.png", encode_png(img))
             _add(tar, f"{key}.json", json.dumps(meta).encode())
             n_in_shard += 1

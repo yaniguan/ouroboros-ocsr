@@ -1,0 +1,5 @@
+base: pilot-B-200k.yaml
+model:
+  encoder:
+    type: baseline
+    position: relative

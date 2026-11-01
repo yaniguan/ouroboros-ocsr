@@ -118,10 +118,13 @@ def build_datasets(cfg: dict, tok: SmilesTokenizer):
 def build_optimizer(model, train_config):
     decay, no_decay = [], []
     for name, parameter in model.named_parameters():
-        target = (
-            no_decay if parameter.ndim < 2 or name.endswith(".pos") or "norm" in name else decay
+        # escnn convolutions store their filters as a flat (1-D) coefficient vector named
+        # ``weights``; they are real kernels and must be decayed like ordinary conv weights.
+        kernel = name.endswith(".weights")
+        no_decay_param = (
+            (parameter.ndim < 2 and not kernel) or name.endswith(".pos") or "norm" in name
         )
-        target.append(parameter)
+        (no_decay if no_decay_param else decay).append(parameter)
     return torch.optim.AdamW(
         [
             {"params": decay, "weight_decay": train_config.get("weight_decay", 0.05)},

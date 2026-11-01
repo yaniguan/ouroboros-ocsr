@@ -6,6 +6,7 @@
 01_generate_data.ipynb   Phase 1: build the 1M-train dataset (200k = its prefix) and store on Drive.
 02_train_eval.ipynb      Train one sweep config (resumable) and evaluate it; results on Drive.
 03_geometry.ipynb        MACE-OFF benchmarks on 1,000 molecules + energy-error propagation.
+06_v1_grid.ipynb         v1 grid (Babs/Brel/C x K x seed), resumable, results on Drive.
 04_real_data.ipynb       Real corpus from Hugging Face -> manifests -> real shards + leakage check.
 """
 
@@ -29,7 +30,7 @@ def code(src):
     }
 
 
-def setup_cells(title: str, intro: str) -> list:
+def setup_cells(title: str, intro: str, branch: str = BRANCH) -> list:
     return [
         md(
             f"# Ouroboros — {title}\n\n{intro}\n\n"
@@ -53,7 +54,7 @@ def setup_cells(title: str, intro: str) -> list:
         code(
             "# ---- configuration ----\n"
             "REPO = 'yaniguan/ouroboros-ocsr'\n"
-            f"BRANCH = '{BRANCH}'  # set to 'main' once merged\n"
+            f"BRANCH = '{branch}'  # set to 'main' once merged\n"
             "DRIVE_ROOT = '/content/drive/MyDrive/ouroboros'  # data, runs, results live here\n"
             "REPO_DIR = '/content/ouroboros-ocsr'\n"
             "LOCAL_DATA = '/content/data/full'  # configs expect shards at /content/data/full/shards\n"
@@ -331,6 +332,88 @@ def nb04() -> list:
     return cells
 
 
+V1_BRANCH = "codex/v1-multiseed-cplus"
+
+
+def nb06() -> list:
+    cells = setup_cells(
+        "v1 grid on Colab",
+        "Runs the same 36-task grid as the Hoffman2 array (`scripts/hpc/v1_grid.py`): arms "
+        "Babs/Brel/C x real-label budget K in {0,128,512,2048} x seeds 0-2. Uses the synthetic "
+        "shards already on Drive (`ouroboros/data/full/shards`) and rebuilds the real splits from "
+        "the Hugging Face dataset (CC BY-NC; stays on this VM, never committed). Each finished run "
+        "is written to Drive (`ouroboros/v1/runs/<arm>_K<k>_s<seed>`); rerunning the loop skips "
+        "finished runs and resumes interrupted ones from `last.pt`.",
+        branch=V1_BRANCH,
+    )
+    cells += [
+        copy_shards_cell("200"),
+        code(
+            "# Real splits + nested label pools from the HF dataset (deterministic; see make_real_splits.py)\n"
+            "HF, REAL = '/content/hf', '/content/v1/data/real_v2'\n"
+            "os.makedirs(REAL, exist_ok=True)\n"
+            "if not os.path.isdir(f'{REAL}/pool2048'):\n"
+            "    !{PY} scripts/hf_to_manifest.py inspect --repo yaniguan/ocsr-dataset --local {HF}/ocsr\n"
+            "    !{PY} scripts/make_real_splits.py --local {HF}/ocsr --out {HF}/real_v2\n"
+            "    for m in ['eval', 'pool128', 'pool512', 'pool2048']:\n"
+            "        !{PY} scripts/ingest_real.py --manifest {HF}/real_v2/manifest_{m}.csv --out {REAL}/{m}\n"
+            "    !cp {HF}/real_v2/eval_keys.txt /content/v1/data/eval_keys_v2.txt\n"
+            "    !cp {HF}/real_v2/split_stats.json {DRIVE_ROOT}/v1/\n"
+            "!head -c 1500 {HF}/real_v2/split_stats.json"
+        ),
+        code(
+            "# Layout expected by scripts/hpc/v1_task.py; runs and reports persist on Drive.\n"
+            "V1, V0, ORIG = '/content/v1', '/content/v0', '/content/orig'\n"
+            "for d in (V1, f'{V0}/data/full', ORIG, f'{DRIVE_ROOT}/v1/runs', f'{DRIVE_ROOT}/v1/reports'):\n"
+            "    os.makedirs(d, exist_ok=True)\n"
+            "def link(src, dst):\n"
+            "    if not os.path.lexists(dst):\n"
+            "        os.symlink(src, dst)\n"
+            "link(REPO_DIR, f'{V1}/code'); link('/content/venv', f'{ORIG}/venv')\n"
+            "link(f'{LOCAL_DATA}/shards', f'{V0}/data/full/shards')\n"
+            "link(f'{DRIVE_ROOT}/v1/runs', f'{V1}/runs'); link(f'{DRIVE_ROOT}/v1/reports', f'{V1}/reports')\n"
+            "!ls {V1} {V1}/data"
+        ),
+        code(
+            "# Smoke gate: tests must pass on this exact checkout before spending GPU hours.\n"
+            "!{PY} -m pytest -q -x"
+        ),
+        md(
+            "## Run the grid\n\n"
+            "`TASKS` selects grid ids (print them with `!{PY} scripts/hpc/v1_grid.py`). Priority order "
+            "when time is short: seed 0 first (ids 1-12), then seeds 1 and 2 (13-24, 25-36). "
+            "A100 ~ 1-1.5 h per task. If the session is disconnected, reconnect, run all cells "
+            "again; finished runs are skipped."
+        ),
+        code(
+            "import json, pathlib\n"
+            "TASKS = list(range(1, 13))  # seed 0, all arms and budgets\n"
+            "def finished(run_id):\n"
+            "    return pathlib.Path(f'{DRIVE_ROOT}/v1/runs/{run_id}/eval/summary.json').exists()\n"
+            "grid = [json.loads(subprocess.check_output([VENV_PY, 'scripts/hpc/v1_grid.py', '--task', str(i)]))\n"
+            "        for i in TASKS]\n"
+            "for t in grid:\n"
+            "    if finished(t['run_id']):\n"
+            "        print('skip', t['run_id']); continue\n"
+            "    print('RUN ', t['run_id'], time.strftime('%H:%M:%S'), flush=True)\n"
+            "    r = subprocess.run([VENV_PY, 'scripts/hpc/v1_task.py', '--task', str(t['id']),\n"
+            "                        '--original', ORIG, '--v0', V0, '--root', V1],\n"
+            "                       env=dict(os.environ, MPLBACKEND='Agg'))\n"
+            "    print('exit', r.returncode, 'finished' if finished(t['run_id']) else 'NOT finished', flush=True)\n"
+            "    if r.returncode:\n"
+            "        break  # look at the per-stage log in Drive/ouroboros/v1/reports before continuing"
+        ),
+        code(
+            "for t in grid:\n"
+            "    p = pathlib.Path(f'{DRIVE_ROOT}/v1/runs/{t[\"run_id\"]}/eval/summary.json')\n"
+            "    if p.exists():\n"
+            "        s = json.loads(p.read_text())\n"
+            "        print(t['run_id'], {k: s[k] for k in list(s)[:6]})"
+        ),
+    ]
+    return cells
+
+
 def write(name: str, cells: list) -> None:
     nb = {
         "cells": cells,
@@ -356,3 +439,4 @@ if __name__ == "__main__":
     write("02_train_eval.ipynb", nb02())
     write("03_geometry.ipynb", nb03())
     write("04_real_data.ipynb", nb04())
+    write("06_v1_grid.ipynb", nb06())
