@@ -30,6 +30,7 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageFilter
+from ouroboros.labels import labelled_smiles, set_draw_labels
 from rdkit import Chem
 from rdkit.Chem import rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
@@ -75,6 +76,7 @@ class RenderStyle:
     blur: float = 0.0  # Gaussian radius in px, 0 = off
     noise_std: float = 0.0  # additive Gaussian noise, in [0, 1] intensity units
     salt_pepper: float = 0.0  # fraction of pixels flipped
+    real_style: bool = False
     jpeg_quality: int = 0  # 0 = no JPEG round-trip
 
     def to_dict(self) -> dict:
@@ -128,11 +130,12 @@ def depict(mol: Chem.Mol, style: RenderStyle, mirror: bool = False) -> Chem.Mol:
     drawn = Chem.MolFromMolBlock(mb, sanitize=True, removeHs=False)
     if drawn is None:
         raise ValueError("MolBlock round-trip failed")
+    set_draw_labels(drawn)
     return drawn
 
 
 def label_of(drawn: Chem.Mol) -> str:
-    return Chem.MolToSmiles(Chem.RemoveHs(drawn))
+    return labelled_smiles(Chem.RemoveHs(drawn))
 
 
 def _draw(drawn: Chem.Mol, style: RenderStyle, inner: int) -> Image.Image:
@@ -182,6 +185,10 @@ def postprocess(img: Image.Image, style: RenderStyle, rng: np.random.Generator) 
         buf = io.BytesIO()
         img.save(buf, format="JPEG", quality=style.jpeg_quality)
         img = Image.open(io.BytesIO(buf.getvalue())).convert("L")
+    if style.real_style:
+        from ouroboros.data.augment import scan_augment
+        img = scan_augment(img, rng, morphology=int(rng.choice([-1, 0, 0, 0, 1])),
+                           threshold=int(rng.integers(150, 220)) if rng.random() < .3 else 0)
     return img
 
 

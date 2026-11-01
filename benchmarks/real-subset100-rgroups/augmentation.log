@@ -1,0 +1,18 @@
+/home/box/.config/matplotlib is not a writable directory
+Matplotlib created a temporary cache directory at /tmp/matplotlib-4q5_a_e5 because there was an issue with the default path (/home/box/.config/matplotlib); it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+{
+  "n": 200,
+  "size": 384,
+  "seed": 0,
+  "postprocess_seconds": 2.084627201999865,
+  "postprocess_images_per_second": 95.94041553719156,
+  "substitute_render_augment_seconds": 2.9038101969999843,
+  "substitute_render_augment_images_per_second": 68.87502502974408,
+  "labelled_outputs": 200,
+  "threads": {
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "scope": "one CPU process; PIL/numpy augmentation; includes randomized fonts and drawing styles"
+}

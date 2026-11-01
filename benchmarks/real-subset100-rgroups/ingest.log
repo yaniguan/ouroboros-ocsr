@@ -1,0 +1,13 @@
+{
+ "manifest": "real_data/subset100/manifest.csv",
+ "n_rows": 300,
+ "written": {
+  "test": 298
+ },
+ "n_failures": 2,
+ "failure_reasons": {
+  "label_unparsable": 2
+ },
+ "label_parse_rate": 0.9933333333333333
+}
+2 rows failed; see real/subset100/ingest_failures.jsonl

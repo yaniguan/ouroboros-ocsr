@@ -1,0 +1,48 @@
+# Fine-tune a released checkpoint on REAL PMC figure crops (HF yaniguan/ocsr-dataset, train split)
+# mixed with real-style synthetic shards; select the checkpoint by REAL validation exact match
+# (PMC validation split, test molecules removed, molecule-disjoint from PMC train).
+# colab/finetune_real_pmc.ipynb fills in paths, replaces `model` with the released checkpoint's
+# exact architecture and writes the append-only vocabulary before calling `python -m ouroboros.train`.
+#
+# Why these defaults (Oct 29 run: synthetic-only, lr 3e-5, rotation_aug on, synthetic val ->
+# A 18.12% -> 8.39% on the real test set):
+#  * real_fraction 0.6: most gradient signal comes from real document images;
+#  * rotation_aug false: A was released without rotation augmentation and every real
+#    eval image is upright; 360-degree rotation turned the fine-tune into a different task;
+#  * lr 1.5e-5 with short warmup and cosine decay to 0, batch 16: gentle update to limit forgetting;
+#  * validation.at_start: the released weights are scored at step 0, so the selected checkpoint
+#    can never be worse on real validation than the starting point.
+base: base.yaml
+seed: 30
+data:
+  synthetic_root: /content/data/synth-aug/shards
+  synthetic_max_samples: 10000
+  real_roots: [/content/data/real/pmc]
+  real_fraction: 0.6
+  exclude_keys: /content/eval_keys.txt   # defence in depth; prepare_pmc.py already removed them
+  image_size: 384
+  vocab: /content/data/vocab.json
+  num_workers: 4
+train:
+  init_checkpoint: /content/ouroboros-ocsr/checkpoints/ouroboros-A.pt
+  batch_size: 16
+  steps: 3000
+  lr: 0.000015
+  warmup: 100
+  weight_decay: 0.05
+  grad_clip: 1.0
+  amp: bf16
+  rotation_aug: false
+  log_every: 25
+  ckpt_every: 250
+validation:
+  enabled: true
+  at_start: true
+  keep_only_best: true   # prune superseded best-step-*.pt (each ~0.5 GB with optimizer state)
+  root: /content/data/real/pmc
+  split: val
+  samples: 400
+  batch_size: 64
+  every: 250
+  patience: 4
+  min_delta: 0.0025   # one image out of 400

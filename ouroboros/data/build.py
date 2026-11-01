@@ -80,6 +80,9 @@ def prepare_pool(
     from ouroboros.data import chem, pool_cache, stereo
     from ouroboros.data import filter as filtering
 
+    from ouroboros.data import augment, rgroups
+    import ouroboros.labels as labels_module
+
     identity = {
         "schema": 1,
         "rdkit": version("rdkit"),
@@ -272,13 +275,21 @@ def sample_key(split: str, idx: int) -> str:
     return f"{split}_{idx:08d}"
 
 
-def render_row(row: dict, split: str, size: int, seed: int) -> tuple[str, bytes, dict] | str:
+def render_row(row: dict, split: str, size: int, seed: int,
+               rgroup_probability: float = 0.0, real_style: bool = False,
+               max_tokens: int | None = None) -> tuple[str, bytes, dict] | str:
     """Render one manifest row. Returns (key, png, meta) or a drop reason."""
     key = sample_key(split, int(row["idx"]))
     mol = Chem.MolFromSmiles(row["smiles"])
     if mol is None:
         return "unparsable"
     style = sample_style(random.Random(_hash_int(key, f"style{seed}")))
+    style.real_style = real_style
+    if rgroup_probability:
+        from ouroboros.data.rgroups import substitute
+        rng = random.Random(_hash_int(key, f"rgroup{seed}"))
+        if rng.random() < rgroup_probability:
+            mol = substitute(mol, rng)
     try:
         post_seed = _hash_int(key, f"noise{seed}") % 2**32
         r = render(mol, style, size=size, seed=post_seed, apply_postprocess=False)
@@ -286,9 +297,14 @@ def render_row(row: dict, split: str, size: int, seed: int) -> tuple[str, bytes,
         # Never drop silently: an environment problem (e.g. a broken matplotlib/font setup) would
         # otherwise remove a biased subset of samples (none failed in 65k local renders).
         raise RuntimeError(f"rendering {key} ({row['smiles']}) failed: {e!r}") from e
-    source = Chem.MolToSmiles(mol)
+    from ouroboros.labels import labelled_smiles
+    source = labelled_smiles(mol)
     if r.label != source:
         return "label_mismatch"
+    if max_tokens is not None:
+        from ouroboros.decode.tokenizer import tokenize
+        if len(tokenize(r.label)) + 1 > max_tokens:
+            return "label_too_long"
     meta = {"smiles": r.label, "key14": row["key14"], "stereo": int(row["stereo"])}
     meta["style"] = style.to_dict()
     # degradation (blur / noise / JPEG) is deferred to load time, deterministically seeded
@@ -305,7 +321,7 @@ def _add(tar: tarfile.TarFile, name: str, data: bytes) -> None:
 
 
 def _render_shard(args) -> dict:
-    rows, split, shard_path, size, seed = args
+    rows, split, shard_path, size, seed, rgroup_probability, real_style, max_tokens = args
     t0 = time.time()
     drops: Counter = Counter()
     n = 0
@@ -315,7 +331,7 @@ def _render_shard(args) -> dict:
     try:
         with tarfile.open(tmp, "w", format=tarfile.USTAR_FORMAT) as tar:
             for row in rows:
-                res = render_row(row, split, size, seed)
+                res = render_row(row, split, size, seed, rgroup_probability, real_style, max_tokens)
                 if isinstance(res, str):
                     drops[res] += 1
                     continue
@@ -341,18 +357,31 @@ def render_shards(
     seed: int = 0,
     workers: int = os.cpu_count() or 1,
     skip_existing: bool = True,
+    rgroup_probability: float = 0.0,
+    real_style: bool = False,
+    max_tokens: int | None = None,
 ) -> dict:
     """Resume only matching input/settings and checksum-verified completed shards.
 
     Legacy outputs without manifests/receipts require a new output directory.
     A single writer owns each output directory; .part files are never trusted.
     """
+    if max_tokens is not None and max_tokens < 2:
+        raise ValueError("max_tokens must be at least 2")
+    if not 0 <= rgroup_probability <= 1:
+        raise ValueError("rgroup_probability must be in [0, 1]")
     if shard_size < 1 or workers < 1:
         raise ValueError("shard_size and workers must be positive")
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    from ouroboros.data import augment, rgroups
+    import ouroboros.labels as labels_module
+
     identity = {
         "schema": 1,
+        "rgroup_probability": rgroup_probability,
+        "real_style": real_style,
+        "max_tokens": max_tokens,
         "rows_sha256": json_sha256(manifest),
         "rows": len(manifest),
         "split": split,
@@ -362,6 +391,9 @@ def render_shards(
         "renderer": json_sha256(
             [
                 inspect.getsource(rendering_module),
+                inspect.getsource(augment),
+                inspect.getsource(rgroups),
+                inspect.getsource(labels_module),
                 inspect.getsource(render_row),
                 inspect.getsource(_add),
             ]
@@ -392,7 +424,8 @@ def render_shards(
             ):
                 raise ValueError(f"Unverified or corrupt shard: {path}")
             continue
-        jobs.append((manifest[i : i + shard_size], split, path, size, seed))
+        jobs.append((manifest[i : i + shard_size], split, path, size, seed,
+                     rgroup_probability, real_style, max_tokens))
     t0 = time.time()
     results = []
     if workers == 1:

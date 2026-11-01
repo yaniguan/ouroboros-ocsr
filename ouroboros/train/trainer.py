@@ -33,7 +33,7 @@ from ouroboros.data.loader import ShardDataset, collate, rotate_batch
 from ouroboros.data.mixture import MixtureSampler
 from ouroboros.decode.tokenizer import SmilesTokenizer
 from ouroboros.eval.standardize import standardize
-from ouroboros.model import OCSRModel, build_model, count_params, load_model_state
+from ouroboros.model import OCSRModel, build_model, count_params, load_model_state, initialize_finetune
 from ouroboros.provenance import json_sha256
 
 
@@ -171,6 +171,12 @@ class Trainer:
         if previous is not None and previous["vocab"] != self.tok.itos:
             raise ValueError("Checkpoint vocabulary mismatch")
         self.model: OCSRModel = build_model(cfg, self.tok).to(self.dev)
+        if previous is None and t.get("init_checkpoint"):
+            pretrained = load_checkpoint(Path(t["init_checkpoint"]))
+            if pretrained["config"]["model"] != cfg["model"]:
+                raise ValueError("Fine-tuning model config must match the pretrained architecture")
+            initialize_finetune(self.model, pretrained)
+            del pretrained
         self.opt = build_optimizer(self.model, t)
         self.sched = build_scheduler(self.opt, t)
         self.step = 0
@@ -332,6 +338,11 @@ class Trainer:
             # A crash in between leaves an unreferenced candidate; evaluation follows last.pt.
             save_checkpoint(self.best_checkpoint_path(self.step), self.state())
         self.save()
+        if improved and self.validation_cfg.get("keep_only_best", False):
+            # last.pt now points at the new best; superseded best files are never needed again.
+            for old in (self.out / "ckpt").glob("best-step-*.pt"):
+                if old != self.best_checkpoint_path(self.step):
+                    old.unlink(missing_ok=True)
         self.log(
             {
                 "step": self.step,
@@ -345,7 +356,10 @@ class Trainer:
     # ------------------------------------------------------------------ loop
     def loader(self) -> DataLoader:
         self.sampler.set_position(self.step * self.cfg["train"]["batch_size"])
-        nw = int(self.cfg["data"].get("num_workers", 4))
+        # Runtime resource override for constrained CPU/sandbox environments.
+        nw = int(os.environ.get("OUROBOROS_NUM_WORKERS", self.cfg["data"].get("num_workers", 4)))
+        if nw < 0:
+            raise ValueError("OUROBOROS_NUM_WORKERS must be nonnegative")
         return DataLoader(
             self.dataset,
             batch_size=self.cfg["train"]["batch_size"],
@@ -411,8 +425,21 @@ class Trainer:
                     "params_decoder": count_params(self.model.decoder),
                     "n_synth": len(self.synth),
                     "n_real": len(self.real) if self.real else 0,
+                    "real_fraction": float(self.cfg["data"].get("real_fraction", 0.0)),
+                    "n_validation": len(self.validation) if self.validation is not None else 0,
                 }
             )
+        if (
+            self.validation is not None
+            and self.validation_cfg.get("at_start", False)
+            and self.step == 0
+            and self.early_stop["last_step"] is None
+        ):
+            # Score the initial (e.g. released) weights first: if fine-tuning never beats them on
+            # validation, the selected checkpoint is the step-0 initialization, not a regression.
+            self.check_validation()
+            if self.early_stop["stopped"]:
+                return
         it = iter(self.loader())
         t0, n_img = time.perf_counter(), 0
         while self.step < end:

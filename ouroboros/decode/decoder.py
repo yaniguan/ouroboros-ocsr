@@ -143,3 +143,118 @@ class SmilesDecoder(nn.Module):
                 break
             cur = nxt[:, None]
         return torch.stack(out, dim=1)
+
+    @torch.no_grad()
+    def beam(
+        self,
+        memory: torch.Tensor,
+        bos_id: int,
+        eos_id: int,
+        beam_size: int = 5,
+        max_len: int | None = None,
+        padding_mask=None,
+        length_penalty: float = 1.0,
+    ) -> list[list[tuple[list[int], float]]]:
+        """Beam search with the same KV cache as ``greedy``.
+
+        Returns, per batch element, up to ``beam_size`` hypotheses ``(token_ids, sum_logprob)``
+        (ids without BOS/EOS), best first by ``sum_logprob / len ** length_penalty`` where
+        ``len`` counts the EOS. An element stops once ``beam_size`` hypotheses have finished
+        (an EOS counts only if it ranks within the top ``beam_size`` candidates of its step);
+        at ``max_len`` the still-alive beams are returned unfinished (``len`` = their length).
+        ``beam_size=1`` reproduces ``greedy`` token for token.
+        """
+        B, K = memory.shape[0], beam_size
+        if K < 1:
+            raise ValueError(f"beam_size must be >= 1, got {K}")
+        max_len = min(max_len or self.c.max_len, self.c.max_len)
+        dev = memory.device
+        memory = memory.repeat_interleave(K, dim=0)  # row b * K + k = beam k of element b
+        if padding_mask is not None:
+            padding_mask = padding_mask.repeat_interleave(K, dim=0)
+        mask = self._mem_mask(padding_mask, memory.dtype)
+        caches = [{} for _ in self.layers]
+        cur = torch.full((B * K, 1), bos_id, dtype=torch.long, device=dev)
+        # only beam 0 is live at the start, so the first step expands a single BOS per element
+        scores = torch.full((B, K), float("-inf"), device=dev)
+        scores[:, 0] = 0.0
+        hyps: list[list[int]] = [[] for _ in range(B * K)]
+        finished: list[list[tuple[list[int], float]]] = [[] for _ in range(B)]
+        done = [False] * B
+
+        def norm(h: tuple[list[int], float], n_eos: int) -> float:
+            return h[1] / max(len(h[0]) + n_eos, 1) ** length_penalty
+
+        for t in range(max_len - 1):
+            x = self.tok(cur) + self.pos.weight[t][None, None]
+            for layer, cache in zip(self.layers, caches, strict=True):
+                x = layer(x, memory, mask, cache=cache)
+            logp = F.log_softmax(self.head(self.ln(x))[:, -1].float(), dim=-1)
+            V = logp.shape[-1]
+            cand = (scores.reshape(B * K, 1) + logp).reshape(B, K * V)
+            # each beam yields at most one EOS, so 2K candidates always leave K to continue
+            top_s, top_i = cand.topk(min(2 * K, K * V), dim=-1)
+            top_s, top_i = top_s.tolist(), top_i.tolist()
+            src = list(range(B * K))  # rows of done elements just keep their own state
+            nxt = [eos_id] * (B * K)
+            new_scores = torch.full((B, K), float("-inf"))
+            new_hyps = list(hyps)
+            for b in range(B):
+                if done[b]:
+                    continue
+                n_alive = 0
+                for rank, (s, i) in enumerate(zip(top_s[b], top_i[b], strict=True)):
+                    k, tok = divmod(i, V)
+                    row = b * K + k
+                    if tok == eos_id:
+                        if rank < K and s != float("-inf"):
+                            finished[b].append((hyps[row], s))
+                        continue
+                    if n_alive < K:
+                        dst = b * K + n_alive
+                        src[dst], nxt[dst] = row, tok
+                        new_hyps[dst] = hyps[row] + [tok]
+                        new_scores[b, n_alive] = s
+                        n_alive += 1
+                if len(finished[b]) >= K:
+                    done[b] = True
+            if all(done):
+                break
+            hyps = new_hyps
+            scores = new_scores.to(dev)
+            idx = torch.tensor(src, dtype=torch.long, device=dev)
+            for cache in caches:  # reorder every cached tensor to follow its surviving beam
+                for key in cache:
+                    cache[key] = cache[key].index_select(0, idx)
+            cur = torch.tensor(nxt, dtype=torch.long, device=dev)[:, None]
+        results = []
+        for b in range(B):
+            ranked = [(h, norm(h, 1)) for h in finished[b]]
+            if not done[b]:  # max_len reached: keep the unfinished beams as well
+                ranked += [
+                    ((hyps[b * K + k], s), norm((hyps[b * K + k], s), 0))
+                    for k, s in enumerate(scores[b].tolist())
+                    if s != float("-inf")
+                ]
+            ranked.sort(key=lambda r: r[1], reverse=True)
+            results.append([h for h, _ in ranked[:K]])
+        return results
+
+    @torch.no_grad()
+    def score(
+        self,
+        ids: torch.Tensor,
+        memory: torch.Tensor,
+        padding_mask=None,
+        pad_id: int | None = None,
+    ) -> torch.Tensor:
+        """Teacher-forced sum log probability of ``ids`` [B, T] (BOS first, EOS included).
+
+        Target positions equal to ``pad_id`` are ignored, so right-padded batches work. -> [B]
+        """
+        logp = F.log_softmax(self(ids[:, :-1], memory, padding_mask).float(), dim=-1)
+        tgt = ids[:, 1:]
+        tok = logp.gather(-1, tgt[..., None]).squeeze(-1)
+        if pad_id is not None:
+            tok = tok.masked_fill(tgt == pad_id, 0.0)
+        return tok.sum(-1)

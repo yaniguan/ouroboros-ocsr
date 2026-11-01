@@ -25,6 +25,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest", "ruff"]
 demo = ["jupyterlab>=4,<5"]
+# Hugging Face export/upload (scripts/export_hf_release.py falls back to .bin without safetensors)
+hf = ["safetensors", "huggingface_hub"]
 
 [tool.setuptools.package-data]
 "ouroboros" = ["weights.json"]

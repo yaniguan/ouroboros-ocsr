@@ -82,6 +82,69 @@ class OCSRModel(nn.Module):
         )
         return [self.tokenizer.decode(row.tolist()) for row in out]
 
+    @torch.no_grad()
+    def generate_nbest(
+        self, images: torch.Tensor, beam_size: int = 5, max_len: int | None = None
+    ) -> list[list[tuple[str, float]]]:
+        """Beam search: per image, up to ``beam_size`` ``(smiles, sum_logprob)``, best first
+        (by length-normalized log probability)."""
+        enc = self.encoder(images)
+        beams = self.decoder.beam(
+            enc.tokens,
+            self.tokenizer.bos_id,
+            self.tokenizer.eos_id,
+            beam_size=beam_size,
+            max_len=max_len,
+            padding_mask=enc.padding_mask,
+        )
+        return [[(self.tokenizer.decode(ids), lp) for ids, lp in hyps] for hyps in beams]
+
+    def _score_ids(self, smiles: str) -> list[int] | None:
+        """Token ids (BOS ... EOS) of a SMILES the decoder could emit, else None."""
+        try:
+            ids = self.tokenizer.encode(smiles)
+        except ValueError:
+            return None
+        if self.tokenizer.unk_id in ids or len(ids) > self.decoder.c.max_len:
+            return None
+        return ids
+
+    @torch.no_grad()
+    def score_smiles(
+        self,
+        images: torch.Tensor,
+        smiles_list: list[str],
+        image_index: list[int] | None = None,
+    ) -> torch.Tensor:
+        """Teacher-forced sum log probability (EOS included) of each SMILES given its image.
+
+        ``smiles_list[i]`` is paired with ``images[i]``, or with ``images[image_index[i]]`` if
+        given (encodes each image once when scoring several candidates per image). SMILES that
+        cannot be tokenized, contain out-of-vocabulary tokens or exceed ``max_len`` get -inf.
+        """
+        if image_index is None:
+            image_index = list(range(len(smiles_list)))
+        if len(image_index) != len(smiles_list):
+            raise ValueError("image_index and smiles_list differ in length")
+        out = torch.full((len(smiles_list),), float("-inf"))
+        ids = [self._score_ids(s) for s in smiles_list]
+        keep = [i for i, x in enumerate(ids) if x is not None]
+        if not keep:
+            return out
+        dev = images.device
+        enc = self.encoder(images)
+        sel = torch.tensor([image_index[i] for i in keep], dtype=torch.long, device=dev)
+        memory = enc.tokens.index_select(0, sel)
+        pad_mask = None if enc.padding_mask is None else enc.padding_mask.index_select(0, sel)
+        T = max(len(ids[i]) for i in keep)
+        pad = self.tokenizer.pad_id
+        batch = torch.tensor(
+            [ids[i] + [pad] * (T - len(ids[i])) for i in keep], dtype=torch.long, device=dev
+        )
+        lp = self.decoder.score(batch, memory, pad_mask, pad_id=pad)
+        out[torch.tensor(keep)] = lp.float().cpu()
+        return out
+
 
 def build_model(cfg: dict, tokenizer: SmilesTokenizer) -> OCSRModel:
     m = cfg["model"]
@@ -107,3 +170,24 @@ def load_model_state(model: nn.Module, state: dict) -> None:
 
 def count_params(module: nn.Module) -> int:
     return sum(p.numel() for p in module.parameters())
+
+
+def initialize_finetune(model: OCSRModel, checkpoint: dict) -> None:
+    """Load pretrained weights into an explicitly append-only expanded vocabulary.
+
+    Optimizer/scheduler/step are intentionally fresh; exact resume remains the
+    Trainer's separate last.pt path. Only tied token/output rows may grow.
+    """
+    old_vocab = checkpoint['vocab']
+    if model.tokenizer.itos[:len(old_vocab)] != old_vocab:
+        raise ValueError('Fine-tuning vocabulary must preserve the checkpoint vocabulary prefix')
+    state = dict(checkpoint['model'])
+    current = model.state_dict()
+    for key in ('decoder.tok.weight', 'decoder.head.weight'):
+        old, new = state[key], current[key]
+        if old.shape[1:] != new.shape[1:] or old.shape[0] != len(old_vocab):
+            raise ValueError(f'Incompatible pretrained token matrix: {key}')
+        expanded = new.clone()
+        expanded[:len(old_vocab)].copy_(old)
+        state[key] = expanded
+    load_model_state(model, state)
