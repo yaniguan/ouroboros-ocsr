@@ -14,8 +14,6 @@ from pathlib import Path
 import torch
 import yaml
 
-from ouroboros.train.trainer import Trainer
-
 
 def summarise_phase_times(times):
     """Summarise seconds as milliseconds; p90 uses linear interpolation."""
@@ -86,6 +84,10 @@ def peak_memory(device):
 
 
 def main(argv=None):
+    # Imported lazily so the notebook kernel (which lacks the ouroboros venv) can load the
+    # nvidia-smi helpers from this file without importing the package.
+    from ouroboros.train.trainer import Trainer
+
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--config', required=True)
     ap.add_argument('--out-dir', required=True)
