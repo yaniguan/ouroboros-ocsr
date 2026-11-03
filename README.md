@@ -1,5 +1,7 @@
 # Ouroboros — rotate the drawing, compare the recognition
 
+[![tests](https://github.com/yaniguan/ouroboros-ocsr/actions/workflows/tests.yml/badge.svg)](https://github.com/yaniguan/ouroboros-ocsr/actions/workflows/tests.yml)
+
 Ouroboros is a research preview of rotation-aware optical chemical structure recognition
 (OCSR): molecule drawing → SMILES with stereochemistry. The local rotation lab compares
 predictions before and after rotating a synthetic drawing.
