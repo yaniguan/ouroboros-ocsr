@@ -24,6 +24,7 @@ jobs:
           pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
           grep -viE '^(torch|triton|nvidia-|cuda-)' requirements.txt > /tmp/req-cpu.txt
           pip install -r /tmp/req-cpu.txt
+          pip install nbformat==5.11.1 pytest
           pip install -e . --no-deps
       - name: pytest (CPU; GPU-only tests skip themselves)
         run: pytest -q
