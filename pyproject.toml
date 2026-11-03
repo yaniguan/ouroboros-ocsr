@@ -37,6 +37,9 @@ include = ["ouroboros*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Put the repo root first so our scripts/ package wins over the top-level
+# `scripts` package that mace-torch installs into site-packages.
+pythonpath = ["."]
 markers = [
     "slow: long-running tests (deselect with -m 'not slow')",
 ]
