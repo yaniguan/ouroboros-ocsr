@@ -90,7 +90,8 @@ def rows_from_csv(path: Path, smiles_col: str | None, id_col: str, image_col: st
             image = r.get(image_col) if image_col else _first(r, IMAGE_COLS)
             if not image:  # predict_real.py CSVs identify the image by (subset, id)
                 image = f"{r['subset']}/{rid}" if r.get("subset") else f"{path.name}#{rid}"
-            yield {"id": rid, "smiles": r.get(col) or "", "source_image": image}
+            yield {"id": rid, "smiles": r.get(col) or "", "source_image": image,
+                   "accepted": r.get("accepted"), "rejection_reason": r.get("rejection_reason", "")}
 
 
 def _predict_real():
@@ -200,6 +201,11 @@ def process(row: dict, a, calc, mace_name: str | None, seen: set[str]) -> tuple[
            "smiles": None, "inchikey": None, "status": "ok", "mace_model": mace_name,
            "relaxed": bool(a.relax and calc is not None), "n_frames": 0, "energy": None,
            "conformers": []}
+    if getattr(a, "respect_confidence", False):
+        rec["confidence_accepted"] = row.get("accepted")
+        rec["rejection_reason"] = row.get("rejection_reason", "")
+        if str(row.get("accepted", "")).lower() not in ("true", "1"):
+            return [], rec | {"status": "confidence_rejected"}
     std = standardize(row["smiles"])
     if not std.valid:
         return [], rec | {"status": f"invalid_smiles: {std.reason}"}
@@ -289,7 +295,11 @@ def main(argv=None) -> dict:
                     help="skip molecules already in this run or in an existing manifest")
     ap.add_argument("--mace-model", default="small", help="small | medium | large | none")
     ap.add_argument("--device", default=None)
+    ap.add_argument("--respect-confidence", action="store_true",
+                    help="require accepted=True in predictions CSV; rejected rows stay in manifest")
     a = ap.parse_args(argv)
+    if a.respect_confidence and a.images:
+        ap.error("--respect-confidence requires --predictions with acceptance fields")
     if a.images and a.model is None:
         ap.error("--images needs --model")
     if a.n_conf < 1 or a.beam < 1:
