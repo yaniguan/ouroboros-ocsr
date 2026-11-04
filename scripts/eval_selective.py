@@ -1,4 +1,4 @@
-"""Measure precision versus coverage on held-out n-best JSONL; tune on validation only."""
+"""Check how often accepted predictions are correct. Choose limits using validation data."""
 import argparse
 import json
 from pathlib import Path

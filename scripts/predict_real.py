@@ -108,8 +108,13 @@ def predict_batch(
         ranked = ensemble_rank([per_src[i] for per_src in nbest], rescored[i])
         pred = choose(ranked)[0] if prefer_valid else ranked[0][0]
         if diagnostics is not None:
-            diagnostics.append([choose(per_src[i])[0] if prefer_valid else
-                                max(per_src[i], key=lambda c: c[1])[0] for per_src in nbest])
+            predictions = []
+            for per_src in nbest:
+                if prefer_valid:
+                    predictions.append(choose(per_src[i])[0])
+                else:
+                    predictions.append(max(per_src[i], key=lambda c: c[1])[0])
+            diagnostics.append(predictions)
         out.append((pred, ranked))
     return out
 

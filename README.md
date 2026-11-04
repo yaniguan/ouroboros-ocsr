@@ -84,10 +84,12 @@ three quarantined train records are documented.
 Code is MIT-licensed. Weights and dependency provenance: [MODEL_CARD.md](MODEL_CARD.md).
 Experiment history: [TASK.md](TASK.md).
 
-Selective acceptance is opt-in: `predict_real.py --min-margin 0.2 --max-disagreement 0`
-adds acceptance fields and keeps the recognized prediction. Margins compare distinct standardized
-molecules; missing alternatives or nonfinite scores give unknown margins. Source agreement preserves
-stereo and is not a calibrated probability. Use `eval_selective.py validation.jsonl --margins 0 0.2 0.5`
-on held-out validation n-best output to measure precision/coverage before choosing thresholds.
-`image_to_forcefield.py --respect-confidence` requires acceptance fields in its predictions CSV;
-rejected or missing acceptance produces a manifest record without geometry.
+Prediction checks are off by default. `predict_real.py --min-margin 0.2 --max-disagreement 0`
+adds acceptance fields and keeps the predicted molecule. The margin is the score gap between
+distinct molecules after standardization. Missing alternatives or scores that are missing,
+infinite, or NaN leave the margin unknown. Agreement checks keep stereochemistry; they do
+not give the probability that a prediction is correct. Run
+`eval_selective.py validation.jsonl --margins 0 0.2 0.5` on validation data with ranked
+candidates to see how many predictions pass and how often they are correct before choosing limits.
+`image_to_forcefield.py --respect-confidence` reads acceptance fields from the predictions CSV.
+Rows with rejected or missing acceptance get a manifest record without geometry.
