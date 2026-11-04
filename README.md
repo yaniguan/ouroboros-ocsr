@@ -84,8 +84,8 @@ three quarantined train records are documented.
 Code is MIT-licensed. Weights and dependency provenance: [MODEL_CARD.md](MODEL_CARD.md).
 Experiment history: [TASK.md](TASK.md).
 
-`image_to_forcefield.py --expand-aliases` expands the defined pendant aliases Me, Et,
-OMe, OEt, Ph, Boc, CO2Me and CO2Et before geometry. Only single-bond, degree-one
-attachments are accepted; generic R groups and unsupported aliases remain rejected.
-The manifest retains input, recognized, expanded and standardized structures. Expansion
-is disabled by default and does not infer the identities of generic substituents.
+`image_to_forcefield.py --expand-aliases` expands Me, Et, OMe, OEt, Ph, Boc,
+CO2Me and CO2Et before making 3D coordinates. Each alias must have one single bond
+to one other atom. Generic R groups and unknown aliases are still rejected.
+The manifest saves the input, recognized, expanded and standardized structures.
+Expansion is off by default and does not guess what R groups mean.

@@ -301,7 +301,7 @@ def main(argv=None) -> dict:
     ap.add_argument("--mace-model", default="small", help="small | medium | large | none")
     ap.add_argument("--device", default=None)
     ap.add_argument("--expand-aliases", action="store_true",
-                    help="expand defined pendant aliases before geometry; generic R groups still fail")
+                    help="expand known aliases before making 3D coordinates; reject generic R groups")
     a = ap.parse_args(argv)
     if a.images and a.model is None:
         ap.error("--images needs --model")
