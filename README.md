@@ -83,3 +83,11 @@ three quarantined train records are documented.
 
 Code is MIT-licensed. Weights and dependency provenance: [MODEL_CARD.md](MODEL_CARD.md).
 Experiment history: [TASK.md](TASK.md).
+
+Geometry export has an opt-in `--geometry-eligibility` policy: reject residual net charge,
+radicals, and unsupported elements before embedding or labeling. Calculator element support
+comes from declared capabilities; unknown support rejects labeling unless `--allowed-elements
+H C N O ...` is supplied. Implicit hydrogens are included. `--require-assigned-stereo` additionally
+rejects unspecified potential tetrahedral or double-bond stereo. Either supplementary flag enables
+the policy. Standardization still runs first, so checks concern the residual molecule; neutral
+charge-separated groups such as nitro are allowed. Manifest entries carry all rejection reasons.
