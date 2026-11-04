@@ -206,6 +206,15 @@ def process(row: dict, a, calc, mace_name: str | None, seen: set[str]) -> tuple[
     rec["smiles"] = std.smiles
     if any(at.GetAtomicNum() == 0 for at in std.mol.GetAtoms()):
         return [], rec | {"status": "pseudo_atoms"}  # R-groups / abbreviations: no elements
+    if (getattr(a, "geometry_eligibility", False) or getattr(a, "allowed_elements", None)
+            or getattr(a, "require_assigned_stereo", False)):
+        from ouroboros.geometry.eligibility import EligibilityPolicy
+        elements = getattr(a, "allowed_elements", None)
+        policy = EligibilityPolicy(frozenset(elements) if elements is not None else None,
+                                   require_assigned_stereo=getattr(a, "require_assigned_stereo", False))
+        rec["eligibility_reasons"] = policy.reasons(std.mol, calc)
+        if rec["eligibility_reasons"]:
+            return [], rec | {"status": "geometry_ineligible"}
     rec["inchikey"] = standard_inchikey(std)
     rec.update(unassigned_stereo(std.mol))
     if a.dedupe_inchikey and rec["inchikey"]:
@@ -289,7 +298,17 @@ def main(argv=None) -> dict:
                     help="skip molecules already in this run or in an existing manifest")
     ap.add_argument("--mace-model", default="small", help="small | medium | large | none")
     ap.add_argument("--device", default=None)
+    ap.add_argument("--geometry-eligibility", action="store_true",
+                    help="reject net charge, radicals, and unsupported elements")
+    ap.add_argument("--allowed-elements", nargs="+", default=None,
+                    help="list supported element symbols and turn on geometry checks")
+    ap.add_argument("--require-assigned-stereo", action="store_true",
+                    help="turn on geometry checks and reject unassigned stereo")
     a = ap.parse_args(argv)
+    if a.allowed_elements:
+        valid_symbols = {Chem.GetPeriodicTable().GetElementSymbol(z) for z in range(1, 119)}
+        if not set(a.allowed_elements) <= valid_symbols:
+            ap.error("--allowed-elements requires element symbols")
     if a.images and a.model is None:
         ap.error("--images needs --model")
     if a.n_conf < 1 or a.beam < 1:

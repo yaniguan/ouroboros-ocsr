@@ -89,3 +89,12 @@ three quarantined train records are documented.
 
 Code is MIT-licensed. Weights and dependency provenance: [MODEL_CARD.md](MODEL_CARD.md).
 Experiment history: [TASK.md](TASK.md).
+
+Geometry checks are off by default. Use `--geometry-eligibility` to reject molecules
+with net charge, radicals, or unsupported elements before embedding or labeling.
+The calculator must list its supported elements, or you must supply them with
+`--allowed-elements H C N O ...`. Checks include implicit hydrogens.
+Use `--require-assigned-stereo` to also reject unassigned tetrahedral or double-bond
+stereo. Either extra flag turns on the checks. Checks run after standardization.
+Neutral groups with separate charges, such as nitro, are allowed.
+The manifest lists all reasons a molecule was rejected.
