@@ -89,3 +89,12 @@ three quarantined train records are documented.
 
 Code is MIT-licensed. Weights and dependency provenance: [MODEL_CARD.md](MODEL_CARD.md).
 Experiment history: [TASK.md](TASK.md).
+
+`image_to_forcefield.py --displaced-samples 3 --max-displacement 0.1` tries three random
+coordinate changes for each ETKDG conformer, then computes energies and forces. The seed
+makes the changes repeatable. Each atom moves at most 0.1 Angstrom. Samples are rejected
+if atoms are closer than `--displacement-min-distance` (default: 0.6 Angstrom) or if
+specified stereochemistry changes. Rejected samples are not retried. The manifest records
+all attempts and sampling settings. Frames and conformers include parent and sample IDs;
+sample zero is the original. Sampling is off by default and cannot be used with relaxation.
+Whether these extra samples improve force-field training has not been tested.
