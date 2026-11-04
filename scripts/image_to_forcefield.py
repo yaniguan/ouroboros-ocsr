@@ -215,6 +215,26 @@ def process(row: dict, a, calc, mace_name: str | None, seen: set[str]) -> tuple[
     mol, reason = embed(std.smiles, a.n_conf, a.seed, diagnostics=attempts)
     if mol is None:
         return [], rec | {"status": reason}
+    sampling = getattr(a, "displaced_samples", 0)
+    sample_metadata = {}
+    if sampling:
+        from ouroboros.geometry.displacements import displaced_conformers
+        if a.relax:
+            raise ValueError("displaced samples require single-point labeling, not relaxation")
+        sample_metadata = {c.GetId(): dict(parent_conf_id=c.GetId(), sample_id=0,
+                                          displacement_seed=a.seed, displacement_max=0.0)
+                           for c in mol.GetConformers()}
+        amplitude = getattr(a, "max_displacement", .1)
+        distance = getattr(a, "displacement_min_distance", .6)
+        mol, trials = displaced_conformers(mol, std.smiles, sampling, amplitude, a.seed, distance)
+        rec["displacement_samples"] = trials
+        rec["sampling_parameters"] = dict(n_samples=sampling, amplitude=amplitude,
+                                          min_distance=distance, seed=a.seed)
+        for trial in trials:
+            if trial["conf_id"] is not None:
+                sample_metadata[trial["conf_id"]] = dict(
+                    parent_conf_id=trial["parent_conf_id"], sample_id=trial["sample_id"],
+                    displacement_seed=a.seed, displacement_max=trial["displacement_max"])
     symbols = [at.GetSymbol() for at in mol.GetAtoms()]
     frames = []
     for conf in mol.GetConformers():
@@ -222,7 +242,7 @@ def process(row: dict, a, calc, mace_name: str | None, seen: set[str]) -> tuple[
         ok = passes(c, rec["relaxed"])
         write = ok or not a.only_valid
         rec["conformers"].append({k: c[k] for k in ("conf_id", "energy", "converged", "fmax",
-                                                     "stereo_ok", "error")} | {"written": write})
+                                                     "stereo_ok", "error")} | {"written": write} | sample_metadata.get(c["conf_id"], {}))
         if not write:
             continue
         atoms = Atoms(symbols=symbols, positions=np.asarray(c["positions"], dtype=float))
@@ -232,6 +252,7 @@ def process(row: dict, a, calc, mace_name: str | None, seen: set[str]) -> tuple[
             relaxed=rec["relaxed"], stereo_ok=c["stereo_ok"],
             stereo_unassigned=rec["stereo_unassigned"], has_energy=c["energy"] is not None,
         )
+        atoms.info.update(sample_metadata.get(c["conf_id"], {}))
         if rec["relaxed"]:
             atoms.info["converged"] = bool(c["converged"])
         if c["energy"] is not None:
@@ -289,7 +310,16 @@ def main(argv=None) -> dict:
                     help="skip molecules already in this run or in an existing manifest")
     ap.add_argument("--mace-model", default="small", help="small | medium | large | none")
     ap.add_argument("--device", default=None)
+    ap.add_argument("--displaced-samples", type=int, default=0,
+                    help="bounded displacement attempts per ETKDG parent (default: disabled)")
+    ap.add_argument("--max-displacement", type=float, default=.1, help="per-atom bound in Angstrom")
+    ap.add_argument("--displacement-min-distance", type=float, default=.6, help="minimum pair distance in Angstrom")
     a = ap.parse_args(argv)
+    if (a.displaced_samples < 0 or not math.isfinite(a.max_displacement) or a.max_displacement < 0
+            or not math.isfinite(a.displacement_min_distance) or a.displacement_min_distance < 0):
+        ap.error("displacement count, amplitude and distance must be finite and nonnegative")
+    if a.displaced_samples and a.relax:
+        ap.error("--displaced-samples requires single points; omit --relax")
     if a.images and a.model is None:
         ap.error("--images needs --model")
     if a.n_conf < 1 or a.beam < 1:

@@ -83,3 +83,11 @@ three quarantined train records are documented.
 
 Code is MIT-licensed. Weights and dependency provenance: [MODEL_CARD.md](MODEL_CARD.md).
 Experiment history: [TASK.md](TASK.md).
+
+`image_to_forcefield.py --displaced-samples 3 --max-displacement 0.1` adds seeded local
+coordinate samples around each ETKDG parent for single-point energy/force labeling. Each atom's
+motion is bounded in Angstrom; `--displacement-min-distance` (0.6 Angstrom) rejects clashes,
+and specified stereo must survive. Attempts are bounded, with no retries. Manifest records include
+rejected attempts and sampling parameters; frames and conformers carry parent/sample IDs
+(sample zero is the original). Sampling is disabled by default and cannot be combined with relaxation.
+These mechanics broaden local geometry coverage; no improvement in force-field training is claimed.
