@@ -89,3 +89,9 @@ three quarantined train records are documented.
 
 Code is MIT-licensed. Weights and dependency provenance: [MODEL_CARD.md](MODEL_CARD.md).
 Experiment history: [TASK.md](TASK.md).
+
+Use `--ink-crop` with `ingest_real.py` or `image_to_forcefield.py --images` to remove
+white padding before resizing. It keeps all marks darker than `--ink-threshold`
+(default 250), with `--ink-margin` pixels of padding (default 8, before resizing).
+Blank images keep their size. Cropping is off by default. Use the same settings
+when preparing training images and making predictions.
