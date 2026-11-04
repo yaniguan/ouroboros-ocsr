@@ -221,9 +221,11 @@ def process(row: dict, a, calc, mace_name: str | None, seen: set[str]) -> tuple[
         from ouroboros.geometry.displacements import displaced_conformers
         if a.relax:
             raise ValueError("displaced samples require single-point labeling, not relaxation")
-        sample_metadata = {c.GetId(): dict(parent_conf_id=c.GetId(), sample_id=0,
-                                          displacement_seed=a.seed, displacement_max=0.0)
-                           for c in mol.GetConformers()}
+        for conf in mol.GetConformers():
+            parent_id = conf.GetId()
+            sample_metadata[parent_id] = dict(
+                parent_conf_id=parent_id, sample_id=0,
+                displacement_seed=a.seed, displacement_max=0.0)
         amplitude = getattr(a, "max_displacement", .1)
         distance = getattr(a, "displacement_min_distance", .6)
         mol, trials = displaced_conformers(mol, std.smiles, sampling, amplitude, a.seed, distance)
@@ -242,7 +244,8 @@ def process(row: dict, a, calc, mace_name: str | None, seen: set[str]) -> tuple[
         ok = passes(c, rec["relaxed"])
         write = ok or not a.only_valid
         rec["conformers"].append({k: c[k] for k in ("conf_id", "energy", "converged", "fmax",
-                                                     "stereo_ok", "error")} | {"written": write} | sample_metadata.get(c["conf_id"], {}))
+                                                     "stereo_ok", "error")} | {"written": write})
+        rec["conformers"][-1].update(sample_metadata.get(c["conf_id"], {}))
         if not write:
             continue
         atoms = Atoms(symbols=symbols, positions=np.asarray(c["positions"], dtype=float))
@@ -311,9 +314,9 @@ def main(argv=None) -> dict:
     ap.add_argument("--mace-model", default="small", help="small | medium | large | none")
     ap.add_argument("--device", default=None)
     ap.add_argument("--displaced-samples", type=int, default=0,
-                    help="bounded displacement attempts per ETKDG parent (default: disabled)")
-    ap.add_argument("--max-displacement", type=float, default=.1, help="per-atom bound in Angstrom")
-    ap.add_argument("--displacement-min-distance", type=float, default=.6, help="minimum pair distance in Angstrom")
+                    help="random coordinate changes to try per ETKDG conformer (default: off)")
+    ap.add_argument("--max-displacement", type=float, default=.1, help="maximum atom movement in Angstrom")
+    ap.add_argument("--displacement-min-distance", type=float, default=.6, help="minimum distance between atoms in Angstrom")
     a = ap.parse_args(argv)
     if (a.displaced_samples < 0 or not math.isfinite(a.max_displacement) or a.max_displacement < 0
             or not math.isfinite(a.displacement_min_distance) or a.displacement_min_distance < 0):

@@ -1,4 +1,4 @@
-"""Bounded local coordinate sampling around ETKDG parents; no relaxation or downloads."""
+"""Make small random coordinate changes to ETKDG conformers."""
 import numpy as np
 from rdkit import Chem
 from ouroboros.geometry.conformers import stereo_matches
@@ -18,11 +18,11 @@ def geometry_rejection(mol, smiles, conf_id, min_distance):
 
 
 def displaced_conformers(mol, smiles, n_samples, amplitude=.1, seed=0, min_distance=.6):
-    """Return a copy with accepted samples and an audit of every attempted sample.
+    """Return a copy with accepted samples and a record of every attempt.
 
-    Each atom moves uniformly in radius from zero to amplitude along an isotropic
-    direction. There are exactly n_samples attempts per original parent, no retries.
-    Parent coordinates are unchanged. Rejections never receive a conformer ID.
+    Each atom moves in a random direction, with distance uniform from zero to amplitude.
+    Try n_samples changes per original conformer without retries. Keep the original
+    coordinates. Records for rejected samples have no conformer ID.
     """
     if (not isinstance(n_samples, int) or n_samples < 0 or not np.isfinite(amplitude)
             or amplitude < 0 or not np.isfinite(min_distance) or min_distance < 0):
