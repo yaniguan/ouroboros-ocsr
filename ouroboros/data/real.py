@@ -70,7 +70,27 @@ def read_real_manifest(path: str | Path) -> list[dict]:
     return rows
 
 
-def fit_to_canvas(img: Image.Image, size: int = 384) -> Image.Image:
+def crop_ink(img: Image.Image, threshold: int = 250, margin: int = 8) -> Image.Image:
+    """Keep all detected components, including disconnected faint marks.
+
+    Pixels below threshold are foreground; margin is measured in source pixels.
+    Empty images retain their original extent. Transparency is composited on white.
+    """
+    if not 1 <= threshold <= 255 or margin < 0:
+        raise ValueError("threshold must be 1..255 and margin nonnegative")
+    rgba = img.convert("RGBA")
+    white = Image.new("RGBA", img.size, "white")
+    gray = Image.alpha_composite(white, rgba).convert("L")
+    bbox = gray.point(lambda p: 255 if p < threshold else 0).getbbox()
+    if bbox is None:
+        return gray
+    x0, y0, x1, y1 = bbox
+    return gray.crop((max(0, x0-margin), max(0, y0-margin),
+                      min(gray.width, x1+margin), min(gray.height, y1+margin)))
+
+
+def fit_to_canvas(img: Image.Image, size: int = 384, *, ink_crop: bool = False,
+                  ink_threshold: int = 250, ink_margin: int = 8) -> Image.Image:
     """Grayscale; scale so the image diagonal equals the canvas side (fits the inscribed
     circle); centre on white."""
     if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
@@ -78,6 +98,8 @@ def fit_to_canvas(img: Image.Image, size: int = 384) -> Image.Image:
         bg = Image.new("RGBA", rgba.size, (255, 255, 255, 255))
         img = Image.alpha_composite(bg, rgba)
     img = img.convert("L")
+    if ink_crop:
+        img = crop_ink(img, threshold=ink_threshold, margin=ink_margin)
     w, h = img.size
     scale = size / math.hypot(w, h)
     nw, nh = max(1, round(w * scale)), max(1, round(h * scale))
@@ -93,6 +115,9 @@ def ingest(
     size: int = 384,
     shard_size: int = 1000,
     key_prefix: str | None = None,
+    ink_crop: bool = False,
+    ink_threshold: int = 250,
+    ink_margin: int = 8,
 ) -> dict:
     """Convert a real-data manifest into shards. Returns (and writes) ingest statistics."""
     rows = read_real_manifest(manifest)
@@ -118,7 +143,8 @@ def ingest(
                 try:
                     with Image.open(r["image_path"]) as im:
                         orig_size = im.size
-                        img = fit_to_canvas(im, size)
+                        img = fit_to_canvas(im, size, ink_crop=ink_crop,
+                                            ink_threshold=ink_threshold, ink_margin=ink_margin)
                 except (OSError, ValueError) as e:
                     reason = f"image_unreadable:{type(e).__name__}"
             if reason is not None:

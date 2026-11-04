@@ -83,3 +83,8 @@ three quarantined train records are documented.
 
 Code is MIT-licensed. Weights and dependency provenance: [MODEL_CARD.md](MODEL_CARD.md).
 Experiment history: [TASK.md](TASK.md).
+
+`ingest_real.py` and `image_to_forcefield.py --images` accept `--ink-crop` to crop
+white padding before rotation-safe fitting. `--ink-threshold` (250) and `--ink-margin`
+(8 source pixels) retain all detected components; blank images keep their original extent.
+The option is disabled by default. Use the same settings for ingestion and inference.
