@@ -299,11 +299,11 @@ def main(argv=None) -> dict:
     ap.add_argument("--mace-model", default="small", help="small | medium | large | none")
     ap.add_argument("--device", default=None)
     ap.add_argument("--geometry-eligibility", action="store_true",
-                    help="require neutral, nonradical chemistry and known calculator support")
+                    help="reject net charge, radicals, and unsupported elements")
     ap.add_argument("--allowed-elements", nargs="+", default=None,
-                    help="explicit supported element symbols; enables eligibility checks")
+                    help="list supported element symbols and turn on geometry checks")
     ap.add_argument("--require-assigned-stereo", action="store_true",
-                    help="enable eligibility and reject unspecified potential stereo")
+                    help="turn on geometry checks and reject unassigned stereo")
     a = ap.parse_args(argv)
     if a.allowed_elements:
         valid_symbols = {Chem.GetPeriodicTable().GetElementSymbol(z) for z in range(1, 119)}

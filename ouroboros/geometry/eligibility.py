@@ -1,13 +1,13 @@
-"""Opt-in chemistry eligibility for geometry labels, independent of recognition accuracy."""
+"""Optional molecule checks before creating geometry labels."""
 from dataclasses import dataclass
 from rdkit import Chem
 
 
 def calculator_elements(calc):
-    """Read declared capabilities; never infer support from a calculator name.
+    """Read the elements a calculator says it supports.
 
-    Supports MACE's atomic-number table and explicit ASE calculator declarations.
-    For ensembles, only elements supported by every model are allowed.
+    Read MACE's atomic numbers or ASE calculator attributes.
+    With multiple models, keep only elements they all support.
     """
     if calc is None:
         return None
@@ -28,7 +28,9 @@ def calculator_elements(calc):
         if zs is None:
             return None
         supported.append({pt.GetElementSymbol(int(z)) for z in zs})
-    return set.intersection(*supported) if supported else None
+    if not supported:
+        return None
+    return set.intersection(*supported)
 
 
 @dataclass(frozen=True)
@@ -39,12 +41,14 @@ class EligibilityPolicy:
     allow_radicals: bool = False
 
     def reasons(self, mol, calc=None):
-        """Inspect the standardized residual molecule, before embedding/calculation."""
+        """Check the standardized molecule before embedding or calculation."""
         if mol is None or not mol.GetNumAtoms():
             return ['invalid_molecule']
         reasons = []
-        supported = (set(self.supported_elements) if self.supported_elements is not None
-                     else calculator_elements(calc))
+        if self.supported_elements is not None:
+            supported = set(self.supported_elements)
+        else:
+            supported = calculator_elements(calc)
         if supported is None and calc is not None:
             reasons.append('unknown_calculator_elements')
         elif supported is not None:
