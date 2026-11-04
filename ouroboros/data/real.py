@@ -71,10 +71,10 @@ def read_real_manifest(path: str | Path) -> list[dict]:
 
 
 def crop_ink(img: Image.Image, threshold: int = 250, margin: int = 8) -> Image.Image:
-    """Keep all detected components, including disconnected faint marks.
+    """Crop white padding while keeping all marks below the threshold.
 
-    Pixels below threshold are foreground; margin is measured in source pixels.
-    Empty images retain their original extent. Transparency is composited on white.
+    Add margin pixels of padding before resizing. Blank images keep their size.
+    Put transparent images on a white background.
     """
     if not 1 <= threshold <= 255 or margin < 0:
         raise ValueError("threshold must be 1..255 and margin nonnegative")
@@ -85,8 +85,10 @@ def crop_ink(img: Image.Image, threshold: int = 250, margin: int = 8) -> Image.I
     if bbox is None:
         return gray
     x0, y0, x1, y1 = bbox
-    return gray.crop((max(0, x0-margin), max(0, y0-margin),
-                      min(gray.width, x1+margin), min(gray.height, y1+margin)))
+    return gray.crop((
+        max(0, x0 - margin), max(0, y0 - margin),
+        min(gray.width, x1 + margin), min(gray.height, y1 + margin),
+    ))
 
 
 def fit_to_canvas(img: Image.Image, size: int = 384, *, ink_crop: bool = False,

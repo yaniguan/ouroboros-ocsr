@@ -84,7 +84,8 @@ three quarantined train records are documented.
 Code is MIT-licensed. Weights and dependency provenance: [MODEL_CARD.md](MODEL_CARD.md).
 Experiment history: [TASK.md](TASK.md).
 
-`ingest_real.py` and `image_to_forcefield.py --images` accept `--ink-crop` to crop
-white padding before rotation-safe fitting. `--ink-threshold` (250) and `--ink-margin`
-(8 source pixels) retain all detected components; blank images keep their original extent.
-The option is disabled by default. Use the same settings for ingestion and inference.
+Use `--ink-crop` with `ingest_real.py` or `image_to_forcefield.py --images` to remove
+white padding before resizing. It keeps all marks darker than `--ink-threshold`
+(default 250), with `--ink-margin` pixels of padding (default 8, before resizing).
+Blank images keep their size. Cropping is off by default. Use the same settings
+when preparing training images and making predictions.

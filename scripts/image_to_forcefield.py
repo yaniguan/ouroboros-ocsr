@@ -126,8 +126,11 @@ def rows_from_images(paths: list[Path], model_path: Path, beam: int, batch_size:
         ink = []
         for p in batch:
             with Image.open(p) as im:
-                gray = np.asarray(fit_to_canvas(im, size, ink_crop=ink_crop,
-                                                  ink_threshold=ink_threshold, ink_margin=ink_margin), dtype=np.float32)
+                fitted = fit_to_canvas(
+                    im, size, ink_crop=ink_crop,
+                    ink_threshold=ink_threshold, ink_margin=ink_margin,
+                )
+                gray = np.asarray(fitted, dtype=np.float32)
             ink.append(1.0 - torch.from_numpy(gray)[None] / 255.0)
         images = torch.stack(ink).to(dev)
         with torch.inference_mode():
