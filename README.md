@@ -89,3 +89,8 @@ three quarantined train records are documented.
 
 Code is MIT-licensed. Weights and dependency provenance: [MODEL_CARD.md](MODEL_CARD.md).
 Experiment history: [TASK.md](TASK.md).
+
+To check ranked candidates, export them with `scripts/predict_real.py --nbest-out candidates.jsonl`,
+then run `scripts/eval_nbest.py candidates.jsonl --k 1 3 5`. The report uses unique standardized
+molecules. For each subset, it checks for the correct molecule among the top candidates, with
+and without stereochemistry. It also counts cases where the correct candidate was not selected.
