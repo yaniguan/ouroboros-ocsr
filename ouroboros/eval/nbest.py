@@ -1,4 +1,4 @@
-"""Oracle diagnostics over distinct standardized molecules in ranked JSONL records."""
+"""Check where the correct molecule appears among ranked candidates."""
 from collections import defaultdict
 from ouroboros.eval.standardize import standardize, flat_smiles
 
@@ -17,7 +17,8 @@ def diagnose(records, ks=(1, 3, 5)):
         gold = standardize(row['gold'])
         if not gold.valid:
             raise ValueError(f'invalid reference: {key}')
-        unique, identities = [], set()
+        unique = []
+        identities = set()
         for candidate in row['candidates']:
             std = standardize(candidate['smiles'])
             if std.valid and std.smiles not in identities:
@@ -31,12 +32,26 @@ def diagnose(records, ks=(1, 3, 5)):
                       constitution_rank=flat_rank, distinct_candidates=len(unique),
                       selection_failure=rank is not None and selected.smiles != gold.smiles)
         groups[key[0]].append(detail)
+
     def aggregate(rows):
-        return dict(n=len(rows), selection_failures=sum(r['selection_failure'] for r in rows),
-                    oracle_exact={str(k): sum(r['correct_rank'] is not None and
-                        r['correct_rank'] <= k for r in rows) / len(rows) for k in ks},
-                    oracle_constitution={str(k): sum(r['constitution_rank'] is not None and
-                        r['constitution_rank'] <= k for r in rows) / len(rows) for k in ks})
+        exact = {}
+        constitution = {}
+        for k in ks:
+            exact[str(k)] = sum(
+                r['correct_rank'] is not None and r['correct_rank'] <= k
+                for r in rows
+            ) / len(rows)
+            constitution[str(k)] = sum(
+                r['constitution_rank'] is not None and r['constitution_rank'] <= k
+                for r in rows
+            ) / len(rows)
+        return {
+            'n': len(rows),
+            'selection_failures': sum(r['selection_failure'] for r in rows),
+            'oracle_exact': exact,
+            'oracle_constitution': constitution,
+        }
+
     details = [r for rows in groups.values() for r in rows]
     return dict(overall=aggregate(details) if details else {'n': 0},
                 subsets={s: aggregate(rows) for s, rows in groups.items()}, rows=details)

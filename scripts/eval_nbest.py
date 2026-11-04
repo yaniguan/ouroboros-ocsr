@@ -1,4 +1,4 @@
-"""Report distinct-molecule stereo and constitution oracle exact@k by subset."""
+"""Report how often the top candidates include the correct molecule, by subset."""
 import argparse
 import json
 from pathlib import Path
