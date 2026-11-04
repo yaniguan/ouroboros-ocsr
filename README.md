@@ -83,3 +83,7 @@ three quarantined train records are documented.
 
 Code is MIT-licensed. Weights and dependency provenance: [MODEL_CARD.md](MODEL_CARD.md).
 Experiment history: [TASK.md](TASK.md).
+
+N-best diagnostics: export candidates with `scripts/predict_real.py --nbest-out candidates.jsonl`,
+then run `scripts/eval_nbest.py candidates.jsonl --k 1 3 5`. Reports count distinct standardized
+molecules, preserve stereo, and separate oracle coverage from selection failures by subset.
