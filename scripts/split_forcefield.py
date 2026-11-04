@@ -1,4 +1,4 @@
-"""Split extxyz and its authoritative manifest by connectivity (all stereoisomers together)."""
+"""Split extxyz frames and their manifest by molecule, keeping stereoisomers together."""
 import argparse
 import json
 from pathlib import Path
