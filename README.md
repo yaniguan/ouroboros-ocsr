@@ -83,3 +83,11 @@ three quarantined train records are documented.
 
 Code is MIT-licensed. Weights and dependency provenance: [MODEL_CARD.md](MODEL_CARD.md).
 Experiment history: [TASK.md](TASK.md).
+
+Use `scripts/split_forcefield.py --frames data.extxyz --manifest data.manifest.jsonl
+--out-dir splits --seed 0` for deterministic train/val/test exports. Connectivity hashes keep
+all conformers, equivalent spellings, and stereoisomers together, independent of input order.
+The default fractions are 0.8/0.1/0.1 (`--fractions` overrides); small datasets may have empty
+splits. This prevents connectivity leakage, but does not measure scaffold generalization.
+Output manifests preserve frame associations and indices; skipped inputs have a separate manifest.
+Ambiguous or missing associations fail explicitly. The output directory must be empty.
