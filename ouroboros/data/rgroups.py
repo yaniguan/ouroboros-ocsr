@@ -72,3 +72,45 @@ def substitute(mol: Chem.Mol, rng: random.Random, label: str | None = None) -> C
     Chem.SanitizeMol(out)
     set_draw_labels(out)
     return out
+
+
+def expand_aliases(smiles: str) -> Chem.Mol:
+    """Expand whitelisted degree-one, single-bond aliases, rejecting generic placeholders.
+
+    The alias atom is replaced in place by fragment atom zero, preserving retained
+    atom indices and neighbor order (including remote stereo). No generic identity
+    or unsupported attachment chemistry is guessed.
+    """
+    from ouroboros.labels import parse_labelled, ISOTOPE_LABELS
+
+    mol = parse_labelled(smiles)
+    if mol is None or not mol.GetNumAtoms():
+        raise ValueError('invalid_smiles')
+    aliases = []
+    for atom in mol.GetAtoms():
+        if atom.GetAtomicNum() != 0:
+            continue
+        label = ISOTOPE_LABELS.get(atom.GetIsotope())
+        if label not in ABBREVIATIONS:
+            raise ValueError(f'unsupported_alias: {label or "*"}')
+        if (atom.GetDegree() != 1 or atom.GetBonds()[0].GetBondType() != Chem.BondType.SINGLE
+                or atom.GetFormalCharge() or atom.GetNumExplicitHs()):
+            raise ValueError(f'unsupported_attachment: {label}')
+        aliases.append((atom.GetIdx(), label))
+    rw = Chem.RWMol(mol)
+    for idx, label in aliases:
+        fragment = Chem.MolFromSmiles(ABBREVIATIONS[label])
+        rw.ReplaceAtom(idx, Chem.Atom(fragment.GetAtomWithIdx(0)))
+        mapping = {0: idx}
+        for atom in list(fragment.GetAtoms())[1:]:
+            mapping[atom.GetIdx()] = rw.AddAtom(Chem.Atom(atom))
+        for bond in fragment.GetBonds():
+            rw.AddBond(mapping[bond.GetBeginAtomIdx()], mapping[bond.GetEndAtomIdx()],
+                       bond.GetBondType())
+    expanded = rw.GetMol()
+    try:
+        Chem.SanitizeMol(expanded)
+        Chem.AssignStereochemistry(expanded, cleanIt=True, force=True)
+    except Exception as exc:
+        raise ValueError('invalid_expansion') from exc
+    return expanded
