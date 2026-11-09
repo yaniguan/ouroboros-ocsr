@@ -123,6 +123,8 @@ Weights and provenance: [MODEL_CARD.md](MODEL_CARD.md). Training protocol: [docs
 
 Use `--ink-crop` with [`scripts/ingest_real.py`](scripts/ingest_real.py) or [`scripts/image_to_forcefield.py`](scripts/image_to_forcefield.py) `--images` to remove white padding before resizing. It keeps all marks darker than `--ink-threshold` (default 250), with `--ink-margin` pixels of padding (default 8, before resizing). Blank images keep their size. Cropping is off by default. Use the same settings when preparing training images and making predictions.
 
+To check ranked candidates, export them with [`scripts/predict_real.py`](scripts/predict_real.py) `--nbest-out candidates.jsonl`, then run [`scripts/eval_nbest.py`](scripts/eval_nbest.py) `candidates.jsonl --k 1 3 5`. The report uses unique standardized molecules. For each subset, it checks for the correct molecule among the top candidates, with and without stereochemistry. It also counts cases where the correct candidate was not selected.
+
 ## Citation
 
 ```bibtex
