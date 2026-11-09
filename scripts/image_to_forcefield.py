@@ -351,25 +351,23 @@ def main(argv=None) -> dict:
                     help="require accepted=True in predictions CSV; rejected rows stay in manifest")
     ap.add_argument("--expand-aliases", action="store_true",
                     help="expand known aliases before making 3D coordinates; reject generic R groups")
-    a = ap.parse_args(argv)
-    if a.respect_confidence and a.images:
-        ap.error("--respect-confidence requires --predictions with acceptance fields")
     ap.add_argument("--geometry-eligibility", action="store_true",
                     help="reject net charge, radicals, and unsupported elements")
     ap.add_argument("--allowed-elements", nargs="+", default=None,
                     help="list supported element symbols and turn on geometry checks")
     ap.add_argument("--require-assigned-stereo", action="store_true",
                     help="turn on geometry checks and reject unassigned stereo")
-    a = ap.parse_args(argv)
-    if a.allowed_elements:
-        valid_symbols = {Chem.GetPeriodicTable().GetElementSymbol(z) for z in range(1, 119)}
-        if not set(a.allowed_elements) <= valid_symbols:
-            ap.error("--allowed-elements requires element symbols")
     ap.add_argument("--displaced-samples", type=int, default=0,
                     help="random coordinate changes to try per ETKDG conformer (default: off)")
     ap.add_argument("--max-displacement", type=float, default=.1, help="maximum atom movement in Angstrom")
     ap.add_argument("--displacement-min-distance", type=float, default=.6, help="minimum distance between atoms in Angstrom")
     a = ap.parse_args(argv)
+    if a.respect_confidence and a.images:
+        ap.error("--respect-confidence requires --predictions with acceptance fields")
+    if a.allowed_elements:
+        valid_symbols = {Chem.GetPeriodicTable().GetElementSymbol(z) for z in range(1, 119)}
+        if not set(a.allowed_elements) <= valid_symbols:
+            ap.error("--allowed-elements requires element symbols")
     if (a.displaced_samples < 0 or not math.isfinite(a.max_displacement) or a.max_displacement < 0
             or not math.isfinite(a.displacement_min_distance) or a.displacement_min_distance < 0):
         ap.error("displacement count, amplitude and distance must be finite and nonnegative")
