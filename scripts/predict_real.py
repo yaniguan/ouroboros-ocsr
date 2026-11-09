@@ -85,6 +85,7 @@ def predict_batch(
     beam: int,
     tta: list[str],
     prefer_valid: bool,
+    diagnostics: list | None = None,
 ) -> list[tuple[str, list[Candidate]]]:
     """Per image: ``(prediction, ranked pooled candidates)`` over all (model, view) sources."""
     views = [images, *(TTA[name](images) for name in tta)]
@@ -106,6 +107,14 @@ def predict_batch(
     for i in range(n):
         ranked = ensemble_rank([per_src[i] for per_src in nbest], rescored[i])
         pred = choose(ranked)[0] if prefer_valid else ranked[0][0]
+        if diagnostics is not None:
+            predictions = []
+            for per_src in nbest:
+                if prefer_valid:
+                    predictions.append(choose(per_src[i])[0])
+                else:
+                    predictions.append(max(per_src[i], key=lambda c: c[1])[0])
+            diagnostics.append(predictions)
         out.append((pred, ranked))
     return out
 
@@ -139,7 +148,12 @@ def main(argv=None) -> None:
                     help="candidate selection (default: valid if --beam > 1, else none)")
     ap.add_argument("--tta", default="", help=f"comma list of extra views among {sorted(TTA)}")
     ap.add_argument("--nbest-out", default=None, help="JSON lines of ranked candidates per image")
+    ap.add_argument("--min-margin", type=float, default=None)
+    ap.add_argument("--max-disagreement", type=float, default=None)
     a = ap.parse_args(argv)
+    from ouroboros.decode.confidence import confidence
+    gated = a.min_margin is not None or a.max_disagreement is not None
+    confidence('', [], min_margin=a.min_margin, max_disagreement=a.max_disagreement)
     if a.beam < 1:
         ap.error("--beam must be >= 1")
     tta = [t for t in a.tta.split(",") if t]
@@ -152,7 +166,7 @@ def main(argv=None) -> None:
     size = cfg["data"]["image_size"]
     if any(c["data"]["image_size"] != size for _, c in loaded):
         raise SystemExit("ensemble checkpoints must share data.image_size")
-    greedy = a.beam == 1 and len(models) == 1 and not tta and a.nbest_out is None
+    greedy = a.beam == 1 and len(models) == 1 and not tta and a.nbest_out is None and not gated
     ds = ShardDataset(a.shards, a.split, image_size=size, max_samples=a.max_samples)
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     nbest_f = None
@@ -162,22 +176,29 @@ def main(argv=None) -> None:
     t0 = time.time()
     try:
         with open(a.out, "w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=["id", "gold", "pred", "subset"])
+            w = csv.DictWriter(f, fieldnames=["id", "gold", "pred", "subset"] +
+                               (["accepted", "rejection_reason", "margin", "disagreement"] if gated else []))
             w.writeheader()
             for start in range(0, len(ds), a.batch_size):
                 idx = range(start, min(len(ds), start + a.batch_size))
                 imgs = torch.stack([ds[i]["image"] for i in idx]).to(dev)
+                source_predictions = []
                 with torch.inference_mode():
                     if greedy:
                         results = [(p, None) for p in models[0].generate(imgs)]
                     else:
-                        results = predict_batch(models, imgs, a.beam, tta, prefer_valid)
+                        results = predict_batch(models, imgs, a.beam, tta, prefer_valid,
+                                                diagnostics=source_predictions)
                 for i, (p, ranked) in zip(idx, results, strict=True):
                     m = ds.meta(i)
+                    gate = confidence(p, ranked or [], source_predictions[i-start] if source_predictions else [],
+                                      min_margin=a.min_margin, max_disagreement=a.max_disagreement)
                     w.writerow({"id": m.get("id", i), "gold": m["smiles"], "pred": p,
-                                "subset": m.get("source", "")})
+                                "subset": m.get("source", "")} | (gate if gated else {}))
                     if nbest_f is not None:
-                        nbest_f.write(json.dumps(_nbest_record(m, i, p, ranked)) + "\n")
+                        nbest_f.write(json.dumps(_nbest_record(m, i, p, ranked) |
+                            {"subset": m.get("source", ""), "source_predictions": source_predictions[i-start],
+                             "confidence": gate}) + "\n")
                 print(f"{min(len(ds), start + a.batch_size)}/{len(ds)}  {time.time() - t0:.0f}s",
                       flush=True)
     finally:
