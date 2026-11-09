@@ -20,8 +20,12 @@ def main(argv=None) -> None:
     ap.add_argument("--out", required=True)
     ap.add_argument("--image-size", type=int, default=384)
     ap.add_argument("--shard-size", type=int, default=1000)
+    ap.add_argument("--ink-crop", action="store_true")
+    ap.add_argument("--ink-threshold", type=int, default=250)
+    ap.add_argument("--ink-margin", type=int, default=8)
     a = ap.parse_args(argv)
-    stats = ingest(a.manifest, a.out, size=a.image_size, shard_size=a.shard_size)
+    stats = ingest(a.manifest, a.out, size=a.image_size, shard_size=a.shard_size,
+                   ink_crop=a.ink_crop, ink_threshold=a.ink_threshold, ink_margin=a.ink_margin)
     print(json.dumps(stats, indent=1))
     if stats["n_failures"]:
         print(f"{stats['n_failures']} rows failed; see {a.out}/ingest_failures.jsonl")
