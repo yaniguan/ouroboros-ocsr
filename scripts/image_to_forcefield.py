@@ -214,6 +214,17 @@ def process(row: dict, a, calc, mace_name: str | None, seen: set[str]) -> tuple[
     std = standardize(row["smiles"])
     if not std.valid:
         return [], rec | {"status": f"invalid_smiles: {std.reason}"}
+    if getattr(a, "expand_aliases", False):
+        from ouroboros.data.rgroups import expand_aliases
+        rec["recognized_smiles"] = std.smiles
+        try:
+            expanded = expand_aliases(row["smiles"])
+        except ValueError as error:
+            return [], rec | {"status": str(error)}
+        rec["expanded_smiles"] = Chem.MolToSmiles(expanded)
+        std = standardize(rec["expanded_smiles"])
+        if not std.valid:
+            return [], rec | {"status": "invalid_expansion"}
     rec["smiles"] = std.smiles
     if any(at.GetAtomicNum() == 0 for at in std.mol.GetAtoms()):
         return [], rec | {"status": "pseudo_atoms"}  # R-groups / abbreviations: no elements
@@ -305,6 +316,8 @@ def main(argv=None) -> dict:
     ap.add_argument("--ink-margin", type=int, default=8)
     ap.add_argument("--respect-confidence", action="store_true",
                     help="require accepted=True in predictions CSV; rejected rows stay in manifest")
+    ap.add_argument("--expand-aliases", action="store_true",
+                    help="expand known aliases before making 3D coordinates; reject generic R groups")
     a = ap.parse_args(argv)
     if a.respect_confidence and a.images:
         ap.error("--respect-confidence requires --predictions with acceptance fields")
