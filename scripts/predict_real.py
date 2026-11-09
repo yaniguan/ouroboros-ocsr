@@ -125,6 +125,7 @@ def _nbest_record(meta: dict, i: int, pred: str, ranked: list[Candidate]) -> dic
     return {
         "id": meta.get("id", i),
         "gold": meta["smiles"],
+        "subset": meta.get("source", ""),
         "pred": pred,
         "candidates": [
             {"smiles": s, "score": score if math.isfinite(score) else None, "valid": is_valid(s)}

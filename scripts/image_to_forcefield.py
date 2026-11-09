@@ -112,7 +112,8 @@ def load_model(path: Path, device):
     return model, cfg["data"]["image_size"]
 
 
-def rows_from_images(paths: list[Path], model_path: Path, beam: int, batch_size: int):
+def rows_from_images(paths: list[Path], model_path: Path, beam: int, batch_size: int,
+                     ink_crop=False, ink_threshold=250, ink_margin=8):
     import torch
     from PIL import Image
 
@@ -126,7 +127,11 @@ def rows_from_images(paths: list[Path], model_path: Path, beam: int, batch_size:
         ink = []
         for p in batch:
             with Image.open(p) as im:
-                gray = np.asarray(fit_to_canvas(im, size), dtype=np.float32)
+                fitted = fit_to_canvas(
+                    im, size, ink_crop=ink_crop,
+                    ink_threshold=ink_threshold, ink_margin=ink_margin,
+                )
+                gray = np.asarray(fitted, dtype=np.float32)
             ink.append(1.0 - torch.from_numpy(gray)[None] / 255.0)
         images = torch.stack(ink).to(dev)
         with torch.inference_mode():
@@ -295,6 +300,9 @@ def main(argv=None) -> dict:
                     help="skip molecules already in this run or in an existing manifest")
     ap.add_argument("--mace-model", default="small", help="small | medium | large | none")
     ap.add_argument("--device", default=None)
+    ap.add_argument("--ink-crop", action="store_true")
+    ap.add_argument("--ink-threshold", type=int, default=250)
+    ap.add_argument("--ink-margin", type=int, default=8)
     ap.add_argument("--respect-confidence", action="store_true",
                     help="require accepted=True in predictions CSV; rejected rows stay in manifest")
     a = ap.parse_args(argv)
@@ -311,7 +319,8 @@ def main(argv=None) -> dict:
     manifest.parent.mkdir(parents=True, exist_ok=True)
     seen = _seen_inchikeys(manifest) if a.dedupe_inchikey else set()
     calc, mace_name = load_calculator(a.mace_model, a.device)
-    rows = (rows_from_images(a.images, a.model, a.beam, a.batch_size) if a.images
+    rows = (rows_from_images(a.images, a.model, a.beam, a.batch_size,
+                             a.ink_crop, a.ink_threshold, a.ink_margin) if a.images
             else rows_from_csv(a.predictions, a.smiles_col, a.id_col, a.image_col))
     t0, counts, n_frames = time.time(), {}, 0
     with open(manifest, "a") as mf:
