@@ -90,7 +90,8 @@ def rows_from_csv(path: Path, smiles_col: str | None, id_col: str, image_col: st
             image = r.get(image_col) if image_col else _first(r, IMAGE_COLS)
             if not image:  # predict_real.py CSVs identify the image by (subset, id)
                 image = f"{r['subset']}/{rid}" if r.get("subset") else f"{path.name}#{rid}"
-            yield {"id": rid, "smiles": r.get(col) or "", "source_image": image}
+            yield {"id": rid, "smiles": r.get(col) or "", "source_image": image,
+                   "accepted": r.get("accepted"), "rejection_reason": r.get("rejection_reason", "")}
 
 
 def _predict_real():
@@ -111,7 +112,8 @@ def load_model(path: Path, device):
     return model, cfg["data"]["image_size"]
 
 
-def rows_from_images(paths: list[Path], model_path: Path, beam: int, batch_size: int):
+def rows_from_images(paths: list[Path], model_path: Path, beam: int, batch_size: int,
+                     ink_crop=False, ink_threshold=250, ink_margin=8):
     import torch
     from PIL import Image
 
@@ -125,7 +127,11 @@ def rows_from_images(paths: list[Path], model_path: Path, beam: int, batch_size:
         ink = []
         for p in batch:
             with Image.open(p) as im:
-                gray = np.asarray(fit_to_canvas(im, size), dtype=np.float32)
+                fitted = fit_to_canvas(
+                    im, size, ink_crop=ink_crop,
+                    ink_threshold=ink_threshold, ink_margin=ink_margin,
+                )
+                gray = np.asarray(fitted, dtype=np.float32)
             ink.append(1.0 - torch.from_numpy(gray)[None] / 255.0)
         images = torch.stack(ink).to(dev)
         with torch.inference_mode():
@@ -200,12 +206,37 @@ def process(row: dict, a, calc, mace_name: str | None, seen: set[str]) -> tuple[
            "smiles": None, "inchikey": None, "status": "ok", "mace_model": mace_name,
            "relaxed": bool(a.relax and calc is not None), "n_frames": 0, "energy": None,
            "conformers": []}
+    if getattr(a, "respect_confidence", False):
+        rec["confidence_accepted"] = row.get("accepted")
+        rec["rejection_reason"] = row.get("rejection_reason", "")
+        if str(row.get("accepted", "")).lower() not in ("true", "1"):
+            return [], rec | {"status": "confidence_rejected"}
     std = standardize(row["smiles"])
     if not std.valid:
         return [], rec | {"status": f"invalid_smiles: {std.reason}"}
+    if getattr(a, "expand_aliases", False):
+        from ouroboros.data.rgroups import expand_aliases
+        rec["recognized_smiles"] = std.smiles
+        try:
+            expanded = expand_aliases(row["smiles"])
+        except ValueError as error:
+            return [], rec | {"status": str(error)}
+        rec["expanded_smiles"] = Chem.MolToSmiles(expanded)
+        std = standardize(rec["expanded_smiles"])
+        if not std.valid:
+            return [], rec | {"status": "invalid_expansion"}
     rec["smiles"] = std.smiles
     if any(at.GetAtomicNum() == 0 for at in std.mol.GetAtoms()):
         return [], rec | {"status": "pseudo_atoms"}  # R-groups / abbreviations: no elements
+    if (getattr(a, "geometry_eligibility", False) or getattr(a, "allowed_elements", None)
+            or getattr(a, "require_assigned_stereo", False)):
+        from ouroboros.geometry.eligibility import EligibilityPolicy
+        elements = getattr(a, "allowed_elements", None)
+        policy = EligibilityPolicy(frozenset(elements) if elements is not None else None,
+                                   require_assigned_stereo=getattr(a, "require_assigned_stereo", False))
+        rec["eligibility_reasons"] = policy.reasons(std.mol, calc)
+        if rec["eligibility_reasons"]:
+            return [], rec | {"status": "geometry_ineligible"}
     rec["inchikey"] = standard_inchikey(std)
     rec.update(unassigned_stereo(std.mol))
     if a.dedupe_inchikey and rec["inchikey"]:
@@ -313,6 +344,27 @@ def main(argv=None) -> dict:
                     help="skip molecules already in this run or in an existing manifest")
     ap.add_argument("--mace-model", default="small", help="small | medium | large | none")
     ap.add_argument("--device", default=None)
+    ap.add_argument("--ink-crop", action="store_true")
+    ap.add_argument("--ink-threshold", type=int, default=250)
+    ap.add_argument("--ink-margin", type=int, default=8)
+    ap.add_argument("--respect-confidence", action="store_true",
+                    help="require accepted=True in predictions CSV; rejected rows stay in manifest")
+    ap.add_argument("--expand-aliases", action="store_true",
+                    help="expand known aliases before making 3D coordinates; reject generic R groups")
+    a = ap.parse_args(argv)
+    if a.respect_confidence and a.images:
+        ap.error("--respect-confidence requires --predictions with acceptance fields")
+    ap.add_argument("--geometry-eligibility", action="store_true",
+                    help="reject net charge, radicals, and unsupported elements")
+    ap.add_argument("--allowed-elements", nargs="+", default=None,
+                    help="list supported element symbols and turn on geometry checks")
+    ap.add_argument("--require-assigned-stereo", action="store_true",
+                    help="turn on geometry checks and reject unassigned stereo")
+    a = ap.parse_args(argv)
+    if a.allowed_elements:
+        valid_symbols = {Chem.GetPeriodicTable().GetElementSymbol(z) for z in range(1, 119)}
+        if not set(a.allowed_elements) <= valid_symbols:
+            ap.error("--allowed-elements requires element symbols")
     ap.add_argument("--displaced-samples", type=int, default=0,
                     help="random coordinate changes to try per ETKDG conformer (default: off)")
     ap.add_argument("--max-displacement", type=float, default=.1, help="maximum atom movement in Angstrom")
@@ -334,7 +386,8 @@ def main(argv=None) -> dict:
     manifest.parent.mkdir(parents=True, exist_ok=True)
     seen = _seen_inchikeys(manifest) if a.dedupe_inchikey else set()
     calc, mace_name = load_calculator(a.mace_model, a.device)
-    rows = (rows_from_images(a.images, a.model, a.beam, a.batch_size) if a.images
+    rows = (rows_from_images(a.images, a.model, a.beam, a.batch_size,
+                             a.ink_crop, a.ink_threshold, a.ink_margin) if a.images
             else rows_from_csv(a.predictions, a.smiles_col, a.id_col, a.image_col))
     t0, counts, n_frames = time.time(), {}, 0
     with open(manifest, "a") as mf:
