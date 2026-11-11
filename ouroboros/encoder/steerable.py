@@ -30,17 +30,47 @@ Where equivariance holds / is invariant / is broken
 
 from __future__ import annotations
 
+import sys
+import types
 from dataclasses import dataclass, field
 
 import torch
 import torch.nn.functional as F
-from escnn import gspaces
-from escnn import nn as enn
 from torch import nn
 
 from ouroboros.encoder.base import EncoderOutput, ImageEncoder
 from ouroboros.encoder.relpos import RelDistMixer, grid_coords
 from ouroboros.model import register_encoder
+
+
+def _ensure_escnn_2d_shim() -> None:
+    """Allow 2D rot2dOnR2 imports on platforms without Fortran lie_learn/py3nj SO(3)."""
+    try:
+        import lie_learn.representations.SO3.wigner_d  # noqa: F401
+    except ModuleNotFoundError:
+        for mod_name in (
+            "lie_learn",
+            "lie_learn.representations",
+            "lie_learn.representations.SO3",
+            "lie_learn.representations.SO3.wigner_d",
+            "lie_learn.spaces",
+            "lie_learn.spaces.S2",
+            "py3nj",
+        ):
+            sys.modules.setdefault(mod_name, types.ModuleType(mod_name))
+
+        def _unused_so3(*_args, **_kwargs):
+            raise ModuleNotFoundError("SO(3) requires lie_learn; Ouroboros uses 2D rot2dOnR2 only")
+
+        w_mod = sys.modules["lie_learn.representations.SO3.wigner_d"]
+        s2_mod = sys.modules["lie_learn.spaces.S2"]
+        w_mod.wigner_D_matrix = _unused_so3  # type: ignore[attr-defined]
+        s2_mod.change_coordinates = _unused_so3  # type: ignore[attr-defined]
+
+
+_ensure_escnn_2d_shim()
+from escnn import gspaces  # noqa: E402
+from escnn import nn as enn  # noqa: E402
 
 # ----------------------------------------------------------------------------------- blocks
 

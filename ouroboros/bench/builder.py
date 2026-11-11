@@ -399,9 +399,7 @@ def build_chemveritas_benchmark(
         )
 
         # T4: 3D Thermodynamic Stereoisomer Stability Ranking
-        iso_pairs = [
-            (entry.smiles, strain.min_energy_kcal)
-        ] + [
+        iso_pairs = [(entry.smiles, strain.min_energy_kcal)] + [
             (n.smiles, n.min_energy_kcal)
             for n in negs
             if n.category == "diastereomer" and n.min_energy_kcal is not None
@@ -409,9 +407,7 @@ def build_chemveritas_benchmark(
         if len(iso_pairs) >= 2 and strain.min_energy_kcal is not None:
             iso_shuffled = list(iso_pairs)
             rng.shuffle(iso_shuffled)
-            ranked_truth = [
-                s for s, _ in sorted(iso_shuffled, key=lambda kv: float(kv[1] or 0.0))
-            ]
+            ranked_truth = [s for s, _ in sorted(iso_shuffled, key=lambda kv: float(kv[1] or 0.0))]
             t4_rows.append(
                 {
                     "task_id": f"{entry.mol_id}_T4",

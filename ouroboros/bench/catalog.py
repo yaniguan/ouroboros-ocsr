@@ -129,9 +129,7 @@ _Q_SMALL = ("C", "CC", "C(C)C", "C1CC1", "CC(F)(F)F")
 
 def _count_stereo(mol: Chem.Mol) -> int:
     return sum(
-        1
-        for s in Chem.FindPotentialStereo(mol)
-        if s.specified == Chem.StereoSpecified.Specified
+        1 for s in Chem.FindPotentialStereo(mol) if s.specified == Chem.StereoSpecified.Specified
     )
 
 

@@ -39,8 +39,7 @@ def score_veritas_rpf(pred: dict, target: dict) -> dict[str, float]:
     """4-step Reasoning Path Fidelity (RPF) rubric inspired by SUPERChem & FrontierScience."""
     s1_f = str(pred.get("step1_formula") or "").strip() == str(target["step1_formula"]).strip()
     s1_a = (
-        str(pred.get("step1_hrms_adduct") or "").strip()
-        == str(target["step1_hrms_adduct"]).strip()
+        str(pred.get("step1_hrms_adduct") or "").strip() == str(target["step1_hrms_adduct"]).strip()
     )
     step1 = 0.5 * float(s1_f) + 0.5 * float(s1_a)
 
