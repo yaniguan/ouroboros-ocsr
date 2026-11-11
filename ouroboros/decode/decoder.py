@@ -37,15 +37,40 @@ class _Attention(nn.Module):
         self.o = nn.Linear(d, d)
         self.dropout = dropout
 
-    def forward(self, x, mem, mask=None, causal=False, cache=None):
+    def project_kv(self, mem: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        B, M, D = mem.shape
+        k, v = self.kv(mem).view(B, M, 2, self.h, D // self.h).permute(2, 0, 3, 1, 4)
+        return k, v
+
+    def forward(self, x, mem, mask=None, causal=False, cache=None, cross_kv=None):
         B, T, D = x.shape
         q = self.q(x).view(B, T, self.h, D // self.h).transpose(1, 2)
-        k, v = self.kv(mem).view(B, mem.shape[1], 2, self.h, D // self.h).permute(2, 0, 3, 1, 4)
+        if cross_kv is not None:
+            k, v = cross_kv
+        else:
+            k, v = self.project_kv(mem)
         if cache is not None:  # incremental self-attention: append new keys/values
-            if "k" in cache:
-                k = torch.cat([cache["k"], k], dim=2)
-                v = torch.cat([cache["v"], v], dim=2)
-            cache["k"], cache["v"] = k, v
+            if "max_len" in cache:
+                pos = cache.get("pos", 0)
+                if "k" not in cache:
+                    max_steps = cache["max_len"]
+                    cache["k"] = torch.empty(
+                        (B, self.h, max_steps, k.shape[-1]), dtype=k.dtype, device=k.device
+                    )
+                    cache["v"] = torch.empty(
+                        (B, self.h, max_steps, v.shape[-1]), dtype=v.dtype, device=v.device
+                    )
+                end = pos + k.shape[2]
+                cache["k"][:, :, pos:end] = k
+                cache["v"][:, :, pos:end] = v
+                cache["pos"] = end
+                k = cache["k"][:, :, :end]
+                v = cache["v"][:, :, :end]
+            else:
+                if "k" in cache:
+                    k = torch.cat([cache["k"], k], dim=2)
+                    v = torch.cat([cache["v"], v], dim=2)
+                cache["k"], cache["v"] = k, v
             causal = False  # the single new query may attend to all cached positions
         y = F.scaled_dot_product_attention(
             q,
@@ -72,11 +97,11 @@ class DecoderLayer(nn.Module):
         )
         self.drop = nn.Dropout(c.dropout)
 
-    def forward(self, x, mem, mem_mask=None, cache=None):
+    def forward(self, x, mem, mem_mask=None, cache=None, cross_kv=None):
         h = self.ln1(x)
         x = x + self.drop(self.self_attn(h, h, causal=True, cache=cache))
         h = self.ln2(x)
-        x = x + self.drop(self.cross_attn(h, mem, mask=mem_mask))
+        x = x + self.drop(self.cross_attn(h, mem, mask=mem_mask, cross_kv=cross_kv))
         return x + self.drop(self.ff(self.ln3(x)))
 
 
@@ -114,6 +139,19 @@ class SmilesDecoder(nn.Module):
             x = layer(x, memory, mask)
         return self.head(self.ln(x))
 
+    def _precompute_cross_kv(
+        self, memory: torch.Tensor, repeat: int = 1
+    ) -> list[tuple[torch.Tensor, torch.Tensor]]:
+        """Project static encoder memory K/V once per layer before autoregressive decoding."""
+        out = []
+        for layer in self.layers:
+            k, v = layer.cross_attn.project_kv(memory)
+            if repeat > 1:
+                k = k.repeat_interleave(repeat, dim=0)
+                v = v.repeat_interleave(repeat, dim=0)
+            out.append((k, v))
+        return out
+
     @torch.no_grad()
     def greedy(
         self,
@@ -123,18 +161,21 @@ class SmilesDecoder(nn.Module):
         max_len: int | None = None,
         padding_mask=None,
     ) -> torch.Tensor:
-        """Greedy decoding with a self-attention KV cache. Returns ids [B, L] (no BOS)."""
+        """Greedy decoding with static self-attention KV buffers and cached cross-attention K/V.
+        Returns ids [B, L] (no BOS)."""
         B = memory.shape[0]
         max_len = min(max_len or self.c.max_len, self.c.max_len)
-        caches = [{} for _ in self.layers]
+        max_steps = max(max_len - 1, 1)
+        caches = [{"max_len": max_steps} for _ in self.layers]
+        cross_kvs = self._precompute_cross_kv(memory)
         mask = self._mem_mask(padding_mask, memory.dtype)
         cur = torch.full((B, 1), bos_id, dtype=torch.long, device=memory.device)
         out = []
         done = torch.zeros(B, dtype=torch.bool, device=memory.device)
         for t in range(max_len - 1):
             x = self.tok(cur) + self.pos.weight[t][None, None]
-            for layer, cache in zip(self.layers, caches, strict=True):
-                x = layer(x, memory, mask, cache=cache)
+            for layer, cache, cross_kv in zip(self.layers, caches, cross_kvs, strict=True):
+                x = layer(x, memory, mask, cache=cache, cross_kv=cross_kv)
             nxt = self.head(self.ln(x))[:, -1].argmax(-1)
             nxt = torch.where(done, torch.full_like(nxt, eos_id), nxt)
             out.append(nxt)
@@ -168,12 +209,13 @@ class SmilesDecoder(nn.Module):
         if K < 1:
             raise ValueError(f"beam_size must be >= 1, got {K}")
         max_len = min(max_len or self.c.max_len, self.c.max_len)
+        max_steps = max(max_len - 1, 1)
         dev = memory.device
-        memory = memory.repeat_interleave(K, dim=0)  # row b * K + k = beam k of element b
+        cross_kvs = self._precompute_cross_kv(memory, repeat=K)
         if padding_mask is not None:
             padding_mask = padding_mask.repeat_interleave(K, dim=0)
         mask = self._mem_mask(padding_mask, memory.dtype)
-        caches = [{} for _ in self.layers]
+        caches = [{"max_len": max_steps} for _ in self.layers]
         cur = torch.full((B * K, 1), bos_id, dtype=torch.long, device=dev)
         # only beam 0 is live at the start, so the first step expands a single BOS per element
         scores = torch.full((B, K), float("-inf"), device=dev)
@@ -187,8 +229,8 @@ class SmilesDecoder(nn.Module):
 
         for t in range(max_len - 1):
             x = self.tok(cur) + self.pos.weight[t][None, None]
-            for layer, cache in zip(self.layers, caches, strict=True):
-                x = layer(x, memory, mask, cache=cache)
+            for layer, cache, cross_kv in zip(self.layers, caches, cross_kvs, strict=True):
+                x = layer(x, None, mask, cache=cache, cross_kv=cross_kv)
             logp = F.log_softmax(self.head(self.ln(x))[:, -1].float(), dim=-1)
             V = logp.shape[-1]
             cand = (scores.reshape(B * K, 1) + logp).reshape(B, K * V)
@@ -223,9 +265,11 @@ class SmilesDecoder(nn.Module):
             hyps = new_hyps
             scores = new_scores.to(dev)
             idx = torch.tensor(src, dtype=torch.long, device=dev)
-            for cache in caches:  # reorder every cached tensor to follow its surviving beam
-                for key in cache:
-                    cache[key] = cache[key].index_select(0, idx)
+            for cache in caches:  # reorder active prefix to follow its surviving beam
+                pos = cache.get("pos", 0)
+                if pos > 0:
+                    cache["k"][:, :, :pos] = cache["k"][:, :, :pos].index_select(0, idx)
+                    cache["v"][:, :, :pos] = cache["v"][:, :, :pos].index_select(0, idx)
             cur = torch.tensor(nxt, dtype=torch.long, device=dev)[:, None]
         results = []
         for b in range(B):
