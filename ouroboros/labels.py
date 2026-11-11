@@ -7,6 +7,7 @@ Ar denotes the conventional aryl placeholder here (not elemental argon).
 from __future__ import annotations
 
 import re
+
 from rdkit import Chem
 
 # Append only: isotope identities must remain stable across datasets/checkpoints.
@@ -15,6 +16,9 @@ LABELS = tuple(dict.fromkeys([
     'Ph', 'OMe', 'OEt', 'Me', 'Et', 'Pr', 'iPr', 'Bu', 'tBu', 'CO2Et',
     'CO2Me', 'Boc', 'Cbz', 'Fmoc', 'Ac', 'Bn', 'Bz', 'Ts', 'Ms',
     'TBS', 'TBDMS', 'TMS', 'PMP', 'TAGa', 'G', 'M', 'L', 'PG', 'Y', 'Z',
+    'CF3', 'CCl3', 'CO2H', 'COOH', 'CHO', 'OPh', 'OBn', 'OAc', 'OTs', 'OMs',
+    'OTBS', 'OTMS', 'SMe', 'SEt', 'SPh', 'NHBoc', 'NHAc', 'NHCbz', 'NHFmoc',
+    'NMe2', 'NEt2', 'SO2Me', 'SO2Ph',
 ]))
 LABEL_ISOTOPES = {label: 500 + i for i, label in enumerate(LABELS)}
 ISOTOPE_LABELS = {v: k for k, v in LABEL_ISOTOPES.items()}

@@ -1,8 +1,10 @@
 import json
 import random
+
 import pytest
 from rdkit import Chem
-from ouroboros.data.rgroups import expand_aliases, substitute, ABBREVIATIONS
+
+from ouroboros.data.rgroups import ABBREVIATIONS, expand_aliases, substitute
 from ouroboros.labels import labelled_smiles
 
 
@@ -15,7 +17,8 @@ def test_round_trip(alias):
     original = Chem.MolFromSmiles('NCC' + ABBREVIATIONS[alias])
     collapsed = substitute(original, random.Random(0), label=alias)
     assert any(a.GetAtomicNum() == 0 for a in collapsed.GetAtoms())
-    assert Chem.MolToSmiles(expand_aliases(labelled_smiles(collapsed))) == Chem.MolToSmiles(original)
+    expanded = expand_aliases(labelled_smiles(collapsed))
+    assert Chem.MolToSmiles(expanded) == Chem.MolToSmiles(original)
 
 
 @pytest.mark.parametrize('source,expected', [
@@ -26,7 +29,9 @@ def test_attachment_and_remote_stereo(source, expected):
     assert Chem.MolToSmiles(expand_aliases(source)) == canon(expected)
 
 
-@pytest.mark.parametrize('source', ['CC[R1]', 'CC*', 'CC[TBS]', 'C[Me]C', 'C=[Me]', '[Ph]'])
+@pytest.mark.parametrize(
+    'source', ['CC[R1]', 'CC*', 'CC[PG]', 'CC[Ar]', 'C[Me]C', 'C=[Me]', '[Ph]']
+)
 def test_reject_undefined_or_unsafe(source):
     with pytest.raises(ValueError):
         expand_aliases(source)
