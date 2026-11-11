@@ -174,7 +174,7 @@ def test_tier2_lit_nmr_panel_monotonic_disambiguation():
     assert len({e.pair_id for e in panel}) == 15
     assert all(e.doi for e in panel)
 
-    report = evaluate_lit_nmr_panel(n_conf=4, calc=None)
+    report = evaluate_lit_nmr_panel(n_conf=8, calc=None)
     abls = report["ablations"]
     a0 = abls["A0_visual_top1"]["exact_stereoisomer_accuracy"]["mean"]
     a3 = abls["A3_strain_3d"]["exact_stereoisomer_accuracy"]["mean"]
@@ -186,3 +186,25 @@ def test_tier2_lit_nmr_panel_monotonic_disambiguation():
     assert a4 > a3
     assert a5 >= a4
     assert a6 >= 0.70
+
+
+def test_strain_graceful_fallback_on_silyl_and_hypervalent_candidates() -> None:
+    from ouroboros.phys.strain import evaluate_3d_strain
+
+    class _DummyMaceCalc:
+        _cache_tag = "mace_dummy"
+        _relax_steps = 0
+
+        def __getattr__(self, name: str):
+            raise RuntimeError("MACE should not be called on Si-containing molecules")
+
+    # Silyl ether (Z=14 outside MACE-OFF23 10-element set) must fall back cleanly to MMFF/UFF
+    sr_si = evaluate_3d_strain(
+        "CC(C)(C)[Si](C)(C)O[C@H]1CCCC[C@@H]1C", n_conf=2, calc=_DummyMaceCalc()
+    )
+    assert sr_si.valid and sr_si.embed_ok and sr_si.min_energy_kcal is not None
+
+    # Hypervalent -SF5 (triggers UFF fallback without crashing AngleBend.cpp)
+    sr_sf5 = evaluate_3d_strain("FS(F)(F)(F)(F)c1ccc(O)cc1", n_conf=2, calc=None)
+    assert sr_sf5.valid and sr_sf5.embed_ok
+

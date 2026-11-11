@@ -1,0 +1,2145 @@
+{
+  "benchmark": "Tier2-Authentic-Lit-NMR-30",
+  "c13_forward_stats": {
+    "mae_ppm": 5.255,
+    "pearson_r": 0.98103,
+    "rmse_ppm": 6.659
+  },
+  "c13_parity_points": [
+    {
+      "entry_id": "EXP-01",
+      "exp_ppm": 16.1,
+      "name": "(-)-Menthol (equatorial OH)",
+      "pred_ppm": 15.03,
+      "residual_ppm": -1.07
+    },
+    {
+      "entry_id": "EXP-01",
+      "exp_ppm": 21.0,
+      "name": "(-)-Menthol (equatorial OH)",
+      "pred_ppm": 16.35,
+      "residual_ppm": -4.65
+    },
+    {
+      "entry_id": "EXP-01",
+      "exp_ppm": 22.2,
+      "name": "(-)-Menthol (equatorial OH)",
+      "pred_ppm": 18.5,
+      "residual_ppm": -3.7
+    },
+    {
+      "entry_id": "EXP-01",
+      "exp_ppm": 23.1,
+      "name": "(-)-Menthol (equatorial OH)",
+      "pred_ppm": 22.53,
+      "residual_ppm": -0.57
+    },
+    {
+      "entry_id": "EXP-01",
+      "exp_ppm": 25.8,
+      "name": "(-)-Menthol (equatorial OH)",
+      "pred_ppm": 26.19,
+      "residual_ppm": 0.39
+    },
+    {
+      "entry_id": "EXP-01",
+      "exp_ppm": 31.6,
+      "name": "(-)-Menthol (equatorial OH)",
+      "pred_ppm": 26.66,
+      "residual_ppm": -4.94
+    },
+    {
+      "entry_id": "EXP-01",
+      "exp_ppm": 34.5,
+      "name": "(-)-Menthol (equatorial OH)",
+      "pred_ppm": 32.27,
+      "residual_ppm": -2.23
+    },
+    {
+      "entry_id": "EXP-01",
+      "exp_ppm": 45.0,
+      "name": "(-)-Menthol (equatorial OH)",
+      "pred_ppm": 34.5,
+      "residual_ppm": -10.5
+    },
+    {
+      "entry_id": "EXP-01",
+      "exp_ppm": 50.1,
+      "name": "(-)-Menthol (equatorial OH)",
+      "pred_ppm": 38.11,
+      "residual_ppm": -11.99
+    },
+    {
+      "entry_id": "EXP-01",
+      "exp_ppm": 71.5,
+      "name": "(-)-Menthol (equatorial OH)",
+      "pred_ppm": 67.0,
+      "residual_ppm": -4.5
+    },
+    {
+      "entry_id": "EXP-02",
+      "exp_ppm": 20.7,
+      "name": "(+)-Neomenthol (axial OH)",
+      "pred_ppm": 15.84,
+      "residual_ppm": -4.86
+    },
+    {
+      "entry_id": "EXP-02",
+      "exp_ppm": 21.2,
+      "name": "(+)-Neomenthol (axial OH)",
+      "pred_ppm": 15.87,
+      "residual_ppm": -5.33
+    },
+    {
+      "entry_id": "EXP-02",
+      "exp_ppm": 22.4,
+      "name": "(+)-Neomenthol (axial OH)",
+      "pred_ppm": 18.5,
+      "residual_ppm": -3.9
+    },
+    {
+      "entry_id": "EXP-02",
+      "exp_ppm": 24.2,
+      "name": "(+)-Neomenthol (axial OH)",
+      "pred_ppm": 21.17,
+      "residual_ppm": -3.03
+    },
+    {
+      "entry_id": "EXP-02",
+      "exp_ppm": 25.9,
+      "name": "(+)-Neomenthol (axial OH)",
+      "pred_ppm": 26.27,
+      "residual_ppm": 0.37
+    },
+    {
+      "entry_id": "EXP-02",
+      "exp_ppm": 29.2,
+      "name": "(+)-Neomenthol (axial OH)",
+      "pred_ppm": 26.73,
+      "residual_ppm": -2.47
+    },
+    {
+      "entry_id": "EXP-02",
+      "exp_ppm": 35.1,
+      "name": "(+)-Neomenthol (axial OH)",
+      "pred_ppm": 32.16,
+      "residual_ppm": -2.94
+    },
+    {
+      "entry_id": "EXP-02",
+      "exp_ppm": 42.7,
+      "name": "(+)-Neomenthol (axial OH)",
+      "pred_ppm": 32.39,
+      "residual_ppm": -10.31
+    },
+    {
+      "entry_id": "EXP-02",
+      "exp_ppm": 48.0,
+      "name": "(+)-Neomenthol (axial OH)",
+      "pred_ppm": 38.24,
+      "residual_ppm": -9.76
+    },
+    {
+      "entry_id": "EXP-02",
+      "exp_ppm": 67.7,
+      "name": "(+)-Neomenthol (axial OH)",
+      "pred_ppm": 64.27,
+      "residual_ppm": -3.43
+    },
+    {
+      "entry_id": "EXP-03",
+      "exp_ppm": 13.3,
+      "name": "(-)-Borneol (endo-2-OH)",
+      "pred_ppm": 11.45,
+      "residual_ppm": -1.85
+    },
+    {
+      "entry_id": "EXP-03",
+      "exp_ppm": 18.7,
+      "name": "(-)-Borneol (endo-2-OH)",
+      "pred_ppm": 11.51,
+      "residual_ppm": -7.19
+    },
+    {
+      "entry_id": "EXP-03",
+      "exp_ppm": 20.2,
+      "name": "(-)-Borneol (endo-2-OH)",
+      "pred_ppm": 14.73,
+      "residual_ppm": -5.47
+    },
+    {
+      "entry_id": "EXP-03",
+      "exp_ppm": 25.9,
+      "name": "(-)-Borneol (endo-2-OH)",
+      "pred_ppm": 18.9,
+      "residual_ppm": -7.0
+    },
+    {
+      "entry_id": "EXP-03",
+      "exp_ppm": 28.3,
+      "name": "(-)-Borneol (endo-2-OH)",
+      "pred_ppm": 22.87,
+      "residual_ppm": -5.43
+    },
+    {
+      "entry_id": "EXP-03",
+      "exp_ppm": 39.0,
+      "name": "(-)-Borneol (endo-2-OH)",
+      "pred_ppm": 23.35,
+      "residual_ppm": -15.65
+    },
+    {
+      "entry_id": "EXP-03",
+      "exp_ppm": 45.1,
+      "name": "(-)-Borneol (endo-2-OH)",
+      "pred_ppm": 46.74,
+      "residual_ppm": 1.64
+    },
+    {
+      "entry_id": "EXP-03",
+      "exp_ppm": 48.0,
+      "name": "(-)-Borneol (endo-2-OH)",
+      "pred_ppm": 53.54,
+      "residual_ppm": 5.54
+    },
+    {
+      "entry_id": "EXP-03",
+      "exp_ppm": 49.5,
+      "name": "(-)-Borneol (endo-2-OH)",
+      "pred_ppm": 55.85,
+      "residual_ppm": 6.35
+    },
+    {
+      "entry_id": "EXP-03",
+      "exp_ppm": 77.2,
+      "name": "(-)-Borneol (endo-2-OH)",
+      "pred_ppm": 64.76,
+      "residual_ppm": -12.44
+    },
+    {
+      "entry_id": "EXP-04",
+      "exp_ppm": 11.3,
+      "name": "Isoborneol (exo-2-OH)",
+      "pred_ppm": 11.09,
+      "residual_ppm": -0.21
+    },
+    {
+      "entry_id": "EXP-04",
+      "exp_ppm": 20.1,
+      "name": "Isoborneol (exo-2-OH)",
+      "pred_ppm": 11.21,
+      "residual_ppm": -8.89
+    },
+    {
+      "entry_id": "EXP-04",
+      "exp_ppm": 20.5,
+      "name": "Isoborneol (exo-2-OH)",
+      "pred_ppm": 12.39,
+      "residual_ppm": -8.11
+    },
+    {
+      "entry_id": "EXP-04",
+      "exp_ppm": 27.2,
+      "name": "Isoborneol (exo-2-OH)",
+      "pred_ppm": 22.41,
+      "residual_ppm": -4.79
+    },
+    {
+      "entry_id": "EXP-04",
+      "exp_ppm": 33.9,
+      "name": "Isoborneol (exo-2-OH)",
+      "pred_ppm": 23.38,
+      "residual_ppm": -10.52
+    },
+    {
+      "entry_id": "EXP-04",
+      "exp_ppm": 40.4,
+      "name": "Isoborneol (exo-2-OH)",
+      "pred_ppm": 23.43,
+      "residual_ppm": -16.97
+    },
+    {
+      "entry_id": "EXP-04",
+      "exp_ppm": 45.0,
+      "name": "Isoborneol (exo-2-OH)",
+      "pred_ppm": 46.74,
+      "residual_ppm": 1.74
+    },
+    {
+      "entry_id": "EXP-04",
+      "exp_ppm": 46.3,
+      "name": "Isoborneol (exo-2-OH)",
+      "pred_ppm": 51.72,
+      "residual_ppm": 5.42
+    },
+    {
+      "entry_id": "EXP-04",
+      "exp_ppm": 48.9,
+      "name": "Isoborneol (exo-2-OH)",
+      "pred_ppm": 55.85,
+      "residual_ppm": 6.95
+    },
+    {
+      "entry_id": "EXP-04",
+      "exp_ppm": 79.8,
+      "name": "Isoborneol (exo-2-OH)",
+      "pred_ppm": 65.2,
+      "residual_ppm": -14.6
+    },
+    {
+      "entry_id": "EXP-05",
+      "exp_ppm": 24.5,
+      "name": "exo-2-Norborneol",
+      "pred_ppm": 25.94,
+      "residual_ppm": 1.44
+    },
+    {
+      "entry_id": "EXP-05",
+      "exp_ppm": 28.8,
+      "name": "exo-2-Norborneol",
+      "pred_ppm": 26.16,
+      "residual_ppm": -2.64
+    },
+    {
+      "entry_id": "EXP-05",
+      "exp_ppm": 34.5,
+      "name": "exo-2-Norborneol",
+      "pred_ppm": 26.67,
+      "residual_ppm": -7.83
+    },
+    {
+      "entry_id": "EXP-05",
+      "exp_ppm": 35.5,
+      "name": "exo-2-Norborneol",
+      "pred_ppm": 32.88,
+      "residual_ppm": -2.62
+    },
+    {
+      "entry_id": "EXP-05",
+      "exp_ppm": 42.3,
+      "name": "exo-2-Norborneol",
+      "pred_ppm": 45.44,
+      "residual_ppm": 3.14
+    },
+    {
+      "entry_id": "EXP-05",
+      "exp_ppm": 44.3,
+      "name": "exo-2-Norborneol",
+      "pred_ppm": 45.96,
+      "residual_ppm": 1.66
+    },
+    {
+      "entry_id": "EXP-05",
+      "exp_ppm": 74.9,
+      "name": "exo-2-Norborneol",
+      "pred_ppm": 68.97,
+      "residual_ppm": -5.93
+    },
+    {
+      "entry_id": "EXP-06",
+      "exp_ppm": 20.1,
+      "name": "endo-2-Norborneol",
+      "pred_ppm": 22.07,
+      "residual_ppm": 1.97
+    },
+    {
+      "entry_id": "EXP-06",
+      "exp_ppm": 30.3,
+      "name": "endo-2-Norborneol",
+      "pred_ppm": 26.23,
+      "residual_ppm": -4.07
+    },
+    {
+      "entry_id": "EXP-06",
+      "exp_ppm": 37.3,
+      "name": "endo-2-Norborneol",
+      "pred_ppm": 26.62,
+      "residual_ppm": -10.68
+    },
+    {
+      "entry_id": "EXP-06",
+      "exp_ppm": 37.7,
+      "name": "endo-2-Norborneol",
+      "pred_ppm": 35.69,
+      "residual_ppm": -2.01
+    },
+    {
+      "entry_id": "EXP-06",
+      "exp_ppm": 39.7,
+      "name": "endo-2-Norborneol",
+      "pred_ppm": 45.44,
+      "residual_ppm": 5.74
+    },
+    {
+      "entry_id": "EXP-06",
+      "exp_ppm": 43.1,
+      "name": "endo-2-Norborneol",
+      "pred_ppm": 45.96,
+      "residual_ppm": 2.86
+    },
+    {
+      "entry_id": "EXP-06",
+      "exp_ppm": 72.5,
+      "name": "endo-2-Norborneol",
+      "pred_ppm": 68.63,
+      "residual_ppm": -3.87
+    },
+    {
+      "entry_id": "EXP-07",
+      "exp_ppm": 25.7,
+      "name": "trans-4-tert-Butylcyclohexanol",
+      "pred_ppm": 16.4,
+      "residual_ppm": -9.3
+    },
+    {
+      "entry_id": "EXP-07",
+      "exp_ppm": 27.7,
+      "name": "trans-4-tert-Butylcyclohexanol",
+      "pred_ppm": 22.0,
+      "residual_ppm": -5.7
+    },
+    {
+      "entry_id": "EXP-07",
+      "exp_ppm": 32.3,
+      "name": "trans-4-tert-Butylcyclohexanol",
+      "pred_ppm": 25.98,
+      "residual_ppm": -6.32
+    },
+    {
+      "entry_id": "EXP-07",
+      "exp_ppm": 36.1,
+      "name": "trans-4-tert-Butylcyclohexanol",
+      "pred_ppm": 38.26,
+      "residual_ppm": 2.16
+    },
+    {
+      "entry_id": "EXP-07",
+      "exp_ppm": 47.3,
+      "name": "trans-4-tert-Butylcyclohexanol",
+      "pred_ppm": 44.3,
+      "residual_ppm": -3.0
+    },
+    {
+      "entry_id": "EXP-07",
+      "exp_ppm": 71.3,
+      "name": "trans-4-tert-Butylcyclohexanol",
+      "pred_ppm": 70.41,
+      "residual_ppm": -0.89
+    },
+    {
+      "entry_id": "EXP-08",
+      "exp_ppm": 21.0,
+      "name": "cis-4-tert-Butylcyclohexanol",
+      "pred_ppm": 16.4,
+      "residual_ppm": -4.6
+    },
+    {
+      "entry_id": "EXP-08",
+      "exp_ppm": 27.5,
+      "name": "cis-4-tert-Butylcyclohexanol",
+      "pred_ppm": 19.16,
+      "residual_ppm": -8.34
+    },
+    {
+      "entry_id": "EXP-08",
+      "exp_ppm": 32.5,
+      "name": "cis-4-tert-Butylcyclohexanol",
+      "pred_ppm": 26.02,
+      "residual_ppm": -6.48
+    },
+    {
+      "entry_id": "EXP-08",
+      "exp_ppm": 33.4,
+      "name": "cis-4-tert-Butylcyclohexanol",
+      "pred_ppm": 38.34,
+      "residual_ppm": 4.94
+    },
+    {
+      "entry_id": "EXP-08",
+      "exp_ppm": 48.2,
+      "name": "cis-4-tert-Butylcyclohexanol",
+      "pred_ppm": 44.3,
+      "residual_ppm": -3.9
+    },
+    {
+      "entry_id": "EXP-08",
+      "exp_ppm": 65.9,
+      "name": "cis-4-tert-Butylcyclohexanol",
+      "pred_ppm": 67.5,
+      "residual_ppm": 1.6
+    },
+    {
+      "entry_id": "EXP-09",
+      "exp_ppm": 22.8,
+      "name": "cis,cis-1,3,5-Trimethylcyclohexane",
+      "pred_ppm": 18.5,
+      "residual_ppm": -4.3
+    },
+    {
+      "entry_id": "EXP-09",
+      "exp_ppm": 32.8,
+      "name": "cis,cis-1,3,5-Trimethylcyclohexane",
+      "pred_ppm": 26.95,
+      "residual_ppm": -5.85
+    },
+    {
+      "entry_id": "EXP-09",
+      "exp_ppm": 44.2,
+      "name": "cis,cis-1,3,5-Trimethylcyclohexane",
+      "pred_ppm": 34.26,
+      "residual_ppm": -9.94
+    },
+    {
+      "entry_id": "EXP-10",
+      "exp_ppm": 19.0,
+      "name": "cis,trans-1,3,5-Trimethylcyclohexane",
+      "pred_ppm": 15.35,
+      "residual_ppm": -3.65
+    },
+    {
+      "entry_id": "EXP-10",
+      "exp_ppm": 22.9,
+      "name": "cis,trans-1,3,5-Trimethylcyclohexane",
+      "pred_ppm": 18.5,
+      "residual_ppm": -4.4
+    },
+    {
+      "entry_id": "EXP-10",
+      "exp_ppm": 28.5,
+      "name": "cis,trans-1,3,5-Trimethylcyclohexane",
+      "pred_ppm": 26.98,
+      "residual_ppm": -1.52
+    },
+    {
+      "entry_id": "EXP-10",
+      "exp_ppm": 31.9,
+      "name": "cis,trans-1,3,5-Trimethylcyclohexane",
+      "pred_ppm": 27.14,
+      "residual_ppm": -4.76
+    },
+    {
+      "entry_id": "EXP-10",
+      "exp_ppm": 40.9,
+      "name": "cis,trans-1,3,5-Trimethylcyclohexane",
+      "pred_ppm": 32.71,
+      "residual_ppm": -8.19
+    },
+    {
+      "entry_id": "EXP-10",
+      "exp_ppm": 45.0,
+      "name": "cis,trans-1,3,5-Trimethylcyclohexane",
+      "pred_ppm": 34.44,
+      "residual_ppm": -10.56
+    },
+    {
+      "entry_id": "EXP-11",
+      "exp_ppm": 43.9,
+      "name": "cis,cis-1,3,5-Cyclohexanetriol",
+      "pred_ppm": 26.67,
+      "residual_ppm": -17.23
+    },
+    {
+      "entry_id": "EXP-11",
+      "exp_ppm": 68.2,
+      "name": "cis,cis-1,3,5-Cyclohexanetriol",
+      "pred_ppm": 61.6,
+      "residual_ppm": -6.6
+    },
+    {
+      "entry_id": "EXP-12",
+      "exp_ppm": 40.3,
+      "name": "cis,trans-1,3,5-Cyclohexanetriol",
+      "pred_ppm": 26.62,
+      "residual_ppm": -13.68
+    },
+    {
+      "entry_id": "EXP-12",
+      "exp_ppm": 42.1,
+      "name": "cis,trans-1,3,5-Cyclohexanetriol",
+      "pred_ppm": 26.64,
+      "residual_ppm": -15.46
+    },
+    {
+      "entry_id": "EXP-12",
+      "exp_ppm": 65.4,
+      "name": "cis,trans-1,3,5-Cyclohexanetriol",
+      "pred_ppm": 64.38,
+      "residual_ppm": -1.02
+    },
+    {
+      "entry_id": "EXP-12",
+      "exp_ppm": 67.5,
+      "name": "cis,trans-1,3,5-Cyclohexanetriol",
+      "pred_ppm": 64.46,
+      "residual_ppm": -3.04
+    },
+    {
+      "entry_id": "EXP-13",
+      "exp_ppm": 27.0,
+      "name": "trans-Decalin",
+      "pred_ppm": 24.99,
+      "residual_ppm": -2.01
+    },
+    {
+      "entry_id": "EXP-13",
+      "exp_ppm": 34.4,
+      "name": "trans-Decalin",
+      "pred_ppm": 26.55,
+      "residual_ppm": -7.85
+    },
+    {
+      "entry_id": "EXP-13",
+      "exp_ppm": 43.8,
+      "name": "trans-Decalin",
+      "pred_ppm": 32.78,
+      "residual_ppm": -11.02
+    },
+    {
+      "entry_id": "EXP-14",
+      "exp_ppm": 24.5,
+      "name": "cis-Decalin",
+      "pred_ppm": 24.77,
+      "residual_ppm": 0.27
+    },
+    {
+      "entry_id": "EXP-14",
+      "exp_ppm": 29.7,
+      "name": "cis-Decalin",
+      "pred_ppm": 25.21,
+      "residual_ppm": -4.49
+    },
+    {
+      "entry_id": "EXP-14",
+      "exp_ppm": 36.5,
+      "name": "cis-Decalin",
+      "pred_ppm": 33.83,
+      "residual_ppm": -2.67
+    },
+    {
+      "entry_id": "EXP-15",
+      "exp_ppm": 20.2,
+      "name": "trans-1,2-Dimethylcyclohexane",
+      "pred_ppm": 16.18,
+      "residual_ppm": -4.02
+    },
+    {
+      "entry_id": "EXP-15",
+      "exp_ppm": 26.9,
+      "name": "trans-1,2-Dimethylcyclohexane",
+      "pred_ppm": 25.67,
+      "residual_ppm": -1.23
+    },
+    {
+      "entry_id": "EXP-15",
+      "exp_ppm": 36.0,
+      "name": "trans-1,2-Dimethylcyclohexane",
+      "pred_ppm": 26.07,
+      "residual_ppm": -9.93
+    },
+    {
+      "entry_id": "EXP-15",
+      "exp_ppm": 39.6,
+      "name": "trans-1,2-Dimethylcyclohexane",
+      "pred_ppm": 34.98,
+      "residual_ppm": -4.62
+    },
+    {
+      "entry_id": "EXP-16",
+      "exp_ppm": 15.7,
+      "name": "cis-1,2-Dimethylcyclohexane",
+      "pred_ppm": 14.4,
+      "residual_ppm": -1.3
+    },
+    {
+      "entry_id": "EXP-16",
+      "exp_ppm": 23.7,
+      "name": "cis-1,2-Dimethylcyclohexane",
+      "pred_ppm": 24.91,
+      "residual_ppm": 1.21
+    },
+    {
+      "entry_id": "EXP-16",
+      "exp_ppm": 31.5,
+      "name": "cis-1,2-Dimethylcyclohexane",
+      "pred_ppm": 25.45,
+      "residual_ppm": -6.05
+    },
+    {
+      "entry_id": "EXP-16",
+      "exp_ppm": 34.9,
+      "name": "cis-1,2-Dimethylcyclohexane",
+      "pred_ppm": 35.01,
+      "residual_ppm": 0.11
+    },
+    {
+      "entry_id": "EXP-17",
+      "exp_ppm": 22.7,
+      "name": "trans-1,4-Dimethylcyclohexane",
+      "pred_ppm": 16.88,
+      "residual_ppm": -5.82
+    },
+    {
+      "entry_id": "EXP-17",
+      "exp_ppm": 32.6,
+      "name": "trans-1,4-Dimethylcyclohexane",
+      "pred_ppm": 25.41,
+      "residual_ppm": -7.19
+    },
+    {
+      "entry_id": "EXP-17",
+      "exp_ppm": 35.6,
+      "name": "trans-1,4-Dimethylcyclohexane",
+      "pred_ppm": 34.52,
+      "residual_ppm": -1.08
+    },
+    {
+      "entry_id": "EXP-18",
+      "exp_ppm": 20.2,
+      "name": "cis-1,4-Dimethylcyclohexane",
+      "pred_ppm": 18.49,
+      "residual_ppm": -1.71
+    },
+    {
+      "entry_id": "EXP-18",
+      "exp_ppm": 30.1,
+      "name": "cis-1,4-Dimethylcyclohexane",
+      "pred_ppm": 26.19,
+      "residual_ppm": -3.91
+    },
+    {
+      "entry_id": "EXP-18",
+      "exp_ppm": 30.9,
+      "name": "cis-1,4-Dimethylcyclohexane",
+      "pred_ppm": 34.35,
+      "residual_ppm": 3.45
+    },
+    {
+      "entry_id": "EXP-19",
+      "exp_ppm": 24.5,
+      "name": "trans-1,2-Cyclohexanediol",
+      "pred_ppm": 25.02,
+      "residual_ppm": 0.52
+    },
+    {
+      "entry_id": "EXP-19",
+      "exp_ppm": 33.0,
+      "name": "trans-1,2-Cyclohexanediol",
+      "pred_ppm": 25.58,
+      "residual_ppm": -7.42
+    },
+    {
+      "entry_id": "EXP-19",
+      "exp_ppm": 75.5,
+      "name": "trans-1,2-Cyclohexanediol",
+      "pred_ppm": 70.04,
+      "residual_ppm": -5.46
+    },
+    {
+      "entry_id": "EXP-20",
+      "exp_ppm": 21.5,
+      "name": "cis-1,2-Cyclohexanediol",
+      "pred_ppm": 24.2,
+      "residual_ppm": 2.7
+    },
+    {
+      "entry_id": "EXP-20",
+      "exp_ppm": 30.1,
+      "name": "cis-1,2-Cyclohexanediol",
+      "pred_ppm": 24.76,
+      "residual_ppm": -5.34
+    },
+    {
+      "entry_id": "EXP-20",
+      "exp_ppm": 70.8,
+      "name": "cis-1,2-Cyclohexanediol",
+      "pred_ppm": 69.16,
+      "residual_ppm": -1.64
+    },
+    {
+      "entry_id": "EXP-21",
+      "exp_ppm": 23.0,
+      "name": "cis-1,3-Dimethylcyclohexane (diequatorial)",
+      "pred_ppm": 18.5,
+      "residual_ppm": -4.5
+    },
+    {
+      "entry_id": "EXP-21",
+      "exp_ppm": 26.6,
+      "name": "cis-1,3-Dimethylcyclohexane (diequatorial)",
+      "pred_ppm": 25.54,
+      "residual_ppm": -1.06
+    },
+    {
+      "entry_id": "EXP-21",
+      "exp_ppm": 33.1,
+      "name": "cis-1,3-Dimethylcyclohexane (diequatorial)",
+      "pred_ppm": 26.3,
+      "residual_ppm": -6.8
+    },
+    {
+      "entry_id": "EXP-21",
+      "exp_ppm": 35.2,
+      "name": "cis-1,3-Dimethylcyclohexane (diequatorial)",
+      "pred_ppm": 26.84,
+      "residual_ppm": -8.36
+    },
+    {
+      "entry_id": "EXP-21",
+      "exp_ppm": 44.7,
+      "name": "cis-1,3-Dimethylcyclohexane (diequatorial)",
+      "pred_ppm": 34.25,
+      "residual_ppm": -10.45
+    },
+    {
+      "entry_id": "EXP-22",
+      "exp_ppm": 20.8,
+      "name": "trans-1,3-Dimethylcyclohexane (axial-equatorial)",
+      "pred_ppm": 16.9,
+      "residual_ppm": -3.9
+    },
+    {
+      "entry_id": "EXP-22",
+      "exp_ppm": 21.0,
+      "name": "trans-1,3-Dimethylcyclohexane (axial-equatorial)",
+      "pred_ppm": 23.95,
+      "residual_ppm": 2.95
+    },
+    {
+      "entry_id": "EXP-22",
+      "exp_ppm": 27.3,
+      "name": "trans-1,3-Dimethylcyclohexane (axial-equatorial)",
+      "pred_ppm": 26.4,
+      "residual_ppm": -0.9
+    },
+    {
+      "entry_id": "EXP-22",
+      "exp_ppm": 33.9,
+      "name": "trans-1,3-Dimethylcyclohexane (axial-equatorial)",
+      "pred_ppm": 26.86,
+      "residual_ppm": -7.04
+    },
+    {
+      "entry_id": "EXP-22",
+      "exp_ppm": 41.3,
+      "name": "trans-1,3-Dimethylcyclohexane (axial-equatorial)",
+      "pred_ppm": 33.57,
+      "residual_ppm": -7.73
+    },
+    {
+      "entry_id": "EXP-23",
+      "exp_ppm": 20.9,
+      "name": "(+)-alpha-Pinene",
+      "pred_ppm": 14.92,
+      "residual_ppm": -5.98
+    },
+    {
+      "entry_id": "EXP-23",
+      "exp_ppm": 23.0,
+      "name": "(+)-alpha-Pinene",
+      "pred_ppm": 14.92,
+      "residual_ppm": -8.08
+    },
+    {
+      "entry_id": "EXP-23",
+      "exp_ppm": 26.4,
+      "name": "(+)-alpha-Pinene",
+      "pred_ppm": 18.5,
+      "residual_ppm": -7.9
+    },
+    {
+      "entry_id": "EXP-23",
+      "exp_ppm": 31.3,
+      "name": "(+)-alpha-Pinene",
+      "pred_ppm": 22.94,
+      "residual_ppm": -8.36
+    },
+    {
+      "entry_id": "EXP-23",
+      "exp_ppm": 31.5,
+      "name": "(+)-alpha-Pinene",
+      "pred_ppm": 27.91,
+      "residual_ppm": -3.59
+    },
+    {
+      "entry_id": "EXP-23",
+      "exp_ppm": 38.1,
+      "name": "(+)-alpha-Pinene",
+      "pred_ppm": 43.14,
+      "residual_ppm": 5.04
+    },
+    {
+      "entry_id": "EXP-23",
+      "exp_ppm": 40.8,
+      "name": "(+)-alpha-Pinene",
+      "pred_ppm": 43.79,
+      "residual_ppm": 2.99
+    },
+    {
+      "entry_id": "EXP-23",
+      "exp_ppm": 47.1,
+      "name": "(+)-alpha-Pinene",
+      "pred_ppm": 50.63,
+      "residual_ppm": 3.53
+    },
+    {
+      "entry_id": "EXP-23",
+      "exp_ppm": 116.1,
+      "name": "(+)-alpha-Pinene",
+      "pred_ppm": 135.14,
+      "residual_ppm": 19.04
+    },
+    {
+      "entry_id": "EXP-23",
+      "exp_ppm": 144.6,
+      "name": "(+)-alpha-Pinene",
+      "pred_ppm": 145.63,
+      "residual_ppm": 1.03
+    },
+    {
+      "entry_id": "EXP-24",
+      "exp_ppm": 21.9,
+      "name": "(-)-beta-Pinene",
+      "pred_ppm": 14.57,
+      "residual_ppm": -7.33
+    },
+    {
+      "entry_id": "EXP-24",
+      "exp_ppm": 23.6,
+      "name": "(-)-beta-Pinene",
+      "pred_ppm": 14.76,
+      "residual_ppm": -8.84
+    },
+    {
+      "entry_id": "EXP-24",
+      "exp_ppm": 23.7,
+      "name": "(-)-beta-Pinene",
+      "pred_ppm": 22.73,
+      "residual_ppm": -0.97
+    },
+    {
+      "entry_id": "EXP-24",
+      "exp_ppm": 26.2,
+      "name": "(-)-beta-Pinene",
+      "pred_ppm": 22.98,
+      "residual_ppm": -3.22
+    },
+    {
+      "entry_id": "EXP-24",
+      "exp_ppm": 27.0,
+      "name": "(-)-beta-Pinene",
+      "pred_ppm": 28.03,
+      "residual_ppm": 1.03
+    },
+    {
+      "entry_id": "EXP-24",
+      "exp_ppm": 37.0,
+      "name": "(-)-beta-Pinene",
+      "pred_ppm": 43.14,
+      "residual_ppm": 6.14
+    },
+    {
+      "entry_id": "EXP-24",
+      "exp_ppm": 40.6,
+      "name": "(-)-beta-Pinene",
+      "pred_ppm": 43.79,
+      "residual_ppm": 3.19
+    },
+    {
+      "entry_id": "EXP-24",
+      "exp_ppm": 51.9,
+      "name": "(-)-beta-Pinene",
+      "pred_ppm": 51.92,
+      "residual_ppm": 0.02
+    },
+    {
+      "entry_id": "EXP-24",
+      "exp_ppm": 106.1,
+      "name": "(-)-beta-Pinene",
+      "pred_ppm": 108.0,
+      "residual_ppm": 1.9
+    },
+    {
+      "entry_id": "EXP-24",
+      "exp_ppm": 152.0,
+      "name": "(-)-beta-Pinene",
+      "pred_ppm": 145.22,
+      "residual_ppm": -6.78
+    },
+    {
+      "entry_id": "EXP-25",
+      "exp_ppm": 9.3,
+      "name": "(+)-Camphor",
+      "pred_ppm": 10.93,
+      "residual_ppm": 1.63
+    },
+    {
+      "entry_id": "EXP-25",
+      "exp_ppm": 19.1,
+      "name": "(+)-Camphor",
+      "pred_ppm": 11.63,
+      "residual_ppm": -7.47
+    },
+    {
+      "entry_id": "EXP-25",
+      "exp_ppm": 19.8,
+      "name": "(+)-Camphor",
+      "pred_ppm": 12.83,
+      "residual_ppm": -6.97
+    },
+    {
+      "entry_id": "EXP-25",
+      "exp_ppm": 27.1,
+      "name": "(+)-Camphor",
+      "pred_ppm": 21.74,
+      "residual_ppm": -5.36
+    },
+    {
+      "entry_id": "EXP-25",
+      "exp_ppm": 29.9,
+      "name": "(+)-Camphor",
+      "pred_ppm": 22.84,
+      "residual_ppm": -7.06
+    },
+    {
+      "entry_id": "EXP-25",
+      "exp_ppm": 43.0,
+      "name": "(+)-Camphor",
+      "pred_ppm": 23.59,
+      "residual_ppm": -19.41
+    },
+    {
+      "entry_id": "EXP-25",
+      "exp_ppm": 43.3,
+      "name": "(+)-Camphor",
+      "pred_ppm": 46.74,
+      "residual_ppm": 3.44
+    },
+    {
+      "entry_id": "EXP-25",
+      "exp_ppm": 46.8,
+      "name": "(+)-Camphor",
+      "pred_ppm": 53.54,
+      "residual_ppm": 6.74
+    },
+    {
+      "entry_id": "EXP-25",
+      "exp_ppm": 57.7,
+      "name": "(+)-Camphor",
+      "pred_ppm": 55.85,
+      "residual_ppm": -1.85
+    },
+    {
+      "entry_id": "EXP-25",
+      "exp_ppm": 219.6,
+      "name": "(+)-Camphor",
+      "pred_ppm": 201.36,
+      "residual_ppm": -18.24
+    },
+    {
+      "entry_id": "EXP-26",
+      "exp_ppm": 14.7,
+      "name": "(+)-Fenchone",
+      "pred_ppm": 14.24,
+      "residual_ppm": -0.46
+    },
+    {
+      "entry_id": "EXP-26",
+      "exp_ppm": 21.8,
+      "name": "(+)-Fenchone",
+      "pred_ppm": 14.5,
+      "residual_ppm": -7.3
+    },
+    {
+      "entry_id": "EXP-26",
+      "exp_ppm": 23.4,
+      "name": "(+)-Fenchone",
+      "pred_ppm": 15.67,
+      "residual_ppm": -7.73
+    },
+    {
+      "entry_id": "EXP-26",
+      "exp_ppm": 25.1,
+      "name": "(+)-Fenchone",
+      "pred_ppm": 22.71,
+      "residual_ppm": -2.39
+    },
+    {
+      "entry_id": "EXP-26",
+      "exp_ppm": 31.8,
+      "name": "(+)-Fenchone",
+      "pred_ppm": 26.27,
+      "residual_ppm": -5.53
+    },
+    {
+      "entry_id": "EXP-26",
+      "exp_ppm": 41.7,
+      "name": "(+)-Fenchone",
+      "pred_ppm": 34.28,
+      "residual_ppm": -7.42
+    },
+    {
+      "entry_id": "EXP-26",
+      "exp_ppm": 45.4,
+      "name": "(+)-Fenchone",
+      "pred_ppm": 44.37,
+      "residual_ppm": -1.03
+    },
+    {
+      "entry_id": "EXP-26",
+      "exp_ppm": 47.4,
+      "name": "(+)-Fenchone",
+      "pred_ppm": 46.74,
+      "residual_ppm": -0.66
+    },
+    {
+      "entry_id": "EXP-26",
+      "exp_ppm": 54.2,
+      "name": "(+)-Fenchone",
+      "pred_ppm": 54.56,
+      "residual_ppm": 0.36
+    },
+    {
+      "entry_id": "EXP-26",
+      "exp_ppm": 223.1,
+      "name": "(+)-Fenchone",
+      "pred_ppm": 203.13,
+      "residual_ppm": -19.97
+    },
+    {
+      "entry_id": "EXP-27",
+      "exp_ppm": 18.7,
+      "name": "trans-2-Methylcyclohexanol",
+      "pred_ppm": 15.14,
+      "residual_ppm": -3.56
+    },
+    {
+      "entry_id": "EXP-27",
+      "exp_ppm": 25.4,
+      "name": "trans-2-Methylcyclohexanol",
+      "pred_ppm": 25.32,
+      "residual_ppm": -0.08
+    },
+    {
+      "entry_id": "EXP-27",
+      "exp_ppm": 25.9,
+      "name": "trans-2-Methylcyclohexanol",
+      "pred_ppm": 25.33,
+      "residual_ppm": -0.57
+    },
+    {
+      "entry_id": "EXP-27",
+      "exp_ppm": 34.4,
+      "name": "trans-2-Methylcyclohexanol",
+      "pred_ppm": 25.8,
+      "residual_ppm": -8.6
+    },
+    {
+      "entry_id": "EXP-27",
+      "exp_ppm": 35.6,
+      "name": "trans-2-Methylcyclohexanol",
+      "pred_ppm": 25.81,
+      "residual_ppm": -9.79
+    },
+    {
+      "entry_id": "EXP-27",
+      "exp_ppm": 40.4,
+      "name": "trans-2-Methylcyclohexanol",
+      "pred_ppm": 34.83,
+      "residual_ppm": -5.57
+    },
+    {
+      "entry_id": "EXP-27",
+      "exp_ppm": 76.7,
+      "name": "trans-2-Methylcyclohexanol",
+      "pred_ppm": 68.83,
+      "residual_ppm": -7.87
+    },
+    {
+      "entry_id": "EXP-28",
+      "exp_ppm": 16.5,
+      "name": "cis-2-Methylcyclohexanol",
+      "pred_ppm": 13.52,
+      "residual_ppm": -2.98
+    },
+    {
+      "entry_id": "EXP-28",
+      "exp_ppm": 21.1,
+      "name": "cis-2-Methylcyclohexanol",
+      "pred_ppm": 23.88,
+      "residual_ppm": 2.78
+    },
+    {
+      "entry_id": "EXP-28",
+      "exp_ppm": 24.4,
+      "name": "cis-2-Methylcyclohexanol",
+      "pred_ppm": 24.43,
+      "residual_ppm": 0.03
+    },
+    {
+      "entry_id": "EXP-28",
+      "exp_ppm": 29.2,
+      "name": "cis-2-Methylcyclohexanol",
+      "pred_ppm": 25.11,
+      "residual_ppm": -4.09
+    },
+    {
+      "entry_id": "EXP-28",
+      "exp_ppm": 32.6,
+      "name": "cis-2-Methylcyclohexanol",
+      "pred_ppm": 25.6,
+      "residual_ppm": -7.0
+    },
+    {
+      "entry_id": "EXP-28",
+      "exp_ppm": 36.1,
+      "name": "cis-2-Methylcyclohexanol",
+      "pred_ppm": 34.85,
+      "residual_ppm": -1.25
+    },
+    {
+      "entry_id": "EXP-28",
+      "exp_ppm": 71.3,
+      "name": "cis-2-Methylcyclohexanol",
+      "pred_ppm": 66.83,
+      "residual_ppm": -4.47
+    },
+    {
+      "entry_id": "EXP-29",
+      "exp_ppm": 21.8,
+      "name": "trans-4-Methylcyclohexanol",
+      "pred_ppm": 15.23,
+      "residual_ppm": -6.57
+    },
+    {
+      "entry_id": "EXP-29",
+      "exp_ppm": 31.4,
+      "name": "trans-4-Methylcyclohexanol",
+      "pred_ppm": 24.45,
+      "residual_ppm": -6.95
+    },
+    {
+      "entry_id": "EXP-29",
+      "exp_ppm": 33.3,
+      "name": "trans-4-Methylcyclohexanol",
+      "pred_ppm": 26.22,
+      "residual_ppm": -7.08
+    },
+    {
+      "entry_id": "EXP-29",
+      "exp_ppm": 35.4,
+      "name": "trans-4-Methylcyclohexanol",
+      "pred_ppm": 34.42,
+      "residual_ppm": -0.98
+    },
+    {
+      "entry_id": "EXP-29",
+      "exp_ppm": 70.6,
+      "name": "trans-4-Methylcyclohexanol",
+      "pred_ppm": 70.32,
+      "residual_ppm": -0.28
+    },
+    {
+      "entry_id": "EXP-30",
+      "exp_ppm": 21.1,
+      "name": "cis-4-Methylcyclohexanol",
+      "pred_ppm": 18.37,
+      "residual_ppm": -2.73
+    },
+    {
+      "entry_id": "EXP-30",
+      "exp_ppm": 29.0,
+      "name": "cis-4-Methylcyclohexanol",
+      "pred_ppm": 26.0,
+      "residual_ppm": -3.0
+    },
+    {
+      "entry_id": "EXP-30",
+      "exp_ppm": 30.8,
+      "name": "cis-4-Methylcyclohexanol",
+      "pred_ppm": 26.08,
+      "residual_ppm": -4.72
+    },
+    {
+      "entry_id": "EXP-30",
+      "exp_ppm": 32.1,
+      "name": "cis-4-Methylcyclohexanol",
+      "pred_ppm": 34.25,
+      "residual_ppm": 2.15
+    },
+    {
+      "entry_id": "EXP-30",
+      "exp_ppm": 66.3,
+      "name": "cis-4-Methylcyclohexanol",
+      "pred_ppm": 70.03,
+      "residual_ppm": 3.73
+    }
+  ],
+  "closed_pool_a6_accuracy": {
+    "mace_off23_medium": {
+      "ci_high": 0.8333333333333334,
+      "ci_low": 0.5,
+      "mean": 0.6666666666666666,
+      "n": 30
+    },
+    "mmff94s": {
+      "ci_high": 0.8666666666666667,
+      "ci_low": 0.5666666666666667,
+      "mean": 0.7333333333333333,
+      "n": 30
+    }
+  },
+  "elapsed_sec": 101.55,
+  "mace_off23_medium": {
+    "ablations": {
+      "A0_visual_top1": {
+        "exact_stereoisomer_accuracy": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 30
+        }
+      },
+      "A1_rdkit_valid": {
+        "exact_stereoisomer_accuracy": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 30
+        }
+      },
+      "A2_hrms": {
+        "exact_stereoisomer_accuracy": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 30
+        }
+      },
+      "A3_strain_3d": {
+        "exact_stereoisomer_accuracy": {
+          "ci_high": 0.4666666666666667,
+          "ci_low": 0.13333333333333333,
+          "mean": 0.3,
+          "n": 30
+        }
+      },
+      "A4_nmr_13c": {
+        "exact_stereoisomer_accuracy": {
+          "ci_high": 0.7666666666666667,
+          "ci_low": 0.43333333333333335,
+          "mean": 0.6,
+          "n": 30
+        }
+      },
+      "A5_nmr_13c_1h_j": {
+        "exact_stereoisomer_accuracy": {
+          "ci_high": 0.8333333333333334,
+          "ci_low": 0.5,
+          "mean": 0.6666666666666666,
+          "n": 30
+        }
+      },
+      "A6_full_posterior": {
+        "exact_stereoisomer_accuracy": {
+          "ci_high": 0.8333333333333334,
+          "ci_low": 0.5,
+          "mean": 0.6666666666666666,
+          "n": 30
+        },
+        "per_entry": [
+          {
+            "c13_mae_ppm": 4.453,
+            "correct": true,
+            "doi": "10.1002/mrc.1270070907",
+            "entry_id": "EXP-01",
+            "j_hh_mae_hz": 0.162,
+            "name": "(-)-Menthol (equatorial OH)",
+            "posterior_prob": 0.5564,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "CC(C)[C@@H]1CC[C@@H](C)C[C@H]1O",
+            "truth_smiles": "CC(C)[C@@H]1CC[C@@H](C)C[C@H]1O"
+          },
+          {
+            "c13_mae_ppm": 4.641,
+            "correct": true,
+            "doi": "10.1002/mrc.1270070907",
+            "entry_id": "EXP-02",
+            "j_hh_mae_hz": 0.398,
+            "name": "(+)-Neomenthol (axial OH)",
+            "posterior_prob": 0.9024,
+            "rel_strain_kcal": 0.495,
+            "selected_smiles": "CC(C)[C@@H]1CC[C@@H](C)C[C@@H]1O",
+            "truth_smiles": "CC(C)[C@@H]1CC[C@@H](C)C[C@@H]1O"
+          },
+          {
+            "c13_mae_ppm": 6.857,
+            "correct": true,
+            "doi": "10.1002/mrc.1270020609",
+            "entry_id": "EXP-03",
+            "j_hh_mae_hz": 2.404,
+            "name": "(-)-Borneol (endo-2-OH)",
+            "posterior_prob": 0.5933,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "CC1(C)[C@@H]2CC[C@@]1(C)[C@@H](O)C2",
+            "truth_smiles": "CC1(C)[C@@H]2CC[C@@]1(C)[C@@H](O)C2"
+          },
+          {
+            "c13_mae_ppm": 8.187,
+            "correct": false,
+            "doi": "10.1002/mrc.1270020609",
+            "entry_id": "EXP-04",
+            "j_hh_mae_hz": 0.304,
+            "name": "Isoborneol (exo-2-OH)",
+            "posterior_prob": 0.7287,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "CC1(C)[C@@H]2CC[C@@]1(C)[C@@H](O)C2",
+            "truth_smiles": "CC1(C)[C@@H]2CC[C@@]1(C)[C@H](O)C2"
+          },
+          {
+            "c13_mae_ppm": 3.45,
+            "correct": false,
+            "doi": "10.1021/ja00727a015",
+            "entry_id": "EXP-05",
+            "j_hh_mae_hz": 0.45,
+            "name": "exo-2-Norborneol",
+            "posterior_prob": 0.6586,
+            "rel_strain_kcal": 0.225,
+            "selected_smiles": "O[C@@H]1C[C@@H]2CC[C@H]1C2",
+            "truth_smiles": "O[C@H]1C[C@@H]2CC[C@H]1C2"
+          },
+          {
+            "c13_mae_ppm": 4.457,
+            "correct": true,
+            "doi": "10.1021/ja00727a015",
+            "entry_id": "EXP-06",
+            "j_hh_mae_hz": 3.45,
+            "name": "endo-2-Norborneol",
+            "posterior_prob": 0.6258,
+            "rel_strain_kcal": 0.225,
+            "selected_smiles": "O[C@@H]1C[C@@H]2CC[C@H]1C2",
+            "truth_smiles": "O[C@@H]1C[C@@H]2CC[C@H]1C2"
+          },
+          {
+            "c13_mae_ppm": 4.562,
+            "correct": true,
+            "doi": "10.1021/ja00708a038",
+            "entry_id": "EXP-07",
+            "j_hh_mae_hz": 1.491,
+            "name": "trans-4-tert-Butylcyclohexanol",
+            "posterior_prob": 0.981,
+            "rel_strain_kcal": 0.135,
+            "selected_smiles": "CC(C)(C)[C@H]1CC[C@H](O)CC1",
+            "truth_smiles": "CC(C)(C)[C@H]1CC[C@H](O)CC1"
+          },
+          {
+            "c13_mae_ppm": 4.977,
+            "correct": true,
+            "doi": "10.1021/ja00708a038",
+            "entry_id": "EXP-08",
+            "j_hh_mae_hz": 0.122,
+            "name": "cis-4-tert-Butylcyclohexanol",
+            "posterior_prob": 0.9352,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "CC(C)(C)[C@H]1CC[C@@H](O)CC1",
+            "truth_smiles": "CC(C)(C)[C@H]1CC[C@@H](O)CC1"
+          },
+          {
+            "c13_mae_ppm": 6.697,
+            "correct": true,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-09",
+            "j_hh_mae_hz": null,
+            "name": "cis,cis-1,3,5-Trimethylcyclohexane",
+            "posterior_prob": 0.9871,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1C[C@@H](C)C[C@@H](C)C1",
+            "truth_smiles": "C[C@H]1C[C@@H](C)C[C@@H](C)C1"
+          },
+          {
+            "c13_mae_ppm": 5.514,
+            "correct": true,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-10",
+            "j_hh_mae_hz": null,
+            "name": "cis,trans-1,3,5-Trimethylcyclohexane",
+            "posterior_prob": 0.9949,
+            "rel_strain_kcal": 1.351,
+            "selected_smiles": "C[C@H]1C[C@H](C)C[C@@H](C)C1",
+            "truth_smiles": "C[C@H]1C[C@H](C)C[C@@H](C)C1"
+          },
+          {
+            "c13_mae_ppm": 11.915,
+            "correct": true,
+            "doi": "10.1016/S0008-6215(00)81024-1",
+            "entry_id": "EXP-11",
+            "j_hh_mae_hz": 8.015,
+            "name": "cis,cis-1,3,5-Cyclohexanetriol",
+            "posterior_prob": 0.7424,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "O[C@H]1C[C@@H](O)C[C@@H](O)C1",
+            "truth_smiles": "O[C@H]1C[C@@H](O)C[C@@H](O)C1"
+          },
+          {
+            "c13_mae_ppm": 8.297,
+            "correct": true,
+            "doi": "10.1016/S0008-6215(00)81024-1",
+            "entry_id": "EXP-12",
+            "j_hh_mae_hz": 0.115,
+            "name": "cis,trans-1,3,5-Cyclohexanetriol",
+            "posterior_prob": 0.9997,
+            "rel_strain_kcal": 3.491,
+            "selected_smiles": "O[C@H]1C[C@H](O)C[C@@H](O)C1",
+            "truth_smiles": "O[C@H]1C[C@H](O)C[C@@H](O)C1"
+          },
+          {
+            "c13_mae_ppm": 6.957,
+            "correct": true,
+            "doi": "10.1021/ja00792a041",
+            "entry_id": "EXP-13",
+            "j_hh_mae_hz": null,
+            "name": "trans-Decalin",
+            "posterior_prob": 0.5546,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C1CC[C@H]2CCCC[C@@H]2C1",
+            "truth_smiles": "C1CC[C@H]2CCCC[C@@H]2C1"
+          },
+          {
+            "c13_mae_ppm": 2.452,
+            "correct": false,
+            "doi": "10.1021/ja00792a041",
+            "entry_id": "EXP-14",
+            "j_hh_mae_hz": null,
+            "name": "cis-Decalin",
+            "posterior_prob": 0.8003,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C1CC[C@H]2CCCC[C@@H]2C1",
+            "truth_smiles": "C1CC[C@H]2CCCC[C@H]2C1"
+          },
+          {
+            "c13_mae_ppm": 4.953,
+            "correct": true,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-15",
+            "j_hh_mae_hz": null,
+            "name": "trans-1,2-Dimethylcyclohexane",
+            "posterior_prob": 0.7166,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1CCCC[C@@H]1C",
+            "truth_smiles": "C[C@H]1CCCC[C@@H]1C"
+          },
+          {
+            "c13_mae_ppm": 1.987,
+            "correct": false,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-16",
+            "j_hh_mae_hz": null,
+            "name": "cis-1,2-Dimethylcyclohexane",
+            "posterior_prob": 0.7338,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1CCCC[C@@H]1C",
+            "truth_smiles": "C[C@@H]1CCCC[C@@H]1C"
+          },
+          {
+            "c13_mae_ppm": 3.956,
+            "correct": false,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-17",
+            "j_hh_mae_hz": null,
+            "name": "trans-1,4-Dimethylcyclohexane",
+            "posterior_prob": 0.8126,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1CC[C@H](C)CC1",
+            "truth_smiles": "C[C@H]1CC[C@@H](C)CC1"
+          },
+          {
+            "c13_mae_ppm": 3.025,
+            "correct": true,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-18",
+            "j_hh_mae_hz": null,
+            "name": "cis-1,4-Dimethylcyclohexane",
+            "posterior_prob": 0.7138,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1CC[C@H](C)CC1",
+            "truth_smiles": "C[C@H]1CC[C@H](C)CC1"
+          },
+          {
+            "c13_mae_ppm": 4.96,
+            "correct": false,
+            "doi": "10.1139/v74-140",
+            "entry_id": "EXP-19",
+            "j_hh_mae_hz": 0.388,
+            "name": "trans-1,2-Cyclohexanediol",
+            "posterior_prob": 0.5627,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "O[C@@H]1CCCC[C@@H]1O",
+            "truth_smiles": "O[C@H]1CCCC[C@@H]1O"
+          },
+          {
+            "c13_mae_ppm": 2.937,
+            "correct": false,
+            "doi": "10.1139/v74-140",
+            "entry_id": "EXP-20",
+            "j_hh_mae_hz": 5.141,
+            "name": "cis-1,2-Cyclohexanediol",
+            "posterior_prob": 0.7059,
+            "rel_strain_kcal": 0.811,
+            "selected_smiles": "O[C@H]1CCCC[C@@H]1O",
+            "truth_smiles": "O[C@@H]1CCCC[C@@H]1O"
+          },
+          {
+            "c13_mae_ppm": 6.233,
+            "correct": true,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-21",
+            "j_hh_mae_hz": null,
+            "name": "cis-1,3-Dimethylcyclohexane (diequatorial)",
+            "posterior_prob": 0.7208,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@@H]1CCC[C@H](C)C1",
+            "truth_smiles": "C[C@@H]1CCC[C@H](C)C1"
+          },
+          {
+            "c13_mae_ppm": 4.391,
+            "correct": false,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-22",
+            "j_hh_mae_hz": null,
+            "name": "trans-1,3-Dimethylcyclohexane (axial-equatorial)",
+            "posterior_prob": 0.7614,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@@H]1CCC[C@H](C)C1",
+            "truth_smiles": "C[C@H]1CCC[C@H](C)C1"
+          },
+          {
+            "c13_mae_ppm": 6.554,
+            "correct": true,
+            "doi": "10.1002/mrc.1270070907",
+            "entry_id": "EXP-23",
+            "j_hh_mae_hz": 0.556,
+            "name": "(+)-alpha-Pinene",
+            "posterior_prob": 0.8782,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "CC1=CC[C@@H]2C[C@H]1C2(C)C",
+            "truth_smiles": "CC1=CC[C@@H]2C[C@H]1C2(C)C"
+          },
+          {
+            "c13_mae_ppm": 3.944,
+            "correct": true,
+            "doi": "10.1002/mrc.1270070907",
+            "entry_id": "EXP-24",
+            "j_hh_mae_hz": null,
+            "name": "(-)-beta-Pinene",
+            "posterior_prob": 1.0,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C=C1CC[C@@H]2C[C@H]1C2(C)C",
+            "truth_smiles": "C=C1CC[C@@H]2C[C@H]1C2(C)C"
+          },
+          {
+            "c13_mae_ppm": 5.116,
+            "correct": false,
+            "doi": "10.1002/mrc.1270020609",
+            "entry_id": "EXP-25",
+            "j_hh_mae_hz": 1.078,
+            "name": "(+)-Camphor",
+            "posterior_prob": 0.95,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "CC1(C)C(=O)[C@]2(C)CC[C@H]1C2",
+            "truth_smiles": "CC1(C)[C@@H]2CC[C@@]1(C)C(=O)C2"
+          },
+          {
+            "c13_mae_ppm": 5.285,
+            "correct": true,
+            "doi": "10.1002/mrc.1270020609",
+            "entry_id": "EXP-26",
+            "j_hh_mae_hz": null,
+            "name": "(+)-Fenchone",
+            "posterior_prob": 0.9179,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "CC1(C)C(=O)[C@]2(C)CC[C@H]1C2",
+            "truth_smiles": "CC1(C)C(=O)[C@]2(C)CC[C@H]1C2"
+          },
+          {
+            "c13_mae_ppm": 5.148,
+            "correct": true,
+            "doi": "10.1021/ja00708a038",
+            "entry_id": "EXP-27",
+            "j_hh_mae_hz": 0.124,
+            "name": "trans-2-Methylcyclohexanol",
+            "posterior_prob": 0.6664,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1CCCC[C@@H]1O",
+            "truth_smiles": "C[C@H]1CCCC[C@@H]1O"
+          },
+          {
+            "c13_mae_ppm": 3.23,
+            "correct": true,
+            "doi": "10.1021/ja00708a038",
+            "entry_id": "EXP-28",
+            "j_hh_mae_hz": 1.839,
+            "name": "cis-2-Methylcyclohexanol",
+            "posterior_prob": 0.7875,
+            "rel_strain_kcal": 0.405,
+            "selected_smiles": "C[C@@H]1CCCC[C@@H]1O",
+            "truth_smiles": "C[C@@H]1CCCC[C@@H]1O"
+          },
+          {
+            "c13_mae_ppm": 3.553,
+            "correct": false,
+            "doi": "10.1021/ja00708a038",
+            "entry_id": "EXP-29",
+            "j_hh_mae_hz": 3.317,
+            "name": "trans-4-Methylcyclohexanol",
+            "posterior_prob": 0.8223,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1CC[C@H](O)CC1",
+            "truth_smiles": "C[C@H]1CC[C@@H](O)CC1"
+          },
+          {
+            "c13_mae_ppm": 3.267,
+            "correct": true,
+            "doi": "10.1021/ja00708a038",
+            "entry_id": "EXP-30",
+            "j_hh_mae_hz": 4.583,
+            "name": "cis-4-Methylcyclohexanol",
+            "posterior_prob": 0.7029,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1CC[C@H](O)CC1",
+            "truth_smiles": "C[C@H]1CC[C@H](O)CC1"
+          }
+        ]
+      }
+    },
+    "calculator": "MACE-OFF23-medium",
+    "n_entries": 30,
+    "n_pairs": 15
+  },
+  "mmff94s": {
+    "ablations": {
+      "A0_visual_top1": {
+        "exact_stereoisomer_accuracy": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 30
+        }
+      },
+      "A1_rdkit_valid": {
+        "exact_stereoisomer_accuracy": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 30
+        }
+      },
+      "A2_hrms": {
+        "exact_stereoisomer_accuracy": {
+          "ci_high": 0.0,
+          "ci_low": 0.0,
+          "mean": 0.0,
+          "n": 30
+        }
+      },
+      "A3_strain_3d": {
+        "exact_stereoisomer_accuracy": {
+          "ci_high": 0.5333333333333333,
+          "ci_low": 0.16666666666666666,
+          "mean": 0.3333333333333333,
+          "n": 30
+        }
+      },
+      "A4_nmr_13c": {
+        "exact_stereoisomer_accuracy": {
+          "ci_high": 0.7333333333333333,
+          "ci_low": 0.4,
+          "mean": 0.5666666666666667,
+          "n": 30
+        }
+      },
+      "A5_nmr_13c_1h_j": {
+        "exact_stereoisomer_accuracy": {
+          "ci_high": 0.8666666666666667,
+          "ci_low": 0.5666666666666667,
+          "mean": 0.7333333333333333,
+          "n": 30
+        }
+      },
+      "A6_full_posterior": {
+        "exact_stereoisomer_accuracy": {
+          "ci_high": 0.8666666666666667,
+          "ci_low": 0.5666666666666667,
+          "mean": 0.7333333333333333,
+          "n": 30
+        },
+        "per_entry": [
+          {
+            "c13_mae_ppm": 4.444,
+            "correct": true,
+            "doi": "10.1002/mrc.1270070907",
+            "entry_id": "EXP-01",
+            "j_hh_mae_hz": 0.179,
+            "name": "(-)-Menthol (equatorial OH)",
+            "posterior_prob": 0.6095,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "CC(C)[C@@H]1CC[C@@H](C)C[C@H]1O",
+            "truth_smiles": "CC(C)[C@@H]1CC[C@@H](C)C[C@H]1O"
+          },
+          {
+            "c13_mae_ppm": 4.658,
+            "correct": true,
+            "doi": "10.1002/mrc.1270070907",
+            "entry_id": "EXP-02",
+            "j_hh_mae_hz": 0.384,
+            "name": "(+)-Neomenthol (axial OH)",
+            "posterior_prob": 0.8876,
+            "rel_strain_kcal": 1.122,
+            "selected_smiles": "CC(C)[C@@H]1CC[C@@H](C)C[C@@H]1O",
+            "truth_smiles": "CC(C)[C@@H]1CC[C@@H](C)C[C@@H]1O"
+          },
+          {
+            "c13_mae_ppm": 6.871,
+            "correct": true,
+            "doi": "10.1002/mrc.1270020609",
+            "entry_id": "EXP-03",
+            "j_hh_mae_hz": 2.1,
+            "name": "(-)-Borneol (endo-2-OH)",
+            "posterior_prob": 0.5554,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "CC1(C)[C@@H]2CC[C@@]1(C)[C@@H](O)C2",
+            "truth_smiles": "CC1(C)[C@@H]2CC[C@@]1(C)[C@@H](O)C2"
+          },
+          {
+            "c13_mae_ppm": 8.206,
+            "correct": false,
+            "doi": "10.1002/mrc.1270020609",
+            "entry_id": "EXP-04",
+            "j_hh_mae_hz": 0.0,
+            "name": "Isoborneol (exo-2-OH)",
+            "posterior_prob": 0.6963,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "CC1(C)[C@@H]2CC[C@@]1(C)[C@@H](O)C2",
+            "truth_smiles": "CC1(C)[C@@H]2CC[C@@]1(C)[C@H](O)C2"
+          },
+          {
+            "c13_mae_ppm": 3.61,
+            "correct": true,
+            "doi": "10.1021/ja00727a015",
+            "entry_id": "EXP-05",
+            "j_hh_mae_hz": 0.757,
+            "name": "exo-2-Norborneol",
+            "posterior_prob": 0.5367,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "O[C@H]1C[C@@H]2CC[C@H]1C2",
+            "truth_smiles": "O[C@H]1C[C@@H]2CC[C@H]1C2"
+          },
+          {
+            "c13_mae_ppm": 5.367,
+            "correct": false,
+            "doi": "10.1021/ja00727a015",
+            "entry_id": "EXP-06",
+            "j_hh_mae_hz": 3.757,
+            "name": "endo-2-Norborneol",
+            "posterior_prob": 0.5703,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "O[C@H]1C[C@@H]2CC[C@H]1C2",
+            "truth_smiles": "O[C@@H]1C[C@@H]2CC[C@H]1C2"
+          },
+          {
+            "c13_mae_ppm": 4.561,
+            "correct": true,
+            "doi": "10.1021/ja00708a038",
+            "entry_id": "EXP-07",
+            "j_hh_mae_hz": 1.489,
+            "name": "trans-4-tert-Butylcyclohexanol",
+            "posterior_prob": 0.9836,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "CC(C)(C)[C@H]1CC[C@H](O)CC1",
+            "truth_smiles": "CC(C)(C)[C@H]1CC[C@H](O)CC1"
+          },
+          {
+            "c13_mae_ppm": 4.977,
+            "correct": true,
+            "doi": "10.1021/ja00708a038",
+            "entry_id": "EXP-08",
+            "j_hh_mae_hz": 0.121,
+            "name": "cis-4-tert-Butylcyclohexanol",
+            "posterior_prob": 0.9254,
+            "rel_strain_kcal": 0.297,
+            "selected_smiles": "CC(C)(C)[C@H]1CC[C@@H](O)CC1",
+            "truth_smiles": "CC(C)(C)[C@H]1CC[C@@H](O)CC1"
+          },
+          {
+            "c13_mae_ppm": 6.697,
+            "correct": true,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-09",
+            "j_hh_mae_hz": null,
+            "name": "cis,cis-1,3,5-Trimethylcyclohexane",
+            "posterior_prob": 0.9876,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1C[C@@H](C)C[C@@H](C)C1",
+            "truth_smiles": "C[C@H]1C[C@@H](C)C[C@@H](C)C1"
+          },
+          {
+            "c13_mae_ppm": 5.514,
+            "correct": true,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-10",
+            "j_hh_mae_hz": null,
+            "name": "cis,trans-1,3,5-Trimethylcyclohexane",
+            "posterior_prob": 0.9947,
+            "rel_strain_kcal": 1.475,
+            "selected_smiles": "C[C@H]1C[C@H](C)C[C@@H](C)C1",
+            "truth_smiles": "C[C@H]1C[C@H](C)C[C@@H](C)C1"
+          },
+          {
+            "c13_mae_ppm": 8.942,
+            "correct": true,
+            "doi": "10.1016/S0008-6215(00)81024-1",
+            "entry_id": "EXP-11",
+            "j_hh_mae_hz": 2.408,
+            "name": "cis,cis-1,3,5-Cyclohexanetriol",
+            "posterior_prob": 0.9909,
+            "rel_strain_kcal": 1.102,
+            "selected_smiles": "O[C@H]1C[C@@H](O)C[C@@H](O)C1",
+            "truth_smiles": "O[C@H]1C[C@@H](O)C[C@@H](O)C1"
+          },
+          {
+            "c13_mae_ppm": 8.129,
+            "correct": true,
+            "doi": "10.1016/S0008-6215(00)81024-1",
+            "entry_id": "EXP-12",
+            "j_hh_mae_hz": 0.838,
+            "name": "cis,trans-1,3,5-Cyclohexanetriol",
+            "posterior_prob": 1.0,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "O[C@H]1C[C@H](O)C[C@@H](O)C1",
+            "truth_smiles": "O[C@H]1C[C@H](O)C[C@@H](O)C1"
+          },
+          {
+            "c13_mae_ppm": 6.954,
+            "correct": true,
+            "doi": "10.1021/ja00792a041",
+            "entry_id": "EXP-13",
+            "j_hh_mae_hz": null,
+            "name": "trans-Decalin",
+            "posterior_prob": 0.5516,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C1CC[C@H]2CCCC[C@@H]2C1",
+            "truth_smiles": "C1CC[C@H]2CCCC[C@@H]2C1"
+          },
+          {
+            "c13_mae_ppm": 2.452,
+            "correct": false,
+            "doi": "10.1021/ja00792a041",
+            "entry_id": "EXP-14",
+            "j_hh_mae_hz": null,
+            "name": "cis-Decalin",
+            "posterior_prob": 0.7984,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C1CC[C@H]2CCCC[C@@H]2C1",
+            "truth_smiles": "C1CC[C@H]2CCCC[C@H]2C1"
+          },
+          {
+            "c13_mae_ppm": 4.973,
+            "correct": true,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-15",
+            "j_hh_mae_hz": null,
+            "name": "trans-1,2-Dimethylcyclohexane",
+            "posterior_prob": 0.702,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1CCCC[C@@H]1C",
+            "truth_smiles": "C[C@H]1CCCC[C@@H]1C"
+          },
+          {
+            "c13_mae_ppm": 1.983,
+            "correct": false,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-16",
+            "j_hh_mae_hz": null,
+            "name": "cis-1,2-Dimethylcyclohexane",
+            "posterior_prob": 0.7237,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1CCCC[C@@H]1C",
+            "truth_smiles": "C[C@@H]1CCCC[C@@H]1C"
+          },
+          {
+            "c13_mae_ppm": 3.956,
+            "correct": false,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-17",
+            "j_hh_mae_hz": null,
+            "name": "trans-1,4-Dimethylcyclohexane",
+            "posterior_prob": 0.8151,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1CC[C@H](C)CC1",
+            "truth_smiles": "C[C@H]1CC[C@@H](C)CC1"
+          },
+          {
+            "c13_mae_ppm": 3.026,
+            "correct": true,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-18",
+            "j_hh_mae_hz": null,
+            "name": "cis-1,4-Dimethylcyclohexane",
+            "posterior_prob": 0.7173,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1CC[C@H](C)CC1",
+            "truth_smiles": "C[C@H]1CC[C@H](C)CC1"
+          },
+          {
+            "c13_mae_ppm": 4.354,
+            "correct": true,
+            "doi": "10.1139/v74-140",
+            "entry_id": "EXP-19",
+            "j_hh_mae_hz": 0.029,
+            "name": "trans-1,2-Cyclohexanediol",
+            "posterior_prob": 0.7274,
+            "rel_strain_kcal": 1.187,
+            "selected_smiles": "O[C@H]1CCCC[C@@H]1O",
+            "truth_smiles": "O[C@H]1CCCC[C@@H]1O"
+          },
+          {
+            "c13_mae_ppm": 3.253,
+            "correct": true,
+            "doi": "10.1139/v74-140",
+            "entry_id": "EXP-20",
+            "j_hh_mae_hz": 4.578,
+            "name": "cis-1,2-Cyclohexanediol",
+            "posterior_prob": 0.5472,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "O[C@@H]1CCCC[C@@H]1O",
+            "truth_smiles": "O[C@@H]1CCCC[C@@H]1O"
+          },
+          {
+            "c13_mae_ppm": 6.233,
+            "correct": true,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-21",
+            "j_hh_mae_hz": null,
+            "name": "cis-1,3-Dimethylcyclohexane (diequatorial)",
+            "posterior_prob": 0.7243,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@@H]1CCC[C@H](C)C1",
+            "truth_smiles": "C[C@@H]1CCC[C@H](C)C1"
+          },
+          {
+            "c13_mae_ppm": 4.391,
+            "correct": false,
+            "doi": "10.1021/ja01001a039",
+            "entry_id": "EXP-22",
+            "j_hh_mae_hz": null,
+            "name": "trans-1,3-Dimethylcyclohexane (axial-equatorial)",
+            "posterior_prob": 0.7646,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@@H]1CCC[C@H](C)C1",
+            "truth_smiles": "C[C@H]1CCC[C@H](C)C1"
+          },
+          {
+            "c13_mae_ppm": 6.554,
+            "correct": true,
+            "doi": "10.1002/mrc.1270070907",
+            "entry_id": "EXP-23",
+            "j_hh_mae_hz": 0.577,
+            "name": "(+)-alpha-Pinene",
+            "posterior_prob": 0.7902,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "CC1=CC[C@@H]2C[C@H]1C2(C)C",
+            "truth_smiles": "CC1=CC[C@@H]2C[C@H]1C2(C)C"
+          },
+          {
+            "c13_mae_ppm": 3.944,
+            "correct": true,
+            "doi": "10.1002/mrc.1270070907",
+            "entry_id": "EXP-24",
+            "j_hh_mae_hz": null,
+            "name": "(-)-beta-Pinene",
+            "posterior_prob": 1.0,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C=C1CC[C@@H]2C[C@H]1C2(C)C",
+            "truth_smiles": "C=C1CC[C@@H]2C[C@H]1C2(C)C"
+          },
+          {
+            "c13_mae_ppm": 5.115,
+            "correct": false,
+            "doi": "10.1002/mrc.1270020609",
+            "entry_id": "EXP-25",
+            "j_hh_mae_hz": 1.073,
+            "name": "(+)-Camphor",
+            "posterior_prob": 0.9626,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "CC1(C)C(=O)[C@]2(C)CC[C@H]1C2",
+            "truth_smiles": "CC1(C)[C@@H]2CC[C@@]1(C)C(=O)C2"
+          },
+          {
+            "c13_mae_ppm": 5.285,
+            "correct": true,
+            "doi": "10.1002/mrc.1270020609",
+            "entry_id": "EXP-26",
+            "j_hh_mae_hz": null,
+            "name": "(+)-Fenchone",
+            "posterior_prob": 0.9379,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "CC1(C)C(=O)[C@]2(C)CC[C@H]1C2",
+            "truth_smiles": "CC1(C)C(=O)[C@]2(C)CC[C@H]1C2"
+          },
+          {
+            "c13_mae_ppm": 5.092,
+            "correct": true,
+            "doi": "10.1021/ja00708a038",
+            "entry_id": "EXP-27",
+            "j_hh_mae_hz": 0.112,
+            "name": "trans-2-Methylcyclohexanol",
+            "posterior_prob": 0.708,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1CCCC[C@@H]1O",
+            "truth_smiles": "C[C@H]1CCCC[C@@H]1O"
+          },
+          {
+            "c13_mae_ppm": 3.284,
+            "correct": true,
+            "doi": "10.1021/ja00708a038",
+            "entry_id": "EXP-28",
+            "j_hh_mae_hz": 2.047,
+            "name": "cis-2-Methylcyclohexanol",
+            "posterior_prob": 0.7837,
+            "rel_strain_kcal": 0.402,
+            "selected_smiles": "C[C@@H]1CCCC[C@@H]1O",
+            "truth_smiles": "C[C@@H]1CCCC[C@@H]1O"
+          },
+          {
+            "c13_mae_ppm": 3.519,
+            "correct": false,
+            "doi": "10.1021/ja00708a038",
+            "entry_id": "EXP-29",
+            "j_hh_mae_hz": 3.397,
+            "name": "trans-4-Methylcyclohexanol",
+            "posterior_prob": 0.8406,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1CC[C@H](O)CC1",
+            "truth_smiles": "C[C@H]1CC[C@@H](O)CC1"
+          },
+          {
+            "c13_mae_ppm": 3.248,
+            "correct": true,
+            "doi": "10.1021/ja00708a038",
+            "entry_id": "EXP-30",
+            "j_hh_mae_hz": 4.503,
+            "name": "cis-4-Methylcyclohexanol",
+            "posterior_prob": 0.6824,
+            "rel_strain_kcal": 0.0,
+            "selected_smiles": "C[C@H]1CC[C@H](O)CC1",
+            "truth_smiles": "C[C@H]1CC[C@H](O)CC1"
+          }
+        ]
+      }
+    },
+    "calculator": "MMFF94s",
+    "n_entries": 30,
+    "n_pairs": 15
+  },
+  "n_compounds": 30,
+  "n_isomer_pairs": 15,
+  "n_matched_13c_signals": 181
+}
