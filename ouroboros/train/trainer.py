@@ -33,8 +33,66 @@ from ouroboros.data.loader import ShardDataset, collate, rotate_batch
 from ouroboros.data.mixture import MixtureSampler
 from ouroboros.decode.tokenizer import SmilesTokenizer
 from ouroboros.eval.standardize import standardize
-from ouroboros.model import OCSRModel, build_model, count_params, load_model_state, initialize_finetune
+from ouroboros.model import (
+    OCSRModel,
+    build_model,
+    count_params,
+    initialize_finetune,
+    load_model_state,
+)
 from ouroboros.provenance import json_sha256
+
+_COMPILE_MODES = frozenset(
+    {"default", "reduce-overhead", "max-autotune", "max-autotune-no-cudagraphs"}
+)
+
+
+def _parse_channels_last(train_config: dict) -> bool:
+    val = train_config.get("channels_last", False)
+    if not isinstance(val, bool):
+        raise ValueError("train.channels_last must be a boolean")
+    return val
+
+
+def _resolve_fused_adamw(train_config: dict, device: torch.device) -> bool:
+    val = train_config.get("fused_adamw", False)
+    if isinstance(val, bool):
+        if val and device.type != "cuda":
+            raise ValueError(
+                "train.fused_adamw=True requires a CUDA device (use 'auto' for CPU fallback)"
+            )
+        return val
+    if val == "auto":
+        return device.type == "cuda"
+    raise ValueError("train.fused_adamw must be False, True, or 'auto'")
+
+
+def _parse_compile_config(train_config: dict) -> dict | None:
+    backend = train_config.get("compile_backend")
+    if backend is not None and (not isinstance(backend, str) or not backend):
+        raise ValueError("train.compile_backend must be a non-empty string when set")
+    dynamic = train_config.get("compile_dynamic", True)
+    if not isinstance(dynamic, bool):
+        raise ValueError("train.compile_dynamic must be a boolean")
+    raw = train_config.get("compile", False)
+    if isinstance(raw, bool):
+        if not raw:
+            return None
+        mode = "default"
+    elif raw == "none":
+        return None
+    elif isinstance(raw, str) and raw in _COMPILE_MODES:
+        mode = raw
+    else:
+        modes = sorted(_COMPILE_MODES)
+        raise ValueError(f"train.compile must be False, True, 'none', or one of {modes}")
+    return {"mode": mode, "backend": backend, "dynamic": dynamic}
+
+
+def _compile_callable(fn, spec: dict):
+    if spec["backend"] is not None:
+        return torch.compile(fn, backend=spec["backend"], dynamic=spec["dynamic"])
+    return torch.compile(fn, mode=spec["mode"], dynamic=spec["dynamic"])
 
 
 def _device(cfg: dict) -> torch.device:
@@ -115,7 +173,13 @@ def build_datasets(cfg: dict, tok: SmilesTokenizer):
     return synth, real
 
 
-def build_optimizer(model, train_config):
+def build_optimizer(model, train_config, device: torch.device | str | None = None):
+    if device is not None:
+        dev = torch.device(device)
+    else:
+        first_param = next(model.parameters(), None)
+        dev = first_param.device if first_param is not None else torch.device("cpu")
+    use_fused = _resolve_fused_adamw(train_config, dev)
     decay, no_decay = [], []
     for name, parameter in model.named_parameters():
         # escnn convolutions store their filters as a flat (1-D) coefficient vector named
@@ -125,6 +189,7 @@ def build_optimizer(model, train_config):
             (parameter.ndim < 2 and not kernel) or name.endswith(".pos") or "norm" in name
         )
         (no_decay if no_decay_param else decay).append(parameter)
+    extra = {"fused": True} if use_fused else {}
     return torch.optim.AdamW(
         [
             {"params": decay, "weight_decay": train_config.get("weight_decay", 0.05)},
@@ -132,6 +197,7 @@ def build_optimizer(model, train_config):
         ],
         lr=train_config["lr"],
         betas=(0.9, 0.98),
+        **extra,
     )
 
 
@@ -162,6 +228,9 @@ class Trainer:
             raise ValueError("Run directory already contains a different configuration")
         self.dev = _device(cfg)
         t = cfg["train"]
+        self.channels_last = _parse_channels_last(t)
+        self.compile_spec = _parse_compile_config(t)
+        _resolve_fused_adamw(t, self.dev)
         self.seed = int(cfg.get("seed", 0))
         random.seed(self.seed)
         np.random.seed(self.seed)
@@ -177,7 +246,14 @@ class Trainer:
                 raise ValueError("Fine-tuning model config must match the pretrained architecture")
             initialize_finetune(self.model, pretrained)
             del pretrained
-        self.opt = build_optimizer(self.model, t)
+        if self.channels_last:
+            self.model.to(memory_format=torch.channels_last)
+        self._compiled_loss = (
+            _compile_callable(self._loss_step, self.compile_spec)
+            if self.compile_spec is not None
+            else None
+        )
+        self.opt = build_optimizer(self.model, t, device=self.dev)
         self.sched = build_scheduler(self.opt, t)
         self.step = 0
         self.synth, self.real = build_datasets(cfg, self.tok)
@@ -260,6 +336,8 @@ class Trainer:
             if best_step is not None and not self.best_checkpoint_path(best_step).is_file():
                 raise ValueError("Best validation checkpoint is missing; restore the run bundle")
         load_model_state(self.model, st["model"])
+        if self.channels_last:
+            self.model.to(memory_format=torch.channels_last)
         self.opt.load_state_dict(st["opt"])
         self.sched.load_state_dict(st["sched"])
         self.step = st["step"]
@@ -296,6 +374,8 @@ class Trainer:
             )
             for batch in loader:
                 images = batch["image"].to(self.dev)
+                if self.channels_last and images.ndim == 4:
+                    images = images.contiguous(memory_format=torch.channels_last)
                 with torch.autocast(
                     self.dev.type,
                     dtype=torch.bfloat16,
@@ -384,16 +464,25 @@ class Trainer:
     def augment(self, images: torch.Tensor) -> torch.Tensor:
         return self.augment_with_angles(images)[0]
 
+    def _loss_step(
+        self, images: torch.Tensor, ids: torch.Tensor, angles: torch.Tensor | None
+    ) -> torch.Tensor:
+        loss = self.model.loss(images, ids, self.cfg["train"].get("label_smoothing", 0.0))
+        if hasattr(self.model.encoder, "prior_loss"):  # arm E: canonicalization prior
+            loss = loss + self.model.encoder.prior_loss(angles)
+        return loss
+
     def train_step(self, batch: dict) -> float:
         t = self.cfg["train"]
         self.model.train()
         images, angles = self.augment_with_angles(batch["image"].to(self.dev, non_blocking=True))
+        if self.channels_last and images.ndim == 4:
+            images = images.contiguous(memory_format=torch.channels_last)
         ids = batch["ids"].to(self.dev, non_blocking=True)
         amp = t.get("amp", "bf16") == "bf16"
+        loss_fn = self._compiled_loss if self._compiled_loss is not None else self._loss_step
         with torch.autocast(self.dev.type, dtype=torch.bfloat16, enabled=amp):
-            loss = self.model.loss(images, ids, t.get("label_smoothing", 0.0))
-            if hasattr(self.model.encoder, "prior_loss"):  # arm E: canonicalization prior
-                loss = loss + self.model.encoder.prior_loss(angles)
+            loss = loss_fn(images, ids, angles)
         self.opt.zero_grad(set_to_none=True)
         loss.backward()
         if t.get("grad_clip"):
