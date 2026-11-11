@@ -411,7 +411,12 @@ def _predict_h1_and_karplus(
                     for conf, w in zip(
                         mol_3d.GetConformers(), strain.boltzmann_weights, strict=True
                     ):
-                        phi = rdMolTransforms.GetDihedralRad(conf, h1, u, v, h2)
+                        try:
+                            phi = rdMolTransforms.GetDihedralRad(conf, h1, u, v, h2)
+                        except Exception:
+                            continue
+                        if not np.isfinite(phi):
+                            continue
                         c = float(np.cos(phi))
                         karplus = max(0.2, 7.76 * (c**2) - 1.10 * c + 1.40 - elec)
                         j_val += w * karplus

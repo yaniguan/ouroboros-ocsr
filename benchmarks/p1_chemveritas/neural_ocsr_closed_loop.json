@@ -1,0 +1,4498 @@
+{
+  "arms": {
+    "Ouroboros-A": {
+      "V0_clean": {
+        "A0_visual_top1": {
+          "aurc": 0.9913936528900872,
+          "categories": {
+            "constitutional": 77,
+            "correct": 1,
+            "diastereomer": 17,
+            "enantiomer": 1,
+            "invalid": 4
+          },
+          "ece": 0.1979891799957853,
+          "flat_connectivity_match": {
+            "ci_high": 0.26,
+            "ci_low": 0.11,
+            "mean": 0.19,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.3234876704827334,
+            "ci_low": 1.8180805056221097,
+            "mean": 2.590992884345867,
+            "n": 19
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.18,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.92,
+            "mean": 0.96,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 0.9922930972834648,
+          "categories": {
+            "constitutional": 79,
+            "correct": 1,
+            "diastereomer": 17,
+            "enantiomer": 1,
+            "invalid": 2
+          },
+          "ece": 0.23053003510672995,
+          "flat_connectivity_match": {
+            "ci_high": 0.26,
+            "ci_low": 0.11,
+            "mean": 0.19,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.3234876704827334,
+            "ci_low": 1.8180805056221097,
+            "mean": 2.590992884345867,
+            "n": 19
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.18,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.95,
+            "mean": 0.98,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.9000647412137982,
+          "categories": {
+            "constitutional": 76,
+            "correct": 10,
+            "diastereomer": 3,
+            "enantiomer": 9,
+            "invalid": 2
+          },
+          "ece": 0.37381967994463455,
+          "flat_connectivity_match": {
+            "ci_high": 0.3,
+            "ci_low": 0.14,
+            "mean": 0.22,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.5036305722949858,
+            "ci_low": 0.0,
+            "mean": 0.19244420242136007,
+            "n": 22
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.05,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.45,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.12,
+          "stereo_exact_match": {
+            "ci_high": 0.16,
+            "ci_low": 0.04,
+            "mean": 0.1,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.95,
+            "mean": 0.98,
+            "n": 100
+          }
+        }
+      },
+      "V0_rot90": {
+        "A0_visual_top1": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 99,
+            "correct": 0,
+            "diastereomer": 0,
+            "enantiomer": 0,
+            "invalid": 1
+          },
+          "ece": 0.20994966596344347,
+          "flat_connectivity_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": null,
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.0,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.97,
+            "mean": 0.99,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 99,
+            "correct": 0,
+            "diastereomer": 0,
+            "enantiomer": 0,
+            "invalid": 1
+          },
+          "ece": 0.22741025509904197,
+          "flat_connectivity_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": null,
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.0,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.97,
+            "mean": 0.99,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 98,
+            "correct": 0,
+            "diastereomer": 0,
+            "enantiomer": 1,
+            "invalid": 1
+          },
+          "ece": 0.5364596942454571,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.97,
+            "mean": 0.99,
+            "n": 100
+          }
+        }
+      },
+      "V1_rotated_offgrid": {
+        "A0_visual_top1": {
+          "aurc": 0.9963117352571272,
+          "categories": {
+            "constitutional": 89,
+            "correct": 1,
+            "diastereomer": 5,
+            "enantiomer": 1,
+            "invalid": 4
+          },
+          "ece": 0.19588733626968016,
+          "flat_connectivity_match": {
+            "ci_high": 0.12,
+            "ci_low": 0.029750000000000013,
+            "mean": 0.07,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.8857892721425742,
+            "ci_low": 0.08238590899078797,
+            "mean": 0.4428946360712871,
+            "n": 6
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.060000000000000005,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.92,
+            "mean": 0.96,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 0.9967343263592958,
+          "categories": {
+            "constitutional": 93,
+            "correct": 1,
+            "diastereomer": 5,
+            "enantiomer": 1,
+            "invalid": 0
+          },
+          "ece": 0.22301976325611594,
+          "flat_connectivity_match": {
+            "ci_high": 0.12,
+            "ci_low": 0.029750000000000013,
+            "mean": 0.07,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.8857892721425742,
+            "ci_low": 0.08238590899078797,
+            "mean": 0.4428946360712871,
+            "n": 6
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.060000000000000005,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.9536355125912597,
+          "categories": {
+            "constitutional": 89,
+            "correct": 6,
+            "diastereomer": 1,
+            "enantiomer": 4,
+            "invalid": 0
+          },
+          "ece": 0.4327942874480596,
+          "flat_connectivity_match": {
+            "ci_high": 0.18,
+            "ci_low": 0.05,
+            "mean": 0.11,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.7861550396773964,
+            "ci_low": 0.0,
+            "mean": 0.26205167989246547,
+            "n": 11
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.05,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.25,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.05,
+          "stereo_exact_match": {
+            "ci_high": 0.11,
+            "ci_low": 0.02,
+            "mean": 0.06,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        }
+      },
+      "V2_crowded_si_scan": {
+        "A0_visual_top1": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 86,
+            "correct": 0,
+            "diastereomer": 1,
+            "enantiomer": 2,
+            "invalid": 11
+          },
+          "ece": 0.21283193407584375,
+          "flat_connectivity_match": {
+            "ci_high": 0.07,
+            "ci_low": 0.0,
+            "mean": 0.03,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.197849406278692,
+            "ci_low": 0.0,
+            "mean": 1.0659498020928975,
+            "n": 3
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.03,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.94,
+            "ci_low": 0.83,
+            "mean": 0.89,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 93,
+            "correct": 0,
+            "diastereomer": 1,
+            "enantiomer": 2,
+            "invalid": 4
+          },
+          "ece": 0.2994144748113193,
+          "flat_connectivity_match": {
+            "ci_high": 0.07,
+            "ci_low": 0.0,
+            "mean": 0.03,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.197849406278692,
+            "ci_low": 0.0,
+            "mean": 1.0659498020928975,
+            "n": 3
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.03,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.92,
+            "mean": 0.96,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.9821741384549108,
+          "categories": {
+            "constitutional": 91,
+            "correct": 2,
+            "diastereomer": 0,
+            "enantiomer": 3,
+            "invalid": 4
+          },
+          "ece": 0.6190001768962827,
+          "flat_connectivity_match": {
+            "ci_high": 0.1,
+            "ci_low": 0.01,
+            "mean": 0.05,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 5
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.1,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.030000000000000002,
+          "stereo_exact_match": {
+            "ci_high": 0.05,
+            "ci_low": 0.0,
+            "mean": 0.02,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.92,
+            "mean": 0.96,
+            "n": 100
+          }
+        }
+      },
+      "V3_condensed_layout": {
+        "A0_visual_top1": {
+          "aurc": 0.9954088838606614,
+          "categories": {
+            "constitutional": 89,
+            "correct": 1,
+            "diastereomer": 4,
+            "enantiomer": 0,
+            "invalid": 6
+          },
+          "ece": 0.19670079157158354,
+          "flat_connectivity_match": {
+            "ci_high": 0.09,
+            "ci_low": 0.01,
+            "mean": 0.05,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 1.0359230471076444,
+            "ci_low": 0.15764046367257833,
+            "mean": 0.5967817553901114,
+            "n": 4
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.05,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.04,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.98,
+            "ci_low": 0.89,
+            "mean": 0.94,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 0.9858858066011389,
+          "categories": {
+            "constitutional": 91,
+            "correct": 1,
+            "diastereomer": 4,
+            "enantiomer": 0,
+            "invalid": 4
+          },
+          "ece": 0.2599224546103053,
+          "flat_connectivity_match": {
+            "ci_high": 0.09,
+            "ci_low": 0.01,
+            "mean": 0.05,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 1.0359230471076444,
+            "ci_low": 0.15764046367257833,
+            "mean": 0.5967817553901114,
+            "n": 4
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.05,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.04,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.92,
+            "mean": 0.96,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.9401340350839859,
+          "categories": {
+            "constitutional": 90,
+            "correct": 4,
+            "diastereomer": 0,
+            "enantiomer": 2,
+            "invalid": 4
+          },
+          "ece": 0.4240188908826073,
+          "flat_connectivity_match": {
+            "ci_high": 0.11,
+            "ci_low": 0.02,
+            "mean": 0.06,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 6
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.1,
+            "S3_strained_bredt": 0.1,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.019999999999999997,
+          "stereo_exact_match": {
+            "ci_high": 0.08,
+            "ci_low": 0.01,
+            "mean": 0.04,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.92,
+            "mean": 0.96,
+            "n": 100
+          }
+        }
+      }
+    },
+    "Ouroboros-AC": {
+      "V0_clean": {
+        "A0_visual_top1": {
+          "aurc": 0.9726262248236037,
+          "categories": {
+            "constitutional": 80,
+            "correct": 1,
+            "diastereomer": 18,
+            "enantiomer": 0,
+            "invalid": 1
+          },
+          "ece": 0.11103665831852397,
+          "flat_connectivity_match": {
+            "ci_high": 0.27,
+            "ci_low": 0.11975000000000001,
+            "mean": 0.19,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.9968969144176776,
+            "ci_low": 2.076468634081462,
+            "mean": 2.9987246099687916,
+            "n": 19
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.18,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.97,
+            "mean": 0.99,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 0.9791583316057106,
+          "categories": {
+            "constitutional": 80,
+            "correct": 1,
+            "diastereomer": 18,
+            "enantiomer": 0,
+            "invalid": 1
+          },
+          "ece": 0.12641882230235424,
+          "flat_connectivity_match": {
+            "ci_high": 0.27,
+            "ci_low": 0.11975000000000001,
+            "mean": 0.19,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.9968969144176776,
+            "ci_low": 2.076468634081462,
+            "mean": 2.9987246099687916,
+            "n": 19
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.18,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.97,
+            "mean": 0.99,
+            "n": 100
+          }
+        },
+        "A2_hrms": {
+          "aurc": 0.9850343573257764,
+          "categories": {
+            "constitutional": 76,
+            "correct": 1,
+            "diastereomer": 22,
+            "enantiomer": 0,
+            "invalid": 1
+          },
+          "ece": 0.20821778886117345,
+          "flat_connectivity_match": {
+            "ci_high": 0.32,
+            "ci_low": 0.15,
+            "mean": 0.23,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.880100174899659,
+            "ci_low": 2.1767252597954387,
+            "mean": 3.0391365584108003,
+            "n": 21
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.22,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.97,
+            "mean": 0.99,
+            "n": 100
+          }
+        },
+        "A3_strain_3d": {
+          "aurc": 0.9576047528362105,
+          "categories": {
+            "constitutional": 75,
+            "correct": 7,
+            "diastereomer": 14,
+            "enantiomer": 3,
+            "invalid": 1
+          },
+          "ece": 0.2929372781411097,
+          "flat_connectivity_match": {
+            "ci_high": 0.33,
+            "ci_low": 0.16,
+            "mean": 0.24,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.240305980982679,
+            "ci_low": 0.830207137633482,
+            "mean": 1.5059070381963544,
+            "n": 23
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.35,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.16999999999999998,
+          "stereo_exact_match": {
+            "ci_high": 0.12,
+            "ci_low": 0.029750000000000013,
+            "mean": 0.07,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.97,
+            "mean": 0.99,
+            "n": 100
+          }
+        },
+        "A4_nmr_13c": {
+          "aurc": 0.9531522223300614,
+          "categories": {
+            "constitutional": 75,
+            "correct": 13,
+            "diastereomer": 4,
+            "enantiomer": 7,
+            "invalid": 1
+          },
+          "ece": 0.43047389536500347,
+          "flat_connectivity_match": {
+            "ci_high": 0.33,
+            "ci_low": 0.16,
+            "mean": 0.24,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.4680257244896063,
+            "ci_low": 0.0,
+            "mean": 0.2114927960033326,
+            "n": 23
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.05,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.6,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.10999999999999999,
+          "stereo_exact_match": {
+            "ci_high": 0.2,
+            "ci_low": 0.06,
+            "mean": 0.13,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.97,
+            "mean": 0.99,
+            "n": 100
+          }
+        },
+        "A5_nmr_13c_1h_j": {
+          "aurc": 0.9440654048878723,
+          "categories": {
+            "constitutional": 74,
+            "correct": 13,
+            "diastereomer": 4,
+            "enantiomer": 8,
+            "invalid": 1
+          },
+          "ece": 0.44728035577821956,
+          "flat_connectivity_match": {
+            "ci_high": 0.34,
+            "ci_low": 0.16,
+            "mean": 0.25,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.5124253405888641,
+            "ci_low": 0.050670149042465105,
+            "mean": 0.22332399022222185,
+            "n": 24
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.05,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.6,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.12,
+          "stereo_exact_match": {
+            "ci_high": 0.2,
+            "ci_low": 0.06,
+            "mean": 0.13,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.97,
+            "mean": 0.99,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.9239901461739692,
+          "categories": {
+            "constitutional": 74,
+            "correct": 14,
+            "diastereomer": 2,
+            "enantiomer": 9,
+            "invalid": 1
+          },
+          "ece": 0.3769936023559184,
+          "flat_connectivity_match": {
+            "ci_high": 0.34,
+            "ci_low": 0.16,
+            "mean": 0.25,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.44139329832047225,
+            "ci_low": 0.0,
+            "mean": 0.1657476875325665,
+            "n": 25
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.1,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.6,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.10999999999999999,
+          "stereo_exact_match": {
+            "ci_high": 0.21,
+            "ci_low": 0.07,
+            "mean": 0.14,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.97,
+            "mean": 0.99,
+            "n": 100
+          }
+        }
+      },
+      "V0_rot90": {
+        "A0_visual_top1": {
+          "aurc": 0.9521544226694162,
+          "categories": {
+            "constitutional": 81,
+            "correct": 3,
+            "diastereomer": 9,
+            "enantiomer": 5,
+            "invalid": 2
+          },
+          "ece": 0.08236560566449941,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.1,
+            "mean": 0.17,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.477339757473793,
+            "ci_low": 0.598702584555876,
+            "mean": 1.465129015436533,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.15,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.14,
+          "stereo_exact_match": {
+            "ci_high": 0.07,
+            "ci_low": 0.0,
+            "mean": 0.03,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.95,
+            "mean": 0.98,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 0.9636674358195003,
+          "categories": {
+            "constitutional": 83,
+            "correct": 3,
+            "diastereomer": 9,
+            "enantiomer": 5,
+            "invalid": 0
+          },
+          "ece": 0.09077892564709945,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.1,
+            "mean": 0.17,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.477339757473793,
+            "ci_low": 0.598702584555876,
+            "mean": 1.465129015436533,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.15,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.14,
+          "stereo_exact_match": {
+            "ci_high": 0.07,
+            "ci_low": 0.0,
+            "mean": 0.03,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A2_hrms": {
+          "aurc": 0.9621442108817146,
+          "categories": {
+            "constitutional": 82,
+            "correct": 3,
+            "diastereomer": 10,
+            "enantiomer": 5,
+            "invalid": 0
+          },
+          "ece": 0.19007259747669053,
+          "flat_connectivity_match": {
+            "ci_high": 0.26024999999999976,
+            "ci_low": 0.11,
+            "mean": 0.18,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.477339757473793,
+            "ci_low": 0.598702584555876,
+            "mean": 1.465129015436533,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.15,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.15,
+          "stereo_exact_match": {
+            "ci_high": 0.07,
+            "ci_low": 0.0,
+            "mean": 0.03,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A3_strain_3d": {
+          "aurc": 0.9779814802500169,
+          "categories": {
+            "constitutional": 83,
+            "correct": 3,
+            "diastereomer": 9,
+            "enantiomer": 5,
+            "invalid": 0
+          },
+          "ece": 0.3101696226267717,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.1,
+            "mean": 0.17,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.3606990614466827,
+            "ci_low": 0.6650043090064119,
+            "mean": 1.4730772741090998,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.15,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.14,
+          "stereo_exact_match": {
+            "ci_high": 0.07,
+            "ci_low": 0.0,
+            "mean": 0.03,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A4_nmr_13c": {
+          "aurc": 0.9845563372278963,
+          "categories": {
+            "constitutional": 83,
+            "correct": 6,
+            "diastereomer": 2,
+            "enantiomer": 9,
+            "invalid": 0
+          },
+          "ece": 0.5295020576909608,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.1,
+            "mean": 0.17,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.8955038105178734,
+            "ci_low": 0.0,
+            "mean": 0.33117744471768246,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.3,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.11000000000000001,
+          "stereo_exact_match": {
+            "ci_high": 0.11,
+            "ci_low": 0.02,
+            "mean": 0.06,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A5_nmr_13c_1h_j": {
+          "aurc": 0.9785350457879198,
+          "categories": {
+            "constitutional": 83,
+            "correct": 6,
+            "diastereomer": 2,
+            "enantiomer": 9,
+            "invalid": 0
+          },
+          "ece": 0.5584185158539283,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.1,
+            "mean": 0.17,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.8955038105178734,
+            "ci_low": 0.0,
+            "mean": 0.33117744471768246,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.3,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.11000000000000001,
+          "stereo_exact_match": {
+            "ci_high": 0.11,
+            "ci_low": 0.02,
+            "mean": 0.06,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.9643587163538524,
+          "categories": {
+            "constitutional": 83,
+            "correct": 8,
+            "diastereomer": 0,
+            "enantiomer": 9,
+            "invalid": 0
+          },
+          "ece": 0.468852631744056,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.1,
+            "mean": 0.17,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.4,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.09000000000000001,
+          "stereo_exact_match": {
+            "ci_high": 0.13,
+            "ci_low": 0.03,
+            "mean": 0.08,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        }
+      },
+      "V1_rotated_offgrid": {
+        "A0_visual_top1": {
+          "aurc": 0.9581262248236038,
+          "categories": {
+            "constitutional": 80,
+            "correct": 1,
+            "diastereomer": 15,
+            "enantiomer": 2,
+            "invalid": 2
+          },
+          "ece": 0.11695736626291717,
+          "flat_connectivity_match": {
+            "ci_high": 0.26,
+            "ci_low": 0.11,
+            "mean": 0.18,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.538143936325522,
+            "ci_low": 0.9190174090978176,
+            "mean": 1.7062261951950324,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.16999999999999998,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.95,
+            "mean": 0.98,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 0.9581262248236038,
+          "categories": {
+            "constitutional": 82,
+            "correct": 1,
+            "diastereomer": 15,
+            "enantiomer": 2,
+            "invalid": 0
+          },
+          "ece": 0.12316474383429801,
+          "flat_connectivity_match": {
+            "ci_high": 0.26,
+            "ci_low": 0.11,
+            "mean": 0.18,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.538143936325522,
+            "ci_low": 0.9190174090978176,
+            "mean": 1.7062261951950324,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.16999999999999998,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A2_hrms": {
+          "aurc": 0.9893083247280582,
+          "categories": {
+            "constitutional": 79,
+            "correct": 1,
+            "diastereomer": 18,
+            "enantiomer": 2,
+            "invalid": 0
+          },
+          "ece": 0.1980996657431105,
+          "flat_connectivity_match": {
+            "ci_high": 0.3,
+            "ci_low": 0.13,
+            "mean": 0.21,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.628429531296424,
+            "ci_low": 1.1292124214932848,
+            "mean": 1.8635354814323364,
+            "n": 20
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.19999999999999998,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A3_strain_3d": {
+          "aurc": 0.9643942057750918,
+          "categories": {
+            "constitutional": 79,
+            "correct": 3,
+            "diastereomer": 12,
+            "enantiomer": 6,
+            "invalid": 0
+          },
+          "ece": 0.3081126233256564,
+          "flat_connectivity_match": {
+            "ci_high": 0.3,
+            "ci_low": 0.13,
+            "mean": 0.21,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.0139373523916304,
+            "ci_low": 0.6401865020972938,
+            "mean": 1.3008019214335254,
+            "n": 21
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.05,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.1,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.18,
+          "stereo_exact_match": {
+            "ci_high": 0.07,
+            "ci_low": 0.0,
+            "mean": 0.03,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A4_nmr_13c": {
+          "aurc": 0.9562585900479899,
+          "categories": {
+            "constitutional": 78,
+            "correct": 9,
+            "diastereomer": 4,
+            "enantiomer": 9,
+            "invalid": 0
+          },
+          "ece": 0.48416498832209437,
+          "flat_connectivity_match": {
+            "ci_high": 0.3,
+            "ci_low": 0.14,
+            "mean": 0.22,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.6008763128775172,
+            "ci_low": 0.02047278748994524,
+            "mean": 0.26307531926696276,
+            "n": 22
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.15,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.3,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.13,
+          "stereo_exact_match": {
+            "ci_high": 0.15,
+            "ci_low": 0.04,
+            "mean": 0.09,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A5_nmr_13c_1h_j": {
+          "aurc": 0.9397546609254083,
+          "categories": {
+            "constitutional": 78,
+            "correct": 9,
+            "diastereomer": 4,
+            "enantiomer": 9,
+            "invalid": 0
+          },
+          "ece": 0.49297653690621407,
+          "flat_connectivity_match": {
+            "ci_high": 0.3,
+            "ci_low": 0.14,
+            "mean": 0.22,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.6008763128775172,
+            "ci_low": 0.02047278748994524,
+            "mean": 0.26307531926696276,
+            "n": 22
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.15,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.3,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.13,
+          "stereo_exact_match": {
+            "ci_high": 0.15,
+            "ci_low": 0.04,
+            "mean": 0.09,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.9047491938260073,
+          "categories": {
+            "constitutional": 78,
+            "correct": 12,
+            "diastereomer": 1,
+            "enantiomer": 9,
+            "invalid": 0
+          },
+          "ece": 0.39265477900804435,
+          "flat_connectivity_match": {
+            "ci_high": 0.3,
+            "ci_low": 0.14,
+            "mean": 0.22,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.3930775198386982,
+            "ci_low": 0.0,
+            "mean": 0.13102583994623274,
+            "n": 22
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.05,
+            "S2_dense_stereo": 0.2,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.35,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.1,
+          "stereo_exact_match": {
+            "ci_high": 0.19,
+            "ci_low": 0.06,
+            "mean": 0.12,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        }
+      },
+      "V2_crowded_si_scan": {
+        "A0_visual_top1": {
+          "aurc": 0.9998999999999999,
+          "categories": {
+            "constitutional": 91,
+            "correct": 1,
+            "diastereomer": 1,
+            "enantiomer": 1,
+            "invalid": 6
+          },
+          "ece": 0.10759524853069057,
+          "flat_connectivity_match": {
+            "ci_high": 0.07,
+            "ci_low": 0.0,
+            "mean": 0.03,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.197849406278692,
+            "ci_low": 0.0,
+            "mean": 1.0659498020928975,
+            "n": 3
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.019999999999999997,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.98,
+            "ci_low": 0.89,
+            "mean": 0.94,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 0.9998999999999999,
+          "categories": {
+            "constitutional": 97,
+            "correct": 1,
+            "diastereomer": 1,
+            "enantiomer": 1,
+            "invalid": 0
+          },
+          "ece": 0.1414915891882596,
+          "flat_connectivity_match": {
+            "ci_high": 0.07,
+            "ci_low": 0.0,
+            "mean": 0.03,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.197849406278692,
+            "ci_low": 0.0,
+            "mean": 1.0659498020928975,
+            "n": 3
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.019999999999999997,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A2_hrms": {
+          "aurc": 0.9450597395794975,
+          "categories": {
+            "constitutional": 94,
+            "correct": 2,
+            "diastereomer": 3,
+            "enantiomer": 1,
+            "invalid": 0
+          },
+          "ece": 0.18101776306419534,
+          "flat_connectivity_match": {
+            "ci_high": 0.11,
+            "ci_low": 0.02,
+            "mean": 0.06,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.8750617900514044,
+            "ci_low": 0.5329749010270461,
+            "mean": 1.6514715243247338,
+            "n": 6
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.1,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.039999999999999994,
+          "stereo_exact_match": {
+            "ci_high": 0.05,
+            "ci_low": 0.0,
+            "mean": 0.02,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A3_strain_3d": {
+          "aurc": 0.9467298462186444,
+          "categories": {
+            "constitutional": 94,
+            "correct": 2,
+            "diastereomer": 3,
+            "enantiomer": 1,
+            "invalid": 0
+          },
+          "ece": 0.24852458819590753,
+          "flat_connectivity_match": {
+            "ci_high": 0.11,
+            "ci_low": 0.02,
+            "mean": 0.06,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.8750617900514044,
+            "ci_low": 0.5329749010270461,
+            "mean": 1.6514715243247338,
+            "n": 6
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.1,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.039999999999999994,
+          "stereo_exact_match": {
+            "ci_high": 0.05,
+            "ci_low": 0.0,
+            "mean": 0.02,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A4_nmr_13c": {
+          "aurc": 0.9588452048381113,
+          "categories": {
+            "constitutional": 94,
+            "correct": 2,
+            "diastereomer": 1,
+            "enantiomer": 3,
+            "invalid": 0
+          },
+          "ece": 0.6235422807072613,
+          "flat_connectivity_match": {
+            "ci_high": 0.11,
+            "ci_low": 0.02,
+            "mean": 0.06,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 1.5989247030811384,
+            "ci_low": 0.0,
+            "mean": 0.5329749010270461,
+            "n": 6
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.1,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.039999999999999994,
+          "stereo_exact_match": {
+            "ci_high": 0.05,
+            "ci_low": 0.0,
+            "mean": 0.02,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A5_nmr_13c_1h_j": {
+          "aurc": 0.9588452048381113,
+          "categories": {
+            "constitutional": 94,
+            "correct": 2,
+            "diastereomer": 1,
+            "enantiomer": 3,
+            "invalid": 0
+          },
+          "ece": 0.6411039811421071,
+          "flat_connectivity_match": {
+            "ci_high": 0.11,
+            "ci_low": 0.02,
+            "mean": 0.06,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 1.5989247030811384,
+            "ci_low": 0.0,
+            "mean": 0.5329749010270461,
+            "n": 6
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.1,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.039999999999999994,
+          "stereo_exact_match": {
+            "ci_high": 0.05,
+            "ci_low": 0.0,
+            "mean": 0.02,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.9755134714747616,
+          "categories": {
+            "constitutional": 94,
+            "correct": 3,
+            "diastereomer": 0,
+            "enantiomer": 3,
+            "invalid": 0
+          },
+          "ece": 0.5882113694384921,
+          "flat_connectivity_match": {
+            "ci_high": 0.11,
+            "ci_low": 0.02,
+            "mean": 0.06,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 6
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.15,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.03,
+          "stereo_exact_match": {
+            "ci_high": 0.07,
+            "ci_low": 0.0,
+            "mean": 0.03,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        }
+      },
+      "V3_condensed_layout": {
+        "A0_visual_top1": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 93,
+            "correct": 0,
+            "diastereomer": 4,
+            "enantiomer": 0,
+            "invalid": 3
+          },
+          "ece": 0.11428733751390274,
+          "flat_connectivity_match": {
+            "ci_high": 0.08,
+            "ci_low": 0.01,
+            "mean": 0.04,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.702407948905602,
+            "ci_low": 0.9458427820936777,
+            "mean": 1.9967792066939485,
+            "n": 3
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.04,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 95,
+            "correct": 0,
+            "diastereomer": 5,
+            "enantiomer": 0,
+            "invalid": 0
+          },
+          "ece": 0.1274707699879301,
+          "flat_connectivity_match": {
+            "ci_high": 0.09,
+            "ci_low": 0.01,
+            "mean": 0.05,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.702407948905602,
+            "ci_low": 0.9458427820936777,
+            "mean": 1.9967792066939485,
+            "n": 3
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.05,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A2_hrms": {
+          "aurc": 0.9520368637625041,
+          "categories": {
+            "constitutional": 93,
+            "correct": 2,
+            "diastereomer": 5,
+            "enantiomer": 0,
+            "invalid": 0
+          },
+          "ece": 0.188905320400366,
+          "flat_connectivity_match": {
+            "ci_high": 0.12,
+            "ci_low": 0.03,
+            "mean": 0.07,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.206966491614003,
+            "ci_low": 0.18916855641873553,
+            "mean": 1.1980675240163692,
+            "n": 5
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.1,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.05,
+          "stereo_exact_match": {
+            "ci_high": 0.05,
+            "ci_low": 0.0,
+            "mean": 0.02,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A3_strain_3d": {
+          "aurc": 0.9689595581569371,
+          "categories": {
+            "constitutional": 93,
+            "correct": 1,
+            "diastereomer": 6,
+            "enantiomer": 0,
+            "invalid": 0
+          },
+          "ece": 0.3273397734316467,
+          "flat_connectivity_match": {
+            "ci_high": 0.12,
+            "ci_low": 0.03,
+            "mean": 0.07,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 1.5313645043643191,
+            "ci_low": 0.2552274174037545,
+            "mean": 0.8107223846697403,
+            "n": 6
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.05,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.060000000000000005,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A4_nmr_13c": {
+          "aurc": 0.9576707349349062,
+          "categories": {
+            "constitutional": 93,
+            "correct": 2,
+            "diastereomer": 5,
+            "enantiomer": 0,
+            "invalid": 0
+          },
+          "ece": 0.5591406782102126,
+          "flat_connectivity_match": {
+            "ci_high": 0.12,
+            "ci_low": 0.03,
+            "mean": 0.07,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 1.3962441069306806,
+            "ci_low": 0.18766721866753264,
+            "mean": 0.7131354309579668,
+            "n": 6
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.1,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.05,
+          "stereo_exact_match": {
+            "ci_high": 0.05,
+            "ci_low": 0.0,
+            "mean": 0.02,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A5_nmr_13c_1h_j": {
+          "aurc": 0.9585535971707095,
+          "categories": {
+            "constitutional": 93,
+            "correct": 2,
+            "diastereomer": 5,
+            "enantiomer": 0,
+            "invalid": 0
+          },
+          "ece": 0.5719983885551302,
+          "flat_connectivity_match": {
+            "ci_high": 0.12,
+            "ci_low": 0.03,
+            "mean": 0.07,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.7581755634552488,
+            "ci_low": 0.06756019871681929,
+            "mean": 0.41286788108603406,
+            "n": 6
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.1,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.05,
+          "stereo_exact_match": {
+            "ci_high": 0.05,
+            "ci_low": 0.0,
+            "mean": 0.02,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.9592097210259365,
+          "categories": {
+            "constitutional": 93,
+            "correct": 4,
+            "diastereomer": 0,
+            "enantiomer": 3,
+            "invalid": 0
+          },
+          "ece": 0.44064338317372065,
+          "flat_connectivity_match": {
+            "ci_high": 0.12,
+            "ci_low": 0.03,
+            "mean": 0.07,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 7
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.1,
+            "S3_strained_bredt": 0.1,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.030000000000000006,
+          "stereo_exact_match": {
+            "ci_high": 0.08,
+            "ci_low": 0.01,
+            "mean": 0.04,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        }
+      }
+    },
+    "Ouroboros-B": {
+      "V0_clean": {
+        "A0_visual_top1": {
+          "aurc": 0.9933143566382705,
+          "categories": {
+            "constitutional": 79,
+            "correct": 1,
+            "diastereomer": 15,
+            "enantiomer": 0,
+            "invalid": 5
+          },
+          "ece": 0.1953544771414948,
+          "flat_connectivity_match": {
+            "ci_high": 0.23,
+            "ci_low": 0.09,
+            "mean": 0.16,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.181522358204347,
+            "ci_low": 1.6013174601408537,
+            "mean": 2.36460695529604,
+            "n": 16
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.15,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.9,
+            "mean": 0.95,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 0.9944163569679273,
+          "categories": {
+            "constitutional": 80,
+            "correct": 1,
+            "diastereomer": 15,
+            "enantiomer": 0,
+            "invalid": 4
+          },
+          "ece": 0.2330606593260631,
+          "flat_connectivity_match": {
+            "ci_high": 0.23,
+            "ci_low": 0.09,
+            "mean": 0.16,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.181522358204347,
+            "ci_low": 1.6013174601408537,
+            "mean": 2.36460695529604,
+            "n": 16
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.15,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.92,
+            "mean": 0.96,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.9059924179908283,
+          "categories": {
+            "constitutional": 76,
+            "correct": 9,
+            "diastereomer": 0,
+            "enantiomer": 11,
+            "invalid": 4
+          },
+          "ece": 0.442071989914933,
+          "flat_connectivity_match": {
+            "ci_high": 0.27024999999999977,
+            "ci_low": 0.12,
+            "mean": 0.2,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 20
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.2,
+            "S3_strained_bredt": 0.05,
+            "S4_superatom_si": 0.2,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.11000000000000001,
+          "stereo_exact_match": {
+            "ci_high": 0.15,
+            "ci_low": 0.04,
+            "mean": 0.09,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.92,
+            "mean": 0.96,
+            "n": 100
+          }
+        }
+      },
+      "V0_rot90": {
+        "A0_visual_top1": {
+          "aurc": 0.9820224103425645,
+          "categories": {
+            "constitutional": 75,
+            "correct": 3,
+            "diastereomer": 14,
+            "enantiomer": 1,
+            "invalid": 7
+          },
+          "ece": 0.1783696983504829,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.11,
+            "mean": 0.18,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.4605835123511497,
+            "ci_low": 1.5562616887284904,
+            "mean": 2.5047318118999504,
+            "n": 18
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.05,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.1,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.15,
+          "stereo_exact_match": {
+            "ci_high": 0.07,
+            "ci_low": 0.0,
+            "mean": 0.03,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.97,
+            "ci_low": 0.88,
+            "mean": 0.93,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 0.9838549862425237,
+          "categories": {
+            "constitutional": 79,
+            "correct": 3,
+            "diastereomer": 14,
+            "enantiomer": 1,
+            "invalid": 3
+          },
+          "ece": 0.2244010479220156,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.11,
+            "mean": 0.18,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.4605835123511497,
+            "ci_low": 1.5562616887284904,
+            "mean": 2.5047318118999504,
+            "n": 18
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.05,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.1,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.15,
+          "stereo_exact_match": {
+            "ci_high": 0.07,
+            "ci_low": 0.0,
+            "mean": 0.03,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.9069479431734006,
+          "categories": {
+            "constitutional": 74,
+            "correct": 11,
+            "diastereomer": 1,
+            "enantiomer": 11,
+            "invalid": 3
+          },
+          "ece": 0.46450071312087005,
+          "flat_connectivity_match": {
+            "ci_high": 0.31,
+            "ci_low": 0.15,
+            "mean": 0.23,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.4053611923312849,
+            "ci_low": 0.0,
+            "mean": 0.13512039744376164,
+            "n": 23
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.2,
+            "S3_strained_bredt": 0.1,
+            "S4_superatom_si": 0.25,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.12000000000000001,
+          "stereo_exact_match": {
+            "ci_high": 0.1702499999999998,
+            "ci_low": 0.05,
+            "mean": 0.11,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        }
+      },
+      "V1_rotated_offgrid": {
+        "A0_visual_top1": {
+          "aurc": 0.995175834479685,
+          "categories": {
+            "constitutional": 80,
+            "correct": 2,
+            "diastereomer": 14,
+            "enantiomer": 0,
+            "invalid": 4
+          },
+          "ece": 0.18772302739221905,
+          "flat_connectivity_match": {
+            "ci_high": 0.23,
+            "ci_low": 0.09,
+            "mean": 0.16,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.6201710234116944,
+            "ci_low": 1.6100439858013487,
+            "mean": 2.5954376342597243,
+            "n": 16
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.05,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.14,
+          "stereo_exact_match": {
+            "ci_high": 0.06,
+            "ci_low": 0.0,
+            "mean": 0.02,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.92,
+            "mean": 0.96,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 0.995175834479685,
+          "categories": {
+            "constitutional": 83,
+            "correct": 2,
+            "diastereomer": 14,
+            "enantiomer": 0,
+            "invalid": 1
+          },
+          "ece": 0.20502244216867851,
+          "flat_connectivity_match": {
+            "ci_high": 0.23,
+            "ci_low": 0.09,
+            "mean": 0.16,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.6201710234116944,
+            "ci_low": 1.6100439858013487,
+            "mean": 2.5954376342597243,
+            "n": 16
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.05,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.14,
+          "stereo_exact_match": {
+            "ci_high": 0.06,
+            "ci_low": 0.0,
+            "mean": 0.02,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.97,
+            "mean": 0.99,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.9481248530264774,
+          "categories": {
+            "constitutional": 80,
+            "correct": 5,
+            "diastereomer": 2,
+            "enantiomer": 12,
+            "invalid": 1
+          },
+          "ece": 0.46778802977477507,
+          "flat_connectivity_match": {
+            "ci_high": 0.27,
+            "ci_low": 0.12,
+            "mean": 0.19,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.7704233187740963,
+            "ci_low": 0.0,
+            "mean": 0.31291039408748283,
+            "n": 19
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.1,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.15,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.14,
+          "stereo_exact_match": {
+            "ci_high": 0.1,
+            "ci_low": 0.01,
+            "mean": 0.05,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.97,
+            "mean": 0.99,
+            "n": 100
+          }
+        }
+      },
+      "V2_crowded_si_scan": {
+        "A0_visual_top1": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 93,
+            "correct": 0,
+            "diastereomer": 1,
+            "enantiomer": 0,
+            "invalid": 6
+          },
+          "ece": 0.21393744511170373,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.5131303335074335,
+            "ci_low": 3.5131303335074335,
+            "mean": 3.5131303335074335,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.98,
+            "ci_low": 0.89,
+            "mean": 0.94,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 98,
+            "correct": 0,
+            "diastereomer": 1,
+            "enantiomer": 0,
+            "invalid": 1
+          },
+          "ece": 0.2568272207154402,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.5131303335074335,
+            "ci_low": 3.5131303335074335,
+            "mean": 3.5131303335074335,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.97,
+            "mean": 0.99,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.9970064477958008,
+          "categories": {
+            "constitutional": 98,
+            "correct": 1,
+            "diastereomer": 0,
+            "enantiomer": 0,
+            "invalid": 1
+          },
+          "ece": 0.6422463107810021,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.0,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.97,
+            "mean": 0.99,
+            "n": 100
+          }
+        }
+      },
+      "V3_condensed_layout": {
+        "A0_visual_top1": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 90,
+            "correct": 0,
+            "diastereomer": 2,
+            "enantiomer": 0,
+            "invalid": 8
+          },
+          "ece": 0.211841677529546,
+          "flat_connectivity_match": {
+            "ci_high": 0.05,
+            "ci_low": 0.0,
+            "mean": 0.02,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 1.171043444541283,
+            "ci_low": 0.22520066238939762,
+            "mean": 0.6981220534653403,
+            "n": 2
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.02,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.97,
+            "ci_low": 0.86,
+            "mean": 0.92,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 93,
+            "correct": 0,
+            "diastereomer": 2,
+            "enantiomer": 0,
+            "invalid": 5
+          },
+          "ece": 0.2652460628180623,
+          "flat_connectivity_match": {
+            "ci_high": 0.05,
+            "ci_low": 0.0,
+            "mean": 0.02,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 1.171043444541283,
+            "ci_low": 0.22520066238939762,
+            "mean": 0.6981220534653403,
+            "n": 2
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.02,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.9097500000000001,
+            "mean": 0.95,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.9877427627994745,
+          "categories": {
+            "constitutional": 93,
+            "correct": 1,
+            "diastereomer": 1,
+            "enantiomer": 0,
+            "invalid": 5
+          },
+          "ece": 0.5311826124617423,
+          "flat_connectivity_match": {
+            "ci_high": 0.05,
+            "ci_low": 0.0,
+            "mean": 0.02,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.09008026495575905,
+            "ci_low": 0.0,
+            "mean": 0.045040132477879524,
+            "n": 2
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.05,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.9097500000000001,
+            "mean": 0.95,
+            "n": 100
+          }
+        }
+      }
+    },
+    "Ouroboros-C": {
+      "V0_clean": {
+        "A0_visual_top1": {
+          "aurc": 0.9501323530605229,
+          "categories": {
+            "constitutional": 81,
+            "correct": 4,
+            "diastereomer": 11,
+            "enantiomer": 0,
+            "invalid": 4
+          },
+          "ece": 0.16629090901102395,
+          "flat_connectivity_match": {
+            "ci_high": 0.23,
+            "ci_low": 0.08,
+            "mean": 0.15,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.5969371514977992,
+            "ci_low": 1.2900780803673635,
+            "mean": 2.4321671540050636,
+            "n": 14
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.2,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.10999999999999999,
+          "stereo_exact_match": {
+            "ci_high": 0.08,
+            "ci_low": 0.01,
+            "mean": 0.04,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.92,
+            "mean": 0.96,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 0.9550770999984706,
+          "categories": {
+            "constitutional": 82,
+            "correct": 4,
+            "diastereomer": 11,
+            "enantiomer": 0,
+            "invalid": 3
+          },
+          "ece": 0.19996621791480956,
+          "flat_connectivity_match": {
+            "ci_high": 0.23,
+            "ci_low": 0.08,
+            "mean": 0.15,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.5969371514977992,
+            "ci_low": 1.2900780803673635,
+            "mean": 2.4321671540050636,
+            "n": 14
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.2,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.10999999999999999,
+          "stereo_exact_match": {
+            "ci_high": 0.08,
+            "ci_low": 0.01,
+            "mean": 0.04,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        },
+        "A2_hrms": {
+          "aurc": 0.9535111440353329,
+          "categories": {
+            "constitutional": 82,
+            "correct": 4,
+            "diastereomer": 11,
+            "enantiomer": 0,
+            "invalid": 3
+          },
+          "ece": 0.25703896460105524,
+          "flat_connectivity_match": {
+            "ci_high": 0.23,
+            "ci_low": 0.08,
+            "mean": 0.15,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.5969371514977992,
+            "ci_low": 1.2900780803673635,
+            "mean": 2.4321671540050636,
+            "n": 14
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.2,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.10999999999999999,
+          "stereo_exact_match": {
+            "ci_high": 0.08,
+            "ci_low": 0.01,
+            "mean": 0.04,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        },
+        "A3_strain_3d": {
+          "aurc": 0.9756777548071481,
+          "categories": {
+            "constitutional": 83,
+            "correct": 5,
+            "diastereomer": 6,
+            "enantiomer": 3,
+            "invalid": 3
+          },
+          "ece": 0.40080258180407025,
+          "flat_connectivity_match": {
+            "ci_high": 0.21024999999999977,
+            "ci_low": 0.07,
+            "mean": 0.14,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 1.7986294333731554,
+            "ci_low": 0.2765142419119781,
+            "mean": 1.0101858285197522,
+            "n": 14
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.25,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.09000000000000001,
+          "stereo_exact_match": {
+            "ci_high": 0.1,
+            "ci_low": 0.01,
+            "mean": 0.05,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        },
+        "A4_nmr_13c": {
+          "aurc": 0.9762320912371826,
+          "categories": {
+            "constitutional": 80,
+            "correct": 10,
+            "diastereomer": 2,
+            "enantiomer": 5,
+            "invalid": 3
+          },
+          "ece": 0.5024298845333881,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.1,
+            "mean": 0.17,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.8955038105178734,
+            "ci_low": 0.0,
+            "mean": 0.33117744471768246,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.5,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.07,
+          "stereo_exact_match": {
+            "ci_high": 0.16,
+            "ci_low": 0.04,
+            "mean": 0.1,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        },
+        "A5_nmr_13c_1h_j": {
+          "aurc": 0.9658420642556473,
+          "categories": {
+            "constitutional": 80,
+            "correct": 10,
+            "diastereomer": 2,
+            "enantiomer": 5,
+            "invalid": 3
+          },
+          "ece": 0.5177082761535594,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.1,
+            "mean": 0.17,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.8955038105178734,
+            "ci_low": 0.0,
+            "mean": 0.33117744471768246,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.5,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.07,
+          "stereo_exact_match": {
+            "ci_high": 0.16,
+            "ci_low": 0.04,
+            "mean": 0.1,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.948193066109173,
+          "categories": {
+            "constitutional": 80,
+            "correct": 10,
+            "diastereomer": 2,
+            "enantiomer": 5,
+            "invalid": 3
+          },
+          "ece": 0.42797935646661023,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.1,
+            "mean": 0.17,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.8955038105178734,
+            "ci_low": 0.0,
+            "mean": 0.33117744471768246,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.5,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.07,
+          "stereo_exact_match": {
+            "ci_high": 0.16,
+            "ci_low": 0.04,
+            "mean": 0.1,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        }
+      },
+      "V0_rot90": {
+        "A0_visual_top1": {
+          "aurc": 0.9501323530605229,
+          "categories": {
+            "constitutional": 81,
+            "correct": 4,
+            "diastereomer": 11,
+            "enantiomer": 0,
+            "invalid": 4
+          },
+          "ece": 0.16629091076064512,
+          "flat_connectivity_match": {
+            "ci_high": 0.23,
+            "ci_low": 0.08,
+            "mean": 0.15,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.5969371514977992,
+            "ci_low": 1.2900780803673635,
+            "mean": 2.4321671540050636,
+            "n": 14
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.2,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.10999999999999999,
+          "stereo_exact_match": {
+            "ci_high": 0.08,
+            "ci_low": 0.01,
+            "mean": 0.04,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.92,
+            "mean": 0.96,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 0.9550770999984706,
+          "categories": {
+            "constitutional": 82,
+            "correct": 4,
+            "diastereomer": 11,
+            "enantiomer": 0,
+            "invalid": 3
+          },
+          "ece": 0.19996621978252416,
+          "flat_connectivity_match": {
+            "ci_high": 0.23,
+            "ci_low": 0.08,
+            "mean": 0.15,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.5969371514977992,
+            "ci_low": 1.2900780803673635,
+            "mean": 2.4321671540050636,
+            "n": 14
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.2,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.10999999999999999,
+          "stereo_exact_match": {
+            "ci_high": 0.08,
+            "ci_low": 0.01,
+            "mean": 0.04,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        },
+        "A2_hrms": {
+          "aurc": 0.9535111440353329,
+          "categories": {
+            "constitutional": 82,
+            "correct": 4,
+            "diastereomer": 11,
+            "enantiomer": 0,
+            "invalid": 3
+          },
+          "ece": 0.25703896523290715,
+          "flat_connectivity_match": {
+            "ci_high": 0.23,
+            "ci_low": 0.08,
+            "mean": 0.15,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.5969371514977992,
+            "ci_low": 1.2900780803673635,
+            "mean": 2.4321671540050636,
+            "n": 14
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.2,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.10999999999999999,
+          "stereo_exact_match": {
+            "ci_high": 0.08,
+            "ci_low": 0.01,
+            "mean": 0.04,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        },
+        "A3_strain_3d": {
+          "aurc": 0.9756777548071481,
+          "categories": {
+            "constitutional": 83,
+            "correct": 5,
+            "diastereomer": 6,
+            "enantiomer": 3,
+            "invalid": 3
+          },
+          "ece": 0.400802587291085,
+          "flat_connectivity_match": {
+            "ci_high": 0.21024999999999977,
+            "ci_low": 0.07,
+            "mean": 0.14,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 1.7986294333731554,
+            "ci_low": 0.2765142419119781,
+            "mean": 1.0101858285197522,
+            "n": 14
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.25,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.09000000000000001,
+          "stereo_exact_match": {
+            "ci_high": 0.1,
+            "ci_low": 0.01,
+            "mean": 0.05,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        },
+        "A4_nmr_13c": {
+          "aurc": 0.9762320912371826,
+          "categories": {
+            "constitutional": 80,
+            "correct": 10,
+            "diastereomer": 2,
+            "enantiomer": 5,
+            "invalid": 3
+          },
+          "ece": 0.5024298783083992,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.1,
+            "mean": 0.17,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.8955038105178734,
+            "ci_low": 0.0,
+            "mean": 0.33117744471768246,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.5,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.07,
+          "stereo_exact_match": {
+            "ci_high": 0.16,
+            "ci_low": 0.04,
+            "mean": 0.1,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        },
+        "A5_nmr_13c_1h_j": {
+          "aurc": 0.9658420642556473,
+          "categories": {
+            "constitutional": 80,
+            "correct": 10,
+            "diastereomer": 2,
+            "enantiomer": 5,
+            "invalid": 3
+          },
+          "ece": 0.517708269213318,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.1,
+            "mean": 0.17,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.8955038105178734,
+            "ci_low": 0.0,
+            "mean": 0.33117744471768246,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.5,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.07,
+          "stereo_exact_match": {
+            "ci_high": 0.16,
+            "ci_low": 0.04,
+            "mean": 0.1,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.948193066109173,
+          "categories": {
+            "constitutional": 80,
+            "correct": 10,
+            "diastereomer": 2,
+            "enantiomer": 5,
+            "invalid": 3
+          },
+          "ece": 0.42797934926144643,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.1,
+            "mean": 0.17,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.8955038105178734,
+            "ci_low": 0.0,
+            "mean": 0.33117744471768246,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.5,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.07,
+          "stereo_exact_match": {
+            "ci_high": 0.16,
+            "ci_low": 0.04,
+            "mean": 0.1,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.93,
+            "mean": 0.97,
+            "n": 100
+          }
+        }
+      },
+      "V1_rotated_offgrid": {
+        "A0_visual_top1": {
+          "aurc": 0.9292107148191517,
+          "categories": {
+            "constitutional": 82,
+            "correct": 4,
+            "diastereomer": 12,
+            "enantiomer": 1,
+            "invalid": 1
+          },
+          "ece": 0.1659989280227276,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.1,
+            "mean": 0.17,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.644120718623419,
+            "ci_low": 0.88709190342274,
+            "mean": 1.7486169081188137,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.2,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.13,
+          "stereo_exact_match": {
+            "ci_high": 0.09,
+            "ci_low": 0.01,
+            "mean": 0.04,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.96,
+            "mean": 0.99,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 0.940844248582531,
+          "categories": {
+            "constitutional": 83,
+            "correct": 4,
+            "diastereomer": 12,
+            "enantiomer": 1,
+            "invalid": 0
+          },
+          "ece": 0.17274026619130298,
+          "flat_connectivity_match": {
+            "ci_high": 0.25,
+            "ci_low": 0.1,
+            "mean": 0.17,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.644120718623419,
+            "ci_low": 0.88709190342274,
+            "mean": 1.7486169081188137,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.2,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.13,
+          "stereo_exact_match": {
+            "ci_high": 0.09,
+            "ci_low": 0.01,
+            "mean": 0.04,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A2_hrms": {
+          "aurc": 0.9425729287917658,
+          "categories": {
+            "constitutional": 82,
+            "correct": 4,
+            "diastereomer": 13,
+            "enantiomer": 1,
+            "invalid": 0
+          },
+          "ece": 0.20812647556146688,
+          "flat_connectivity_match": {
+            "ci_high": 0.26,
+            "ci_low": 0.11,
+            "mean": 0.18,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 2.644120718623419,
+            "ci_low": 0.88709190342274,
+            "mean": 1.7486169081188137,
+            "n": 17
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.2,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.13999999999999999,
+          "stereo_exact_match": {
+            "ci_high": 0.09,
+            "ci_low": 0.01,
+            "mean": 0.04,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A3_strain_3d": {
+          "aurc": 0.9568864768735403,
+          "categories": {
+            "constitutional": 84,
+            "correct": 7,
+            "diastereomer": 8,
+            "enantiomer": 1,
+            "invalid": 0
+          },
+          "ece": 0.35775144318613794,
+          "flat_connectivity_match": {
+            "ci_high": 0.23,
+            "ci_low": 0.09,
+            "mean": 0.16,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 1.7256000756934555,
+            "ci_low": 0.34751277218574617,
+            "mean": 0.9979204352966917,
+            "n": 16
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.05,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.3,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.09,
+          "stereo_exact_match": {
+            "ci_high": 0.12,
+            "ci_low": 0.02,
+            "mean": 0.07,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A4_nmr_13c": {
+          "aurc": 0.9399513585802562,
+          "categories": {
+            "constitutional": 81,
+            "correct": 15,
+            "diastereomer": 2,
+            "enantiomer": 2,
+            "invalid": 0
+          },
+          "ece": 0.4463103080379783,
+          "flat_connectivity_match": {
+            "ci_high": 0.27,
+            "ci_low": 0.12,
+            "mean": 0.19,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.34147532021758553,
+            "ci_low": 0.0,
+            "mean": 0.1291940642251192,
+            "n": 19
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.15,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.6,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.04000000000000001,
+          "stereo_exact_match": {
+            "ci_high": 0.22,
+            "ci_low": 0.09,
+            "mean": 0.15,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A5_nmr_13c_1h_j": {
+          "aurc": 0.9244019875431441,
+          "categories": {
+            "constitutional": 81,
+            "correct": 15,
+            "diastereomer": 2,
+            "enantiomer": 2,
+            "invalid": 0
+          },
+          "ece": 0.4584341401083796,
+          "flat_connectivity_match": {
+            "ci_high": 0.27,
+            "ci_low": 0.12,
+            "mean": 0.19,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.34147532021758553,
+            "ci_low": 0.0,
+            "mean": 0.1291940642251192,
+            "n": 19
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.15,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.6,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.04000000000000001,
+          "stereo_exact_match": {
+            "ci_high": 0.22,
+            "ci_low": 0.09,
+            "mean": 0.15,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.8795601118234774,
+          "categories": {
+            "constitutional": 81,
+            "correct": 16,
+            "diastereomer": 1,
+            "enantiomer": 2,
+            "invalid": 0
+          },
+          "ece": 0.35705026482031876,
+          "flat_connectivity_match": {
+            "ci_high": 0.27,
+            "ci_low": 0.12,
+            "mean": 0.19,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.2631291950207302,
+            "ci_low": 0.0,
+            "mean": 0.08770973167357672,
+            "n": 19
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.05,
+            "S2_dense_stereo": 0.15,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.6,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.03,
+          "stereo_exact_match": {
+            "ci_high": 0.24,
+            "ci_low": 0.09,
+            "mean": 0.16,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 1.0,
+            "mean": 1.0,
+            "n": 100
+          }
+        }
+      },
+      "V2_crowded_si_scan": {
+        "A0_visual_top1": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 90,
+            "correct": 0,
+            "diastereomer": 1,
+            "enantiomer": 0,
+            "invalid": 9
+          },
+          "ece": 0.21378034070777677,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.5131303335074335,
+            "ci_low": 3.5131303335074335,
+            "mean": 3.5131303335074335,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.96,
+            "ci_low": 0.85,
+            "mean": 0.91,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 95,
+            "correct": 0,
+            "diastereomer": 1,
+            "enantiomer": 0,
+            "invalid": 4
+          },
+          "ece": 0.2887762693554121,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.5131303335074335,
+            "ci_low": 3.5131303335074335,
+            "mean": 3.5131303335074335,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.91,
+            "mean": 0.96,
+            "n": 100
+          }
+        },
+        "A2_hrms": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 95,
+            "correct": 0,
+            "diastereomer": 1,
+            "enantiomer": 0,
+            "invalid": 4
+          },
+          "ece": 0.29769325862375645,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.5131303335074335,
+            "ci_low": 3.5131303335074335,
+            "mean": 3.5131303335074335,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.91,
+            "mean": 0.96,
+            "n": 100
+          }
+        },
+        "A3_strain_3d": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 95,
+            "correct": 0,
+            "diastereomer": 1,
+            "enantiomer": 0,
+            "invalid": 4
+          },
+          "ece": 0.39163871388254573,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 3.5131303335074335,
+            "ci_low": 3.5131303335074335,
+            "mean": 3.5131303335074335,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.91,
+            "mean": 0.96,
+            "n": 100
+          }
+        },
+        "A4_nmr_13c": {
+          "aurc": 0.9993844264745967,
+          "categories": {
+            "constitutional": 95,
+            "correct": 1,
+            "diastereomer": 0,
+            "enantiomer": 0,
+            "invalid": 4
+          },
+          "ece": 0.6613304273356713,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.0,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.91,
+            "mean": 0.96,
+            "n": 100
+          }
+        },
+        "A5_nmr_13c_1h_j": {
+          "aurc": 0.9975294353345778,
+          "categories": {
+            "constitutional": 95,
+            "correct": 1,
+            "diastereomer": 0,
+            "enantiomer": 0,
+            "invalid": 4
+          },
+          "ece": 0.6849791235546052,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.0,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.91,
+            "mean": 0.96,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 0.996019748897366,
+          "categories": {
+            "constitutional": 95,
+            "correct": 1,
+            "diastereomer": 0,
+            "enantiomer": 0,
+            "invalid": 4
+          },
+          "ece": 0.6218648943272493,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.05,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.0,
+          "stereo_exact_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.91,
+            "mean": 0.96,
+            "n": 100
+          }
+        }
+      },
+      "V3_condensed_layout": {
+        "A0_visual_top1": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 95,
+            "correct": 0,
+            "diastereomer": 1,
+            "enantiomer": 0,
+            "invalid": 4
+          },
+          "ece": 0.21328053590686605,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": null,
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 0.99,
+            "ci_low": 0.92,
+            "mean": 0.96,
+            "n": 100
+          }
+        },
+        "A1_rdkit_valid": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 97,
+            "correct": 0,
+            "diastereomer": 1,
+            "enantiomer": 0,
+            "invalid": 2
+          },
+          "ece": 0.2427355287870847,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": null,
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.95,
+            "mean": 0.98,
+            "n": 100
+          }
+        },
+        "A2_hrms": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 97,
+            "correct": 0,
+            "diastereomer": 1,
+            "enantiomer": 0,
+            "invalid": 2
+          },
+          "ece": 0.2627071429055205,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": null,
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.95,
+            "mean": 0.98,
+            "n": 100
+          }
+        },
+        "A3_strain_3d": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 97,
+            "correct": 0,
+            "diastereomer": 1,
+            "enantiomer": 0,
+            "invalid": 2
+          },
+          "ece": 0.41428179902577333,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.09008026495575905,
+            "ci_low": 0.09008026495575905,
+            "mean": 0.09008026495575905,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.95,
+            "mean": 0.98,
+            "n": 100
+          }
+        },
+        "A4_nmr_13c": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 97,
+            "correct": 0,
+            "diastereomer": 1,
+            "enantiomer": 0,
+            "invalid": 2
+          },
+          "ece": 0.6124004945513476,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.09008026495575905,
+            "ci_low": 0.09008026495575905,
+            "mean": 0.09008026495575905,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.95,
+            "mean": 0.98,
+            "n": 100
+          }
+        },
+        "A5_nmr_13c_1h_j": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 97,
+            "correct": 0,
+            "diastereomer": 1,
+            "enantiomer": 0,
+            "invalid": 2
+          },
+          "ece": 0.6291783473483813,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.09008026495575905,
+            "ci_low": 0.09008026495575905,
+            "mean": 0.09008026495575905,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.95,
+            "mean": 0.98,
+            "n": 100
+          }
+        },
+        "A6_full_posterior": {
+          "aurc": 1.0,
+          "categories": {
+            "constitutional": 97,
+            "correct": 0,
+            "diastereomer": 0,
+            "enantiomer": 1,
+            "invalid": 2
+          },
+          "ece": 0.530844635579327,
+          "flat_connectivity_match": {
+            "ci_high": 0.03,
+            "ci_low": 0.0,
+            "mean": 0.01,
+            "n": 100
+          },
+          "isomeric_abs_delta_e_kcal": null,
+          "isomeric_abs_mace_delta_e_kcal": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 1
+          },
+          "per_stratum_exact": {
+            "S1_bridged_caged": 0.0,
+            "S2_dense_stereo": 0.0,
+            "S3_strained_bredt": 0.0,
+            "S4_superatom_si": 0.0,
+            "S5_medchem_bioisosteres": 0.0
+          },
+          "silent_stereo_gap": 0.01,
+          "stereo_exact_match": {
+            "ci_high": 0.0,
+            "ci_low": 0.0,
+            "mean": 0.0,
+            "n": 100
+          },
+          "validity": {
+            "ci_high": 1.0,
+            "ci_low": 0.95,
+            "mean": 0.98,
+            "n": 100
+          }
+        }
+      }
+    }
+  },
+  "beam_size": 5,
+  "benchmark": "ChemVeritas-Medium100-ClosedLoop-NeuralOCSR",
+  "elapsed_sec": 5319.07,
+  "n_scaffolds": 100,
+  "physics_calculator": "MACE-OFF23-medium//MMFF94s",
+  "rot90_c8_invariance": {
+    "Ouroboros-A": {
+      "canonical_smiles_invariance": {
+        "ci_high": 0.06,
+        "ci_low": 0.0,
+        "mean": 0.03,
+        "n": 100
+      },
+      "exact_token_invariance": {
+        "ci_high": 0.06,
+        "ci_low": 0.0,
+        "mean": 0.03,
+        "n": 100
+      }
+    },
+    "Ouroboros-AC": {
+      "canonical_smiles_invariance": {
+        "ci_high": 0.44,
+        "ci_low": 0.26,
+        "mean": 0.35,
+        "n": 100
+      },
+      "exact_token_invariance": {
+        "ci_high": 0.44,
+        "ci_low": 0.26,
+        "mean": 0.35,
+        "n": 100
+      }
+    },
+    "Ouroboros-B": {
+      "canonical_smiles_invariance": {
+        "ci_high": 0.49,
+        "ci_low": 0.3,
+        "mean": 0.4,
+        "n": 100
+      },
+      "exact_token_invariance": {
+        "ci_high": 0.49,
+        "ci_low": 0.3,
+        "mean": 0.4,
+        "n": 100
+      }
+    },
+    "Ouroboros-C": {
+      "canonical_smiles_invariance": {
+        "ci_high": 1.0,
+        "ci_low": 0.93,
+        "mean": 0.97,
+        "n": 100
+      },
+      "exact_token_invariance": {
+        "ci_high": 1.0,
+        "ci_low": 1.0,
+        "mean": 1.0,
+        "n": 100
+      }
+    }
+  },
+  "total_visual_instances": 500,
+  "views_evaluated_separately": [
+    "V0_clean",
+    "V0_rot90",
+    "V1_rotated_offgrid",
+    "V2_crowded_si_scan",
+    "V3_condensed_layout"
+  ]
+}

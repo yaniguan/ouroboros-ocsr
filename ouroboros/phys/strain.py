@@ -211,25 +211,51 @@ def _ring_angle_strain_outlier(mol: Chem.Mol, conf_id: int) -> float:
 
 def _eval_mmff_or_uff(mol: Chem.Mol, relax_steps: int) -> list[float]:
     energies: list[float] = []
-    props = AllChem.MMFFGetMoleculeProperties(mol, mmffVariant="MMFF94s")
+    try:
+        props = AllChem.MMFFGetMoleculeProperties(mol, mmffVariant="MMFF94s")
+    except Exception:
+        props = None
     for conf in mol.GetConformers():
         cid = conf.GetId()
-        ff = (
-            AllChem.MMFFGetMoleculeForceField(mol, props, confId=cid) if props is not None else None
-        )
+        ff = None
+        if props is not None:
+            try:
+                ff = AllChem.MMFFGetMoleculeForceField(mol, props, confId=cid)
+            except Exception:
+                ff = None
         if ff is None:
-            ff = AllChem.UFFGetMoleculeForceField(mol, confId=cid)
+            try:
+                ff = AllChem.UFFGetMoleculeForceField(mol, confId=cid)
+            except Exception:
+                ff = None
         if ff is None:
             energies.append(0.0)
             continue
-        if relax_steps > 0:
-            ff.Minimize(maxIts=relax_steps)
-        energies.append(float(ff.CalcEnergy()))
+        try:
+            if relax_steps > 0:
+                ff.Minimize(maxIts=relax_steps)
+            energies.append(float(ff.CalcEnergy()))
+        except Exception:
+            energies.append(0.0)
     return energies
+
+
+_MACE_SUPPORTED_Z: frozenset[int] = frozenset({1, 6, 7, 8, 9, 15, 16, 17, 35, 53})
 
 
 def _eval_ase_calc(mol: Chem.Mol, calc, relax_steps: int) -> tuple[list[float], float]:
     from ouroboros.geometry.conformers import relax
+
+    z_arr = np.asarray([a.GetAtomicNum() for a in mol.GetAtoms()], dtype=int)
+    is_mace = "mace" in type(calc).__name__.lower() or "mace" in str(
+        getattr(calc, "_cache_tag", "")
+    ).lower()
+    if is_mace and (
+        Chem.GetFormalCharge(mol) != 0 or any(int(z) not in _MACE_SUPPORTED_Z for z in z_arr)
+    ):
+        # MACE-OFF23 covers neutral closed-shell {H,C,N,O,F,P,S,Cl,Br,I}; fall back to MMFF94s/UFF
+        # on silyl/boronate superatoms (Si, B) or ionic OCSR beam candidates.
+        return _eval_mmff_or_uff(mol, max(80, relax_steps)), 0.0
 
     # Fast MMFF94s/UFF pre-relaxation (<0.3 ms/conf) removes raw ETKDG bond-length jitter
     # before MLIP evaluation (DP4-style MACE-OFF23//MMFF94s, plus optional MACE BFGS polish).
@@ -239,32 +265,34 @@ def _eval_ase_calc(mol: Chem.Mol, calc, relax_steps: int) -> tuple[list[float], 
     ase_steps = 0 if relax_steps <= 0 else min(relax_steps, int(getattr(calc, "_relax_steps", 0)))
     energies: list[float] = []
     node_outlier = 0.0
-    z_arr = np.asarray([a.GetAtomicNum() for a in mol.GetAtoms()], dtype=int)
-    for conf in mol.GetConformers():
-        cid = conf.GetId()
-        atoms = to_atoms(mol, cid)
-        if ase_steps > 0:
-            res = relax(atoms, calc, steps=ase_steps)
-            for idx, xyz in enumerate(res.positions):
-                conf.SetAtomPosition(idx, xyz.tolist())
-            energies.append(res.energy * EV_TO_KCAL)
-        else:
-            atoms.calc = calc
-            energies.append(float(atoms.get_potential_energy()) * EV_TO_KCAL)
-        res_dict = getattr(calc, "results", {}) or {}
-        if "node_energy" in res_dict and res_dict["node_energy"] is not None:
-            ne = np.asarray(res_dict["node_energy"], dtype=float) * EV_TO_KCAL
-            if ne.size == z_arr.size:
-                # Compare within identical atomic numbers Z so element baseline offsets cancel.
-                conf_max = 0.0
-                for z_val in np.unique(z_arr):
-                    grp = ne[z_arr == z_val]
-                    if grp.size >= 2:
-                        conf_max = max(conf_max, float(np.max(grp - np.median(grp))))
-                node_outlier = max(node_outlier, max(0.0, conf_max - 5.0))
-            elif ne.size:
-                med = float(np.median(ne))
-                node_outlier = max(node_outlier, float(np.max(ne - med)))
+    try:
+        for conf in mol.GetConformers():
+            cid = conf.GetId()
+            atoms = to_atoms(mol, cid)
+            if ase_steps > 0:
+                res = relax(atoms, calc, steps=ase_steps)
+                for idx, xyz in enumerate(res.positions):
+                    conf.SetAtomPosition(idx, xyz.tolist())
+                energies.append(res.energy * EV_TO_KCAL)
+            else:
+                atoms.calc = calc
+                energies.append(float(atoms.get_potential_energy()) * EV_TO_KCAL)
+            res_dict = getattr(calc, "results", {}) or {}
+            if "node_energy" in res_dict and res_dict["node_energy"] is not None:
+                ne = np.asarray(res_dict["node_energy"], dtype=float) * EV_TO_KCAL
+                if ne.size == z_arr.size:
+                    # Compare within identical atomic numbers Z so element baseline offsets cancel.
+                    conf_max = 0.0
+                    for z_val in np.unique(z_arr):
+                        grp = ne[z_arr == z_val]
+                        if grp.size >= 2:
+                            conf_max = max(conf_max, float(np.max(grp - np.median(grp))))
+                    node_outlier = max(node_outlier, max(0.0, conf_max - 5.0))
+                elif ne.size:
+                    med = float(np.median(ne))
+                    node_outlier = max(node_outlier, float(np.max(ne - med)))
+    except Exception:
+        return _eval_mmff_or_uff(mol, max(80, relax_steps)), 0.0
     return energies, node_outlier
 
 
