@@ -110,3 +110,48 @@ def test_end_to_end_h2_1_to_h2_3_active_distillation_cli(tmp_path: Path):
     assert lc_lcmd_24["test_bioisostere_rel_mae_kcal"]["mean"] < 0.35 * base_bio_mae
     assert lc_lcmd_24["test_bioisostere_softening_alpha"]["mean"] > 0.82
     assert lc_lcmd_24["test_control_forgetting_drift_kcal"]["mean"] < 0.12
+
+
+def test_mmff_cache_and_distilled_ase_calculator_nve_conservation():
+    from ase import Atoms, units
+    from ase.md.verlet import VelocityVerlet
+
+    from ouroboros.active.distill import (
+        DistilledASECalculator,
+        DistilledEnsemblePotential,
+    )
+    from ouroboros.active.motifs import build_bioisostere_panel
+    from ouroboros.active.oracle import (
+        AnalyticalCageMember,
+        CachedPredictorMember,
+        MMFF94sMember,
+    )
+    from ouroboros.active.torsion import generate_blindspot_frames
+
+    rec = build_bioisostere_panel("smoke")[0]
+    fr = generate_blindspot_frames(rec, torsion_step_deg=90.0, n_displaced=0)[0]
+
+    mmff = MMFF94sMember()
+    cached = CachedPredictorMember(mmff)
+    e1, f1 = cached.predict_frame(fr)
+    e2, f2 = cached.predict_frame(fr)
+    assert np.isfinite(e1) and f1.shape == fr.positions.shape
+    assert e1 == e2 and np.allclose(f1, f2)
+    assert len(cached.cache) == 1
+
+    base = AnalyticalCageMember(0.5, 0.5)
+    delta = ConservativeShallowEnsembleDeltaMLIP(hidden_dim=12, n_rbf=10, n_heads=4, seed=2)
+    pot = DistilledEnsemblePotential(base, delta)
+    calc = DistilledASECalculator(pot, mol_id=rec.mol_id, smiles=rec.smiles)
+
+    atoms = Atoms(numbers=fr.atomic_numbers.tolist(), positions=fr.positions.copy())
+    atoms.calc = calc
+    rng = np.random.default_rng(11)
+    atoms.set_momenta(rng.normal(scale=0.02, size=fr.positions.shape))
+    e_tot_0 = atoms.get_potential_energy() + atoms.get_kinetic_energy()
+    dyn = VelocityVerlet(atoms, timestep=0.25 * units.fs)
+    dyn.run(6)
+    e_tot_1 = atoms.get_potential_energy() + atoms.get_kinetic_energy()
+    assert abs(e_tot_1 - e_tot_0) < 1e-3
+    assert calc.n_evals >= 6
+    assert calc.last_sigma_f_max >= 0.0

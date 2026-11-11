@@ -20,6 +20,7 @@ import torch.nn as nn
 from ouroboros.active.committee import evaluate_committee, select_active_batch
 from ouroboros.active.motifs import BioisostereRecord
 from ouroboros.active.oracle import (
+    EV_TO_KCAL,
     AnalyticalCageMember,
     QMLabel,
     QMOracleSpec,
@@ -331,6 +332,78 @@ class DistilledEnsemblePotential:
     def predict_frame(self, frame: ConformerFrame) -> tuple[float, np.ndarray]:
         e_val, f_val, _, _ = self.predict_frame_with_uq(frame)
         return e_val, f_val
+
+
+try:
+    from ase.calculators.calculator import Calculator as _ASECalculatorBase
+    from ase.calculators.calculator import all_changes as _ASE_ALL_CHANGES
+except ImportError:  # pragma: no cover
+    _ASECalculatorBase = object  # type: ignore[assignment,misc]
+    _ASE_ALL_CHANGES = ["positions", "numbers", "cell", "pbc"]
+
+
+class DistilledASECalculator(_ASECalculatorBase):  # type: ignore[misc]
+    """Official ASE Calculator wrapping DistilledEnsemblePotential for NVE/Langevin MD & UQ."""
+
+    implemented_properties = ["energy", "forces"]
+
+    def __init__(
+        self,
+        potential: DistilledEnsemblePotential,
+        *,
+        mol_id: str = "md_mol",
+        smiles: str = "",
+        connectivity_key_str: str = "",
+        group: str = "bioisostere",
+        family: str = "bcp_111",
+    ) -> None:
+        if _ASECalculatorBase is not object:
+            super().__init__()
+        else:
+            self.results = {}
+        self.potential = potential
+        self.mol_id = mol_id
+        self.smiles = smiles
+        self.connectivity_key = connectivity_key_str
+        self.group = group
+        self.family = family
+        self.n_evals = 0
+        self.last_energy_std_kcal = 0.0
+        self.last_sigma_f_max = 0.0
+
+    def calculate(
+        self,
+        atoms=None,
+        properties=("energy", "forces"),
+        system_changes=_ASE_ALL_CHANGES,
+    ) -> None:
+        if _ASECalculatorBase is not object:
+            super().calculate(atoms, properties, system_changes)
+        else:
+            self.atoms = atoms
+        target = atoms if atoms is not None else self.atoms
+        pos = np.asarray(target.get_positions(), dtype=np.float64)
+        z = np.asarray(target.get_atomic_numbers(), dtype=np.int64)
+        self.n_evals += 1
+        fr = ConformerFrame(
+            frame_id=f"{self.mol_id}_md_{self.n_evals:07d}",
+            mol_id=self.mol_id,
+            smiles=self.smiles,
+            connectivity_key=self.connectivity_key,
+            group=self.group,
+            family=self.family,
+            source="md",
+            dihedral_deg=None,
+            transannular_c1_c3_a=None,
+            displacement_a=0.0,
+            atomic_numbers=z,
+            positions=pos.copy(),
+        )
+        e_kcal, f_kcal_a, e_std, f_std = self.potential.predict_frame_with_uq(fr)
+        self.last_energy_std_kcal = e_std
+        self.last_sigma_f_max = f_std
+        self.results["energy"] = e_kcal / EV_TO_KCAL
+        self.results["forces"] = (f_kcal_a / EV_TO_KCAL).astype(np.float64)
 
 
 def _mean_base_member() -> AnalyticalCageMember:

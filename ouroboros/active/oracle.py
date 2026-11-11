@@ -7,6 +7,8 @@ hypervalent-SF5 physics potential for fast CPU validation and active-learning be
 
 from __future__ import annotations
 
+import os
+import tempfile
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -18,6 +20,7 @@ from ouroboros.active.torsion import ConformerFrame
 HARTREE_TO_KCAL = 627.5094740631
 BOHR_TO_ANGSTROM = 0.529177210903
 EV_TO_KCAL = 23.06054783061903
+ANI2X_ATOMIC_NUMBERS: frozenset[int] = frozenset({1, 6, 7, 8, 9, 16, 17})
 
 
 @dataclass(frozen=True)
@@ -228,6 +231,101 @@ class ASECalculatorMember:
         return e_kcal, f_kcal_a
 
 
+class CachedPredictorMember:
+    """Memoizes (energy_kcal, forces_kcal_a) by frame_id for fast multi-strategy evaluation."""
+
+    def __init__(self, inner, cache: dict[str, tuple[float, np.ndarray]] | None = None) -> None:
+        self.inner = inner
+        self.cache: dict[str, tuple[float, np.ndarray]] = cache if cache is not None else {}
+
+    def predict_frame(self, frame: ConformerFrame) -> tuple[float, np.ndarray]:
+        hit = self.cache.get(frame.frame_id)
+        if hit is not None:
+            return hit[0], hit[1].copy()
+        e_val, f_val = self.inner.predict_frame(frame)
+        f_arr = np.asarray(f_val, dtype=np.float64)
+        self.cache[frame.frame_id] = (float(e_val), f_arr)
+        return float(e_val), f_arr.copy()
+
+
+class ANI2xModelMember:
+    """Adapter wrapping TorchANI ANI-2x (either full 8-model ensemble or a single submodel)."""
+
+    def __init__(self, model_module, *, device: str = "cpu") -> None:
+        self.model = model_module.to(device).double()
+        self.model.eval()
+        self.device = device
+
+    @staticmethod
+    def supports_frame(frame: ConformerFrame) -> bool:
+        return set(int(z) for z in frame.atomic_numbers).issubset(ANI2X_ATOMIC_NUMBERS)
+
+    def predict_frame(self, frame: ConformerFrame) -> tuple[float, np.ndarray]:
+        if not self.supports_frame(frame):
+            unsupported = sorted(set(int(z) for z in frame.atomic_numbers) - ANI2X_ATOMIC_NUMBERS)
+            raise ValueError(f"ANI-2x does not support atomic numbers {unsupported}")
+        z_t = torch.as_tensor(frame.atomic_numbers, dtype=torch.long, device=self.device).unsqueeze(
+            0
+        )
+        pos_t = torch.tensor(
+            frame.positions, dtype=torch.float64, device=self.device, requires_grad=True
+        ).unsqueeze(0)
+        e_h = self.model((z_t, pos_t)).energies.sum()
+        (grad_pos,) = torch.autograd.grad(e_h, pos_t, create_graph=False)
+        e_kcal = float(e_h.detach().cpu().item()) * HARTREE_TO_KCAL
+        f_kcal_a = (-grad_pos.squeeze(0).detach().cpu().numpy() * HARTREE_TO_KCAL).astype(
+            np.float64
+        )
+        return e_kcal, f_kcal_a
+
+
+def build_ani2x_committee(
+    *, device: str = "cpu"
+) -> tuple[ANI2xModelMember, list[ANI2xModelMember]]:
+    """Return (ensemble_mean_member, 8-member neural committee) for pretrained ANI-2x."""
+    os.environ.setdefault("TORCHANI_NO_WARN_EXTENSIONS", "1")
+    import torchani  # type: ignore[import-not-found]
+
+    ens = torchani.models.ANI2x(periodic_table_index=True).to(device).double()
+    ens.eval()
+    mean_member = ANI2xModelMember(ens, device=device)
+    sub_members = [ANI2xModelMember(ens[k], device=device) for k in range(len(ens.neural_networks))]
+    return mean_member, sub_members
+
+
+class MMFF94sMember:
+    """Classical MMFF94s force-field baseline returning analytical energies and forces."""
+
+    def __init__(self) -> None:
+        self._mol_cache: dict[str, object] = {}
+
+    def predict_frame(self, frame: ConformerFrame) -> tuple[float, np.ndarray]:
+        from rdkit import Chem
+        from rdkit.Chem import AllChem
+
+        base_mol = self._mol_cache.get(frame.smiles)
+        if base_mol is None:
+            m = Chem.AddHs(Chem.MolFromSmiles(frame.smiles))
+            AllChem.EmbedMolecule(m, randomSeed=0)
+            self._mol_cache[frame.smiles] = m
+            base_mol = m
+
+        work = Chem.Mol(base_mol)
+        conf = work.GetConformer(0)
+        for idx, (x, y, zc) in enumerate(frame.positions):
+            conf.SetAtomPosition(idx, (float(x), float(y), float(zc)))
+
+        props = AllChem.MMFFGetMoleculeProperties(work, mmffVariant="MMFF94s")
+        ff = AllChem.MMFFGetMoleculeForceField(work, props) if props is not None else None
+        if ff is None:
+            ff = AllChem.UFFGetMoleculeForceField(work)
+        if ff is None:
+            return 0.0, np.zeros_like(frame.positions, dtype=np.float64)
+        e_kcal = float(ff.CalcEnergy())
+        grad = np.asarray(ff.CalcGrad(), dtype=np.float64).reshape(-1, 3)
+        return e_kcal, (-grad).astype(np.float64)
+
+
 def build_pretrained_baseline_committee(mace_models: Sequence[str] = ()) -> list:
     """Return an M-member baseline MLIP committee (MACE-OFF23 models or fast CPU surrogate).
 
@@ -248,8 +346,33 @@ def build_pretrained_baseline_committee(mace_models: Sequence[str] = ()) -> list
     ]
 
 
-def _run_psi4_single_point(frame: ConformerFrame, spec: QMOracleSpec) -> tuple[float, np.ndarray]:
+_PSI4_INITIALIZED_OUT: str | None = None
+
+
+def _configure_psi4_runtime(*, n_threads: int = 8, memory: str = "6 GB") -> None:
+    global _PSI4_INITIALIZED_OUT
     import psi4  # type: ignore[import-not-found]
+
+    if _PSI4_INITIALIZED_OUT is None:
+        fd, tmp_out = tempfile.mkstemp(prefix="ouroboros_psi4_", suffix=".out")
+        os.close(fd)
+        psi4.core.set_output_file(tmp_out, False)
+        _PSI4_INITIALIZED_OUT = tmp_out
+    psi4.set_num_threads(n_threads)
+    psi4.set_memory(memory)
+    psi4.set_options(
+        {
+            "scf_type": "df",
+            "reference": "rhf",
+            "e_convergence": 1e-7,
+            "d_convergence": 1e-7,
+        }
+    )
+
+
+def _build_psi4_molecule(frame: ConformerFrame, spec: QMOracleSpec):
+    import psi4  # type: ignore[import-not-found]
+    from rdkit import Chem
 
     pt = [
         f"{spec.charge} {spec.multiplicity}",
@@ -258,17 +381,61 @@ def _run_psi4_single_point(frame: ConformerFrame, spec: QMOracleSpec) -> tuple[f
         "no_reorient",
         "no_com",
     ]
-    from rdkit import Chem
-
     ptable = Chem.GetPeriodicTable()
     for z, (x, y, zc) in zip(frame.atomic_numbers, frame.positions, strict=True):
         sym = ptable.GetElementSymbol(int(z))
         pt.append(f"{sym} {x:.8f} {y:.8f} {zc:.8f}")
-    mol_psi = psi4.geometry("\n".join(pt))
-    e_h, wfn = psi4.gradient(f"{spec.method}/{spec.basis}", molecule=mol_psi, return_wfn=True)
-    grad = np.asarray(wfn.gradient())  # Hartree / Bohr
+    return psi4.geometry("\n".join(pt))
+
+
+def _run_psi4_single_point(
+    frame: ConformerFrame,
+    spec: QMOracleSpec,
+    *,
+    n_threads: int = 8,
+    memory: str = "6 GB",
+) -> tuple[float, np.ndarray]:
+    import psi4  # type: ignore[import-not-found]
+
+    _configure_psi4_runtime(n_threads=n_threads, memory=memory)
+    mol_psi = _build_psi4_molecule(frame, spec)
+    grad_mat, wfn = psi4.gradient(
+        f"{spec.method}/{spec.basis}", molecule=mol_psi, return_wfn=True
+    )
+    e_h = float(wfn.energy())
+    grad = np.asarray(grad_mat, dtype=np.float64)  # Hartree / Bohr
+    psi4.core.clean()
     forces = -grad * (HARTREE_TO_KCAL / BOHR_TO_ANGSTROM)
-    return float(e_h) * HARTREE_TO_KCAL, forces.astype(np.float64)
+    return e_h * HARTREE_TO_KCAL, forces.astype(np.float64)
+
+
+def evaluate_psi4_torsion_energies(
+    frames: Sequence[ConformerFrame],
+    spec: QMOracleSpec | None = None,
+    *,
+    n_threads: int = 16,
+    memory: str = "8 GB",
+) -> list[dict[str, float | str]]:
+    """Compute exact Psi4 single-point energies (wB97M-D3(BJ)/def2-TZVPPD) for torsion scans."""
+    import psi4  # type: ignore[import-not-found]
+
+    spec = spec or QMOracleSpec(backend="psi4", method="wb97m-d3bj", basis="def2-tzvppd")
+    _configure_psi4_runtime(n_threads=n_threads, memory=memory)
+    results: list[dict[str, float | str]] = []
+    for frame in frames:
+        mol_psi = _build_psi4_molecule(frame, spec)
+        e_h = float(psi4.energy(f"{spec.method}/{spec.basis}", molecule=mol_psi))
+        psi4.core.clean()
+        results.append(
+            {
+                "frame_id": frame.frame_id,
+                "mol_id": frame.mol_id,
+                "energy_hartree": e_h,
+                "energy_kcal": e_h * HARTREE_TO_KCAL,
+                "provenance_tag": spec.provenance_tag,
+            }
+        )
+    return results
 
 
 def _run_pyscf_single_point(frame: ConformerFrame, spec: QMOracleSpec) -> tuple[float, np.ndarray]:
