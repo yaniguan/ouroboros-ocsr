@@ -43,29 +43,33 @@ class StrainResult:
 
 
 def _bounded_embed(smiles: str, n_conf: int = 8, seed: int = 0) -> tuple[Chem.Mol | None, str]:
-    """Fast bounded ETKDGv3 embedding that rejects impossible inside-out bridgeheads in <50 ms."""
+    """Fast bounded ETKDGv3 embedding: 1-conf gate rejects impossible bridgeheads in <20 ms,
+    then single-call EmbedMultipleConfs samples chair/ring flips cleanly."""
     mol = Chem.MolFromSmiles(smiles)
     if mol is None or mol.GetNumAtoms() == 0:
         return None, "unparsable"
     mol = Chem.AddHs(mol)
-    for random_coords, max_it in ((False, 30), (True, 20)):
+    target_confs = max(1, int(n_conf))
+    for random_coords, gate_it, batch_it in ((False, 30, 60), (True, 20, 35)):
         probe = AllChem.ETKDGv3()
         probe.randomSeed = seed
         probe.numThreads = 1
         probe.enforceChirality = True
         probe.useRandomCoords = random_coords
-        probe.maxIterations = max_it
+        probe.maxIterations = gate_it
         if AllChem.EmbedMolecule(mol, params=probe) < 0:
             continue
-        if n_conf > 1:
+        if target_confs > 1:
             batch = AllChem.ETKDGv3()
-            batch.randomSeed = seed
+            batch.randomSeed = seed + 101
             batch.numThreads = 1
             batch.enforceChirality = True
             batch.useRandomCoords = random_coords
-            batch.maxIterations = max_it
-            batch.clearConfs = False
-            AllChem.EmbedMultipleConfs(mol, numConfs=n_conf - 1, params=batch)
+            batch.maxIterations = batch_it
+            batch.clearConfs = True
+            AllChem.EmbedMultipleConfs(mol, numConfs=target_confs, params=batch)
+            if mol.GetNumConformers() == 0:
+                AllChem.EmbedMolecule(mol, params=probe)
         if mol.GetNumConformers() > 0:
             return mol, "ok"
     return None, "embed_failed"
@@ -102,11 +106,41 @@ def embed_parity_invariant(
             conf.SetAtomPosition(idx, xyz.tolist())
     Chem.AssignStereochemistryFrom3D(refl)
 
-    target = Chem.AddHs(Chem.MolFromSmiles(canonical_smiles))
-    match = refl.GetSubstructMatch(target, useChirality=True)
-    if len(match) != target.GetNumAtoms():
-        match = refl.GetSubstructMatch(target, useChirality=False)
-    if len(match) != target.GetNumAtoms():
+    target_no_h = Chem.MolFromSmiles(canonical_smiles)
+    refl_no_h = Chem.RemoveHs(refl)
+    heavy_match = refl_no_h.GetSubstructMatch(target_no_h, useChirality=True)
+    if len(heavy_match) != target_no_h.GetNumAtoms():
+        heavy_match = refl_no_h.GetSubstructMatch(target_no_h, useChirality=False)
+    if len(heavy_match) != target_no_h.GetNumAtoms():
+        return _bounded_embed(canonical_smiles, n_conf=n_conf, seed=seed)
+
+    # Map heavy-atom indices from RemoveHs back to AddHs molecules, pairing attached H atoms 1-to-1.
+    target = Chem.AddHs(Chem.Mol(target_no_h))
+    refl_heavy_full = [a.GetIdx() for a in refl.GetAtoms() if a.GetAtomicNum() != 1]
+    tgt_heavy_full = [a.GetIdx() for a in target.GetAtoms() if a.GetAtomicNum() != 1]
+    if len(refl_heavy_full) != len(heavy_match) or len(tgt_heavy_full) != len(heavy_match):
+        return _bounded_embed(canonical_smiles, n_conf=n_conf, seed=seed)
+
+    full_map: dict[int, int] = {}
+    for tgt_h_ord, src_h_ord in enumerate(heavy_match):
+        t_idx = tgt_heavy_full[tgt_h_ord]
+        s_idx = refl_heavy_full[src_h_ord]
+        full_map[t_idx] = s_idx
+        t_hs = [
+            nb.GetIdx()
+            for nb in target.GetAtomWithIdx(t_idx).GetNeighbors()
+            if nb.GetAtomicNum() == 1
+        ]
+        s_hs = [
+            nb.GetIdx()
+            for nb in refl.GetAtomWithIdx(s_idx).GetNeighbors()
+            if nb.GetAtomicNum() == 1
+        ]
+        if len(t_hs) != len(s_hs):
+            return _bounded_embed(canonical_smiles, n_conf=n_conf, seed=seed)
+        for th, sh in zip(t_hs, s_hs, strict=True):
+            full_map[th] = sh
+    if len(full_map) != target.GetNumAtoms():
         return _bounded_embed(canonical_smiles, n_conf=n_conf, seed=seed)
 
     out = Chem.Mol(target)
@@ -114,8 +148,8 @@ def embed_parity_invariant(
     for conf in refl.GetConformers():
         new_conf = Chem.Conformer(target.GetNumAtoms())
         pos = conf.GetPositions()
-        for tgt_idx, src_idx in enumerate(match):
-            new_conf.SetAtomPosition(tgt_idx, pos[src_idx].tolist())
+        for tgt_idx in range(target.GetNumAtoms()):
+            new_conf.SetAtomPosition(tgt_idx, pos[full_map[tgt_idx]].tolist())
         out.AddConformer(new_conf, assignId=True)
     return out, "ok"
 
@@ -181,9 +215,7 @@ def _eval_mmff_or_uff(mol: Chem.Mol, relax_steps: int) -> list[float]:
     for conf in mol.GetConformers():
         cid = conf.GetId()
         ff = (
-            AllChem.MMFFGetMoleculeForceField(mol, props, confId=cid)
-            if props is not None
-            else None
+            AllChem.MMFFGetMoleculeForceField(mol, props, confId=cid) if props is not None else None
         )
         if ff is None:
             ff = AllChem.UFFGetMoleculeForceField(mol, confId=cid)
@@ -199,13 +231,20 @@ def _eval_mmff_or_uff(mol: Chem.Mol, relax_steps: int) -> list[float]:
 def _eval_ase_calc(mol: Chem.Mol, calc, relax_steps: int) -> tuple[list[float], float]:
     from ouroboros.geometry.conformers import relax
 
+    # Fast MMFF94s/UFF pre-relaxation (<0.3 ms/conf) removes raw ETKDG bond-length jitter
+    # before MLIP evaluation (DP4-style MACE-OFF23//MMFF94s, plus optional MACE BFGS polish).
+    if relax_steps > 0:
+        _eval_mmff_or_uff(mol, min(80, relax_steps))
+
+    ase_steps = 0 if relax_steps <= 0 else min(relax_steps, int(getattr(calc, "_relax_steps", 0)))
     energies: list[float] = []
     node_outlier = 0.0
+    z_arr = np.asarray([a.GetAtomicNum() for a in mol.GetAtoms()], dtype=int)
     for conf in mol.GetConformers():
         cid = conf.GetId()
         atoms = to_atoms(mol, cid)
-        if relax_steps > 0:
-            res = relax(atoms, calc, steps=relax_steps)
+        if ase_steps > 0:
+            res = relax(atoms, calc, steps=ase_steps)
             for idx, xyz in enumerate(res.positions):
                 conf.SetAtomPosition(idx, xyz.tolist())
             energies.append(res.energy * EV_TO_KCAL)
@@ -215,7 +254,15 @@ def _eval_ase_calc(mol: Chem.Mol, calc, relax_steps: int) -> tuple[list[float], 
         res_dict = getattr(calc, "results", {}) or {}
         if "node_energy" in res_dict and res_dict["node_energy"] is not None:
             ne = np.asarray(res_dict["node_energy"], dtype=float) * EV_TO_KCAL
-            if ne.size:
+            if ne.size == z_arr.size:
+                # Compare within identical atomic numbers Z so element baseline offsets cancel.
+                conf_max = 0.0
+                for z_val in np.unique(z_arr):
+                    grp = ne[z_arr == z_val]
+                    if grp.size >= 2:
+                        conf_max = max(conf_max, float(np.max(grp - np.median(grp))))
+                node_outlier = max(node_outlier, max(0.0, conf_max - 5.0))
+            elif ne.size:
                 med = float(np.median(ne))
                 node_outlier = max(node_outlier, float(np.max(ne - med)))
     return energies, node_outlier
@@ -248,8 +295,13 @@ def evaluate_3d_strain(
             intrinsic_penalty_kcal=embed_fail_penalty_kcal,
         )
 
-    cache_key = (std.smiles, n_conf, seed, relax_steps, embed_fail_penalty_kcal)
-    if calc is None and cache_key in _STRAIN_CACHE:
+    calc_tag = (
+        "mmff"
+        if calc is None
+        else str(getattr(calc, "_cache_tag", f"{type(calc).__name__}:{id(calc)}"))
+    )
+    cache_key = (calc_tag, std.smiles, n_conf, seed, relax_steps, embed_fail_penalty_kcal)
+    if cache_key in _STRAIN_CACHE:
         return _STRAIN_CACHE[cache_key]
 
     mol_3d, _reason = embed_parity_invariant(std.smiles, n_conf=n_conf, seed=seed)
@@ -261,8 +313,7 @@ def evaluate_3d_strain(
             cip_preserved=False,
             intrinsic_penalty_kcal=embed_fail_penalty_kcal,
         )
-        if calc is None:
-            _STRAIN_CACHE[cache_key] = failed
+        _STRAIN_CACHE[cache_key] = failed
         return failed
 
     if calc is not None:
@@ -313,8 +364,7 @@ def evaluate_3d_strain(
         mol_3d=mol_3d,
         intrinsic_penalty_kcal=float(penalty),
     )
-    if calc is None:
-        if len(_STRAIN_CACHE) >= 4096:
-            _STRAIN_CACHE.clear()
-        _STRAIN_CACHE[cache_key] = result
+    if len(_STRAIN_CACHE) >= 8192:
+        _STRAIN_CACHE.clear()
+    _STRAIN_CACHE[cache_key] = result
     return result

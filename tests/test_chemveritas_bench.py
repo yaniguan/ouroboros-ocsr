@@ -98,9 +98,7 @@ def test_end_to_end_chemveritas_smoke_build_and_evaluation(tmp_path: Path):
     rep_a6 = json.loads((eval_a6 / "eval_summary.json").read_text(encoding="utf-8"))["ablations"][
         "A6_full_posterior"
     ]
-    assert (
-        rep_a6["T2"]["stereo_exact_match"]["mean"] > rep_a0["T2"]["stereo_exact_match"]["mean"]
-    )
+    assert rep_a6["T2"]["stereo_exact_match"]["mean"] > rep_a0["T2"]["stereo_exact_match"]["mean"]
     assert rep_a6["T2"]["veritas_rpf"]["mean"] >= 0.80
     # T5: A6 abstains 100% on achiral-only enantiomer pairs; naive A0 hallucinates chirality!
     assert rep_a6["T5"]["epistemic_abstention_rate"]["mean"] == 1.0
@@ -166,3 +164,25 @@ def test_end_to_end_chemveritas_smoke_build_and_evaluation(tmp_path: Path):
     )
     parsed = parse_vlm_response('Reasoning...\n```json\n{"smiles": "CCO", "confidence": 0.88}\n```')
     assert parsed["smiles"] == "CCO" and parsed["confidence"] == 0.88
+
+
+def test_tier2_lit_nmr_panel_monotonic_disambiguation():
+    from ouroboros.bench.lit_nmr_panel import evaluate_lit_nmr_panel, get_lit_nmr_panel
+
+    panel = get_lit_nmr_panel()
+    assert len(panel) == 30
+    assert len({e.pair_id for e in panel}) == 15
+    assert all(e.doi for e in panel)
+
+    report = evaluate_lit_nmr_panel(n_conf=4, calc=None)
+    abls = report["ablations"]
+    a0 = abls["A0_visual_top1"]["exact_stereoisomer_accuracy"]["mean"]
+    a3 = abls["A3_strain_3d"]["exact_stereoisomer_accuracy"]["mean"]
+    a4 = abls["A4_nmr_13c"]["exact_stereoisomer_accuracy"]["mean"]
+    a5 = abls["A5_nmr_13c_1h_j"]["exact_stereoisomer_accuracy"]["mean"]
+    a6 = abls["A6_full_posterior"]["exact_stereoisomer_accuracy"]["mean"]
+    assert a0 == 0.0
+    assert a3 > a0
+    assert a4 > a3
+    assert a5 >= a4
+    assert a6 >= 0.70

@@ -207,13 +207,17 @@ def rerank_candidates(
         ]
         seeds = hrms_valid_seeds or ordered_canon
         for ep_smi in enumerate_targeted_epimers(seeds, max_centers=3, max_epimers=8):
-            if ep_smi not in pooled:
-                best_ep_v = max(
-                    pooled[s][1]
-                    + w.epimer_visual_backoff * max(1, stereo_hamming_distance(s, ep_smi))
-                    for s in seeds[:3]
-                )
-                pooled[ep_smi] = (ep_smi, best_ep_v, True)
+            if ep_smi in pooled:
+                continue
+            if obs.optical_rotation_deg is None and any(
+                _are_enantiomers(ep_smi, s) for s in seeds[:3]
+            ):
+                continue
+            best_ep_v = max(
+                pooled[s][1] + w.epimer_visual_backoff * max(1, stereo_hamming_distance(s, ep_smi))
+                for s in seeds[:3]
+            )
+            pooled[ep_smi] = (ep_smi, best_ep_v, True)
 
     if not pooled:
         raw, v_score = max(invalid_entries, key=lambda x: x[1])
@@ -286,24 +290,12 @@ def rerank_candidates(
                 predictor=nmr_predictor,
                 use_h1_and_j=(w.gamma_nmr_h1_j > 0.0),
             )
-            c13_part = 0.0
-            if w.gamma_nmr_c13 > 0.0:
-                c13_part = n_res.signal_count_penalty + n_res.dept_penalty
-                if n_res.c13_mae_ppm is not None:
-                    c13_part += 0.45 * n_res.c13_mae_ppm + 0.35 * (n_res.c13_max_err_ppm or 0.0)
-            h1_part = 0.0
-            if w.gamma_nmr_h1_j > 0.0:
-                if n_res.h1_mae_ppm is not None:
-                    h1_part += 1.4 * n_res.h1_mae_ppm
-                if n_res.j_hh_mae_hz is not None:
-                    h1_part += 0.35 * n_res.j_hh_mae_hz
+            c13_part = n_res.c13_loss if w.gamma_nmr_c13 > 0.0 else 0.0
+            h1_part = n_res.h1_j_loss if w.gamma_nmr_h1_j > 0.0 else 0.0
             n_loss = w.gamma_nmr_c13 * c13_part + w.gamma_nmr_h1_j * h1_part
 
         log_post = (
-            w.alpha_visual * v_score
-            - w.beta_strain * s_loss
-            - w.gamma_hrms * h_loss
-            - n_loss
+            w.alpha_visual * v_score - w.beta_strain * s_loss - w.gamma_hrms * h_loss - n_loss
         )
         scored.append(
             CandidateScore(
@@ -335,9 +327,7 @@ def rerank_candidates(
         c.posterior_prob = float(p)
 
     top = scored[0]
-    margin = (
-        float(top.log_posterior - scored[1].log_posterior) if len(scored) > 1 else float("inf")
-    )
+    margin = float(top.log_posterior - scored[1].log_posterior) if len(scored) > 1 else float("inf")
     status = "confident"
     if (
         len(scored) > 1

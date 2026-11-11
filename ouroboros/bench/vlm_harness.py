@@ -106,17 +106,23 @@ def parse_vlm_response(raw_text: str) -> dict:
 
 
 def run_physics_posterior_baseline(
-    item: dict, *, ablation: str = "A6_full_posterior", n_conf: int = 4, seed: int = 0
+    item: dict,
+    *,
+    ablation: str = "A6_full_posterior",
+    n_conf: int = 4,
+    seed: int = 0,
+    calc=None,
 ) -> dict:
     """Execute our deterministic Bayesian physics+spectroscopy engine on T2, T3, T4, or T5."""
     if ablation not in ABLATION_PRESETS:
         raise ValueError(f"unknown ablation {ablation!r}")
+    w = ABLATION_PRESETS[ablation]
     task = item["task"]
 
     if task == "T2_multimodal_si_disambig":
         si = SICharacterization.from_dict(item["si"])
         cands = [(s, -0.02 * i) for i, s in enumerate(item["candidates"])]
-        closed_w = replace(ABLATION_PRESETS[ablation], augment_epimers=False)
+        closed_w = replace(w, augment_epimers=False)
         dec = rerank_candidates(
             cands,
             si.to_observables(),
@@ -124,13 +130,12 @@ def run_physics_posterior_baseline(
             weights=closed_w,
             n_conf=n_conf,
             seed=seed,
+            calc=calc,
         )
         top = dec.candidates[0]
         h_info = score_hrms(top.canonical_smiles, si.hrms_obs_mz, adduct=si.hrms_adduct)
         sel_idx = (
-            item["candidates"].index(top.raw_smiles)
-            if top.raw_smiles in item["candidates"]
-            else 0
+            item["candidates"].index(top.raw_smiles) if top.raw_smiles in item["candidates"] else 0
         )
         return {
             "task_id": item["task_id"],
@@ -147,7 +152,7 @@ def run_physics_posterior_baseline(
     if task == "T5_epistemic_parity_abstention":
         si = SICharacterization.from_dict(item["si"])
         cands = [(s, -1.0) for s in item["enantiomer_pair"]]
-        closed_w = replace(ABLATION_PRESETS[ablation], augment_epimers=False)
+        closed_w = replace(w, augment_epimers=False)
         dec = rerank_candidates(
             cands,
             si.to_observables(),
@@ -155,6 +160,7 @@ def run_physics_posterior_baseline(
             weights=closed_w,
             n_conf=n_conf,
             seed=seed,
+            calc=calc,
         )
         abstain = dec.epistemic_status == "abstain_enantiomer_underdetermined"
         return {
@@ -168,6 +174,14 @@ def run_physics_posterior_baseline(
         from ouroboros.eval.standardize import standardize
         from ouroboros.phys.nmr import score_nmr
         from ouroboros.phys.strain import evaluate_3d_strain
+
+        if ablation == "A0_visual_top1":
+            return {
+                "task_id": item["task_id"],
+                "accept": True,
+                "category": "correct",
+                "confidence": 0.90,
+            }
 
         si = (
             SICharacterization.from_dict(item["si"])
@@ -183,27 +197,95 @@ def run_physics_posterior_baseline(
                 "category": "invalid",
                 "confidence": 0.99,
             }
+        if ablation == "A1_rdkit_valid":
+            return {
+                "task_id": item["task_id"],
+                "accept": True,
+                "category": "correct",
+                "confidence": 0.85,
+            }
+
         obs = si.to_observables()
-        hr = score_hrms(
-            st.smiles, obs.hrms_obs_mz, adduct=obs.hrms_adduct, expected_formula=obs.formula
-        )
-        sr = evaluate_3d_strain(st.smiles, n_conf=n_conf, seed=seed, relax_steps=80)
+        if w.gamma_hrms > 0.0:
+            hr = score_hrms(
+                st.smiles, obs.hrms_obs_mz, adduct=obs.hrms_adduct, expected_formula=obs.formula
+            )
+            if not hr.within_window:
+                return {
+                    "task_id": item["task_id"],
+                    "accept": False,
+                    "category": "constitutional",
+                    "confidence": 0.96,
+                }
+        if ablation == "A2_hrms":
+            return {
+                "task_id": item["task_id"],
+                "accept": True,
+                "category": "correct",
+                "confidence": 0.80,
+            }
+
+        sr = evaluate_3d_strain(st.smiles, n_conf=n_conf, seed=seed, relax_steps=80, calc=calc)
+        if not sr.embed_ok or not sr.cip_preserved or sr.intrinsic_penalty_kcal >= 6.0:
+            return {
+                "task_id": item["task_id"],
+                "accept": False,
+                "category": "diastereomer",
+                "confidence": 0.90,
+            }
+        if ablation == "A3_strain_3d":
+            # Compare against epimer energy floor when no NMR is active
+            dec_s = rerank_candidates(
+                [(st.smiles, 0.0)],
+                obs,
+                ablation="A3_strain_3d",
+                weights=replace(
+                    ABLATION_PRESETS["A3_strain_3d"],
+                    augment_epimers=True,
+                    epimer_visual_backoff=-0.35,
+                ),
+                n_conf=n_conf,
+                seed=seed,
+                calc=calc,
+            )
+            if dec_s.canonical_smiles != st.smiles:
+                return {
+                    "task_id": item["task_id"],
+                    "accept": False,
+                    "category": "diastereomer",
+                    "confidence": 0.82,
+                }
+            return {
+                "task_id": item["task_id"],
+                "accept": True,
+                "category": "correct",
+                "confidence": 0.78,
+            }
+
         nr = score_nmr(
             st.smiles,
-            obs_c13_ppm=obs.c13_peaks_ppm,
-            obs_dept_counts=obs.dept_counts,
-            obs_h1_multiplets=obs.h1_multiplets,
+            obs_c13_ppm=obs.c13_peaks_ppm if w.gamma_nmr_c13 > 0.0 else (),
+            obs_dept_counts=obs.dept_counts if w.gamma_nmr_c13 > 0.0 else None,
+            obs_h1_multiplets=obs.h1_multiplets if w.gamma_nmr_h1_j > 0.0 else (),
             strain=sr,
+            use_h1_and_j=(w.gamma_nmr_h1_j > 0.0),
         )
-        if not hr.within_window or nr.signal_count_penalty >= 4.0:
+        if nr.signal_count_penalty >= 4.0:
             return {
                 "task_id": item["task_id"],
                 "accept": False,
                 "category": "constitutional",
                 "confidence": 0.95,
             }
+        audit_w = replace(w, augment_epimers=True) if ablation == "A6_full_posterior" else w
         dec = rerank_candidates(
-            [(st.smiles, 0.0)], obs, ablation="A6_full_posterior", n_conf=n_conf, seed=seed
+            [(st.smiles, 0.0)],
+            obs,
+            ablation=ablation,
+            weights=audit_w,
+            n_conf=n_conf,
+            seed=seed,
+            calc=calc,
         )
         if dec.canonical_smiles != st.smiles or (nr.c13_mae_ppm or 0.0) > 1.5:
             return {
@@ -222,9 +304,17 @@ def run_physics_posterior_baseline(
     if task == "T4_thermodynamic_ranking":
         from ouroboros.phys.strain import evaluate_3d_strain
 
+        if w.beta_strain <= 0.0:
+            unranked = list(item["isomer_smiles"])
+            return {
+                "task_id": item["task_id"],
+                "ranked_smiles": unranked,
+                "lowest_smiles": unranked[0],
+            }
+
         scored = []
         for s in item["isomer_smiles"]:
-            sr = evaluate_3d_strain(s, n_conf=n_conf, seed=seed, relax_steps=80)
+            sr = evaluate_3d_strain(s, n_conf=n_conf, seed=seed, relax_steps=80, calc=calc)
             scored.append((sr.min_energy_kcal if sr.min_energy_kcal is not None else 999.0, s))
         scored.sort(key=lambda t: t[0])
         ranked = [s for _, s in scored]
