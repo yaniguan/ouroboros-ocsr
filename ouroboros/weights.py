@@ -7,6 +7,7 @@ python -m ouroboros.weights export --checkpoint RUN/ckpt/best-step-00010000.pt -
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import os
@@ -20,22 +21,46 @@ def digest(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def export_checkpoint(checkpoint: Path, output: Path, arm: str) -> dict:
+def export_checkpoint(
+    checkpoint: Path, output: Path, arm: str, *, pure_torch: bool = False
+) -> dict:
     """Input must be trusted: training states include Python/NumPy RNG objects."""
     import torch
 
     state = torch.load(checkpoint, map_location="cpu", weights_only=False)
     cfg = state["config"]
+    model_cfg = {
+        "data": {"image_size": cfg["data"]["image_size"]},
+        "model": copy.deepcopy(cfg["model"]),
+    }
+    weights = state["model"]
+    if pure_torch:
+        from ouroboros.decode.tokenizer import SmilesTokenizer
+        from ouroboros.hf import EXPORTED_ENCODER_TYPES, inference_state
+        from ouroboros.model import build_model, load_model_state
+
+        tok = SmilesTokenizer(state["vocab"])
+        built = build_model(model_cfg, tok)
+        load_model_state(built, weights)
+        built.eval()
+        enc_type = model_cfg["model"]["encoder"]["type"]
+        if enc_type in EXPORTED_ENCODER_TYPES and hasattr(built.encoder, "export"):
+            built.encoder = built.encoder.export()
+            model_cfg["model"]["encoder"]["type"] = EXPORTED_ENCODER_TYPES[enc_type]
+        weights = inference_state(built.state_dict())
+
     # Keep only inference configuration: no machine paths, optimizer, RNG or training data.
     inference = {
         "format": "ouroboros-inference-v1",
         "arm": arm,
-        "model": state["model"],
-        "config": {"data": {"image_size": cfg["data"]["image_size"]}, "model": cfg["model"]},
+        "model": weights,
+        "config": model_cfg,
         "vocab": state["vocab"],
         "step": state["step"],
         "source_checkpoint_sha256": digest(checkpoint),
     }
+    if pure_torch:
+        inference["pure_torch"] = True
     # Config/vocabulary should be plain JSON, and every weight a tensor.
     json.dumps({k: v for k, v in inference.items() if k != "model"})
     if not all(isinstance(value, torch.Tensor) for value in inference["model"].values()):
@@ -99,11 +124,21 @@ def main(argv=None):
     download.add_argument("--out", type=Path, default=Path("checkpoints"))
     export = sub.add_parser("export", help="export a TRUSTED training checkpoint for inference")
     export.add_argument("--checkpoint", type=Path, required=True)
-    export.add_argument("--arm", choices=("A", "B", "C"), required=True)
+    export.add_argument("--arm", choices=("A", "B", "C", "D"), required=True)
     export.add_argument("--out", type=Path, default=Path("dist/weights"))
+    export.add_argument(
+        "--pure-torch",
+        action="store_true",
+        help="expand steerable filters into pure-PyTorch Conv2d weights (zero escnn at inference)",
+    )
     args = ap.parse_args(argv)
     if args.command == "export":
-        result = export_checkpoint(args.checkpoint, args.out / f"ouroboros-{args.arm}.pt", args.arm)
+        result = export_checkpoint(
+            args.checkpoint,
+            args.out / f"ouroboros-{args.arm}.pt",
+            args.arm,
+            pure_torch=args.pure_torch,
+        )
         (args.out / f"{args.arm}-receipt.json").write_text(json.dumps(result, indent=2) + "\n")
         print(json.dumps(result, indent=2))
     else:

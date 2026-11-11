@@ -31,8 +31,16 @@ FORMAT = "ouroboros-hf-v1"
 CONFIG_FILE = "config.json"
 VOCAB_FILE = "vocab.json"
 CHECKSUMS_FILE = "checksums.txt"
-WEIGHT_FILES = {"model": ("model.safetensors", "pytorch_model.bin"),
-                "encoder": ("encoder.safetensors", "encoder.bin")}
+WEIGHT_FILES = {
+    "model": ("model.safetensors", "pytorch_model.bin"),
+    "encoder": ("encoder.safetensors", "encoder.bin"),
+    "exported_model": ("exported_model.safetensors", "exported_pytorch_model.bin"),
+    "exported_encoder": ("exported_encoder.safetensors", "exported_encoder.bin"),
+}
+EXPORTED_ENCODER_TYPES = {
+    "steerable": "exported_steerable",
+    "equiv_attention": "exported_equiv_attention",
+}
 ENCODER_PREFIX = "encoder."
 
 
@@ -87,15 +95,25 @@ def read_weights(path: Path) -> dict[str, torch.Tensor]:
     if path.suffix == ".safetensors":
         st = _safetensors()
         if st is None:
-            raise ImportError(f"{path.name} needs the safetensors package (pip install safetensors)")
+            raise ImportError(
+                f"{path.name} needs the safetensors package (pip install safetensors)"
+            )
         return st.load_file(str(path))
     return torch.load(path, map_location="cpu", weights_only=True)
 
 
-def weights_file(folder: Path, kind: str = "model") -> Path:
+def find_weights_file(folder: Path, kind: str = "model") -> Path | None:
     for name in WEIGHT_FILES[kind]:
-        if (Path(folder) / name).is_file():
-            return Path(folder) / name
+        candidate = Path(folder) / name
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def weights_file(folder: Path, kind: str = "model") -> Path:
+    found = find_weights_file(folder, kind)
+    if found is not None:
+        return found
     raise FileNotFoundError(f"no {' or '.join(WEIGHT_FILES[kind])} in {folder}")
 
 
@@ -136,15 +154,37 @@ def load_pretrained(
     from ouroboros.decode.tokenizer import SmilesTokenizer
 
     folder = Path(path)
-    weights = weights_file(folder)
-    if verify and (folder / CHECKSUMS_FILE).is_file():
-        verify_checksums(folder, [CONFIG_FILE, VOCAB_FILE, weights.name])
+    has_checksums = verify and (folder / CHECKSUMS_FILE).is_file()
+    if has_checksums:
+        verify_checksums(folder, [CONFIG_FILE, VOCAB_FILE])
     config = json.loads((folder / CONFIG_FILE).read_text())
     if config.get("format") != FORMAT:
         raise ValueError(f"{folder / CONFIG_FILE}: expected format {FORMAT!r}")
     tok = SmilesTokenizer(json.loads((folder / VOCAB_FILE).read_text()))
     if len(tok) != config["vocab_size"]:
         raise ValueError(f"vocab.json has {len(tok)} tokens, config says {config['vocab_size']}")
+    enc_cfg = config["model"]["encoder"]
+    enc_type = enc_cfg["type"]
+    exp_weights = (
+        find_weights_file(folder, "exported_model")
+        if export_encoder and enc_type in EXPORTED_ENCODER_TYPES
+        else None
+    )
+    if exp_weights is not None:
+        if has_checksums:
+            verify_checksums(folder, [exp_weights.name])
+        pure_enc_cfg = dict(enc_cfg, type=EXPORTED_ENCODER_TYPES[enc_type])
+        pure_model_cfg = {
+            "model": dict(config["model"], encoder=pure_enc_cfg),
+            "data": config["data"],
+        }
+        model = build_model(pure_model_cfg, tok)
+        load_model_state(model, read_weights(exp_weights))
+        return model.to(device).eval()
+
+    weights = weights_file(folder)
+    if has_checksums:
+        verify_checksums(folder, [weights.name])
     model = build_model({"model": config["model"], "data": config["data"]}, tok)
     load_model_state(model, read_weights(weights))
     model.to(device).eval()
