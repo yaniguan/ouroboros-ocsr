@@ -34,6 +34,7 @@ from ouroboros.decode.tokenizer import SmilesTokenizer
 from ouroboros.hf import (
     CHECKSUMS_FILE,
     CONFIG_FILE,
+    EXPORTED_ENCODER_TYPES,
     FORMAT,
     VOCAB_FILE,
     encoder_state,
@@ -100,7 +101,8 @@ def eval_table(report: dict | None) -> str:
         return (str(g.get("kind")), s == "ALL", rank, s)
 
     lines = [
-        "| Subset | n | Exact match (95% CI) | Exact, stereo ignored | InChIKey | Valid | Tanimoto |",
+        "| Subset | n | Exact match (95% CI) | Exact, stereo ignored | InChIKey | Valid "
+        "| Tanimoto |",
         "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for g in sorted(report["groups"], key=order):
@@ -248,6 +250,20 @@ def export(
     out_dir.mkdir(parents=True, exist_ok=True)
     model_file = save_weights(weights, out_dir, "model")
     encoder_file = save_weights(encoder_state(weights), out_dir, "encoder")
+    exp_meta = {}
+    if enc_cfg["type"] in EXPORTED_ENCODER_TYPES and hasattr(model.encoder, "export"):
+        exp_enc = model.encoder.export()
+        exp_enc_weights = inference_state(exp_enc.state_dict())
+        exp_weights = {
+            k: v for k, v in weights.items() if not k.startswith("encoder.")
+        } | {f"encoder.{k}": v for k, v in exp_enc_weights.items()}
+        exp_model_file = save_weights(exp_weights, out_dir, "exported_model")
+        exp_encoder_file = save_weights(exp_enc_weights, out_dir, "exported_encoder")
+        exp_meta = {
+            "exported_encoder_type": EXPORTED_ENCODER_TYPES[enc_cfg["type"]],
+            "exported_weights_file": exp_model_file.name,
+            "exported_encoder_weights_file": exp_encoder_file.name,
+        }
     config = {
         "format": FORMAT,
         "architecture": "OCSRModel",
@@ -261,6 +277,7 @@ def export(
         "n_params_encoder": count_params(model.encoder),
         "weights_file": model_file.name,
         "encoder_weights_file": encoder_file.name,
+        **exp_meta,
         "encoder_key_prefix_stripped": "encoder.",
         "step": state.get("step"),
         "source_checkpoint_sha256": sha256(Path(ckpt)),
@@ -304,15 +321,22 @@ def export(
 
     reloaded = load_pretrained(out_dir, export_encoder=False, verify=False)
     size = config["data"]["image_size"]
-    if not torch.equal(_logits(model, size), _logits(reloaded, size)):
+    expected = _logits(model, size)
+    if not torch.equal(expected, _logits(reloaded, size)):
         raise ValueError("reloaded export does not reproduce the checkpoint's logits")
+    if exp_meta:
+        reloaded_pure = load_pretrained(out_dir, export_encoder=True, verify=False)
+        if not torch.allclose(expected, _logits(reloaded_pure, size), atol=1e-4):
+            raise ValueError("pure-PyTorch exported weights do not reproduce checkpoint logits")
     sums = write_checksums(out_dir)
     return {"out_dir": str(out_dir), "files": sums, "config": config}
 
 
 def main(argv=None) -> dict:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    ap.add_argument("--ckpt", type=Path, required=True, help="trusted checkpoint, e.g. C-selected.pt")
+    ap.add_argument(
+        "--ckpt", type=Path, required=True, help="trusted checkpoint, e.g. C-selected.pt"
+    )
     ap.add_argument("--out-dir", type=Path, required=True)
     ap.add_argument("--arm", default="C")
     ap.add_argument("--report", type=Path, help="eval_predictions.py --json report")

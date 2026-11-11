@@ -33,23 +33,39 @@ def _baseline(enc_cfg: dict, d_model: int, image_size: int) -> ImageEncoder:
     return BaselineEncoder(BaselineConfig(d_model=d_model, image_size=image_size, **kw))
 
 
-def build_encoder(enc_cfg: dict, d_model: int, image_size: int) -> ImageEncoder:
-    name = enc_cfg["type"]
-    if name not in ENCODERS:
-        # lazily import optional encoders so that their registration runs
-        import importlib
+_ENCODER_MODULES = {
+    "exported_steerable": "ouroboros.encoder.pure_torch",
+    "exported_equiv_attention": "ouroboros.encoder.pure_torch",
+    "steerable": "ouroboros.encoder.steerable",
+    "equiv_attention": "ouroboros.encoder.equiv_attention",
+    "canonicalized": "ouroboros.encoder.canonicalize",
+}
+_ESCNN_ENCODERS = frozenset({"steerable", "equiv_attention", "canonicalized"})
 
-        for mod in (
-            "ouroboros.encoder.steerable",
-            "ouroboros.encoder.equiv_attention",
-            "ouroboros.encoder.canonicalize",
-        ):
-            try:
-                importlib.import_module(mod)
-            except ModuleNotFoundError:
-                pass
+
+def build_encoder(enc_cfg: dict, d_model: int, image_size: int) -> ImageEncoder:
+    import importlib
+    import sys
+
+    name = enc_cfg["type"]
+    if name in _ESCNN_ENCODERS and "escnn" in sys.modules and sys.modules["escnn"] is None:
+        raise ImportError(
+            f"encoder {name!r} requires escnn; load an exported pure-PyTorch checkpoint "
+            "or install escnn"
+        )
+    if name not in ENCODERS and name in _ENCODER_MODULES:
+        try:
+            importlib.import_module(_ENCODER_MODULES[name])
+        except ModuleNotFoundError as exc:
+            if name in _ESCNN_ENCODERS and (exc.name or "").startswith("escnn"):
+                raise ImportError(
+                    f"encoder {name!r} requires escnn; load an exported pure-PyTorch checkpoint "
+                    "or install escnn"
+                ) from exc
+            raise
     if name not in ENCODERS:
-        raise KeyError(f"unknown encoder type {name!r}; known: {sorted(ENCODERS)}")
+        known = sorted(ENCODERS | _ENCODER_MODULES.keys())
+        raise KeyError(f"unknown encoder type {name!r}; known: {known}")
     return ENCODERS[name](enc_cfg, d_model, image_size)
 
 
