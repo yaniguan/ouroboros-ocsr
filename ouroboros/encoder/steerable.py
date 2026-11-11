@@ -30,17 +30,60 @@ Where equivariance holds / is invariant / is broken
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import copy
+import sys
+import types
 
 import torch
-import torch.nn.functional as F
-from escnn import gspaces
-from escnn import nn as enn
 from torch import nn
 
 from ouroboros.encoder.base import EncoderOutput, ImageEncoder
+from ouroboros.encoder.pure_torch import (
+    BlurPoolTorch as _BlurPoolTorch,
+)
+from ouroboros.encoder.pure_torch import (
+    ExportedSteerableEncoder,
+    MaxPoolChannels,
+    PureGPoolRelPosHead,
+    SteerableConfig,
+    _blurpool,
+    default_blur_kernel,
+)
+from ouroboros.encoder.pure_torch import (
+    ResBlockTorch as _ResBlockTorch,
+)
 from ouroboros.encoder.relpos import RelDistMixer, grid_coords
 from ouroboros.model import register_encoder
+
+
+def _ensure_escnn_2d_shim() -> None:
+    """Allow 2D rot2dOnR2 imports on platforms without Fortran lie_learn/py3nj SO(3)."""
+    try:
+        import lie_learn.representations.SO3.wigner_d  # noqa: F401
+    except ModuleNotFoundError:
+        for mod_name in (
+            "lie_learn",
+            "lie_learn.representations",
+            "lie_learn.representations.SO3",
+            "lie_learn.representations.SO3.wigner_d",
+            "lie_learn.spaces",
+            "lie_learn.spaces.S2",
+            "py3nj",
+        ):
+            sys.modules.setdefault(mod_name, types.ModuleType(mod_name))
+
+        def _unused_so3(*_args, **_kwargs):
+            raise ModuleNotFoundError("SO(3) requires lie_learn; Ouroboros uses 2D rot2dOnR2 only")
+
+        w_mod = sys.modules["lie_learn.representations.SO3.wigner_d"]
+        s2_mod = sys.modules["lie_learn.spaces.S2"]
+        w_mod.wigner_D_matrix = _unused_so3  # type: ignore[attr-defined]
+        s2_mod.change_coordinates = _unused_so3  # type: ignore[attr-defined]
+
+
+_ensure_escnn_2d_shim()
+from escnn import gspaces  # noqa: E402
+from escnn import nn as enn  # noqa: E402
 
 # ----------------------------------------------------------------------------------- blocks
 
@@ -53,8 +96,7 @@ class BlurPool2x2(enn.EquivariantModule):
     def __init__(self, in_type: enn.FieldType):
         super().__init__()
         self.in_type = self.out_type = in_type
-        k = torch.tensor([1.0, 2.0, 1.0])
-        self.register_buffer("kernel", (k[:, None] * k[None, :] / 16.0)[None, None])
+        self.register_buffer("kernel", default_blur_kernel())
 
     def forward(self, x: enn.GeometricTensor) -> enn.GeometricTensor:
         return enn.GeometricTensor(_blurpool(x.tensor, self.kernel), self.out_type)
@@ -64,23 +106,6 @@ class BlurPool2x2(enn.EquivariantModule):
 
     def export(self):
         return _BlurPoolTorch(self.kernel.clone()).eval()
-
-
-def _blurpool(x: torch.Tensor, kernel: torch.Tensor) -> torch.Tensor:
-    if x.shape[-1] % 2 or x.shape[-2] % 2:
-        raise ValueError("BlurPool2x2 needs even spatial sizes for exact 90-deg equivariance")
-    c = x.shape[1]
-    x = F.conv2d(x, kernel.to(x.dtype).expand(c, 1, 3, 3), padding=1, groups=c)
-    return F.avg_pool2d(x, 2, 2)
-
-
-class _BlurPoolTorch(nn.Module):
-    def __init__(self, kernel):
-        super().__init__()
-        self.register_buffer("kernel", kernel)
-
-    def forward(self, x):
-        return _blurpool(x, self.kernel)
 
 
 class ResBlock(enn.EquivariantModule):
@@ -125,15 +150,6 @@ class ResBlock(enn.EquivariantModule):
         ).eval()
 
 
-class _ResBlockTorch(nn.Module):
-    def __init__(self, body, skip):
-        super().__init__()
-        self.body, self.skip = body, skip
-
-    def forward(self, x):
-        return F.relu(self.body(x) + (x if self.skip is None else self.skip(x)))
-
-
 # ------------------------------------------------------------------------------ token heads
 
 
@@ -159,22 +175,6 @@ class GPoolRelPosHead(nn.Module):
 
 
 # ------------------------------------------------------------------------------- encoder
-
-
-@dataclass
-class SteerableConfig:
-    N: int = 8  # C_N; rotations only
-    fields: list[int] = field(default_factory=lambda: [8, 16, 32, 64])  # regular fields/stage
-    blocks: list[int] = field(default_factory=lambda: [2, 2, 2, 2])
-    stem_fields: int | None = None  # default: fields[0]
-    stem_kernel: int = 7
-    d_model: int = 512
-    head: str = "gpool_relpos"
-    mixer_layers: int = 2
-    mixer_heads: int = 8
-    mixer_ff: int = 2048
-    dropout: float = 0.1
-    image_size: int = 384
 
 
 class SteerableEncoder(ImageEncoder):
@@ -223,21 +223,17 @@ class SteerableEncoder(ImageEncoder):
         return self.head(self.features(images))
 
     def export(self) -> ExportedSteerableEncoder:
-        """Pure-PyTorch copy for inference (escnn filters expanded once)."""
+        """Pure-PyTorch copy for inference (escnn filters expanded once, zero escnn modules)."""
         self.eval()
-        return ExportedSteerableEncoder(self.trunk.export(), self.head).eval()
-
-
-class ExportedSteerableEncoder(ImageEncoder):
-    def __init__(self, trunk: nn.Module, head: GPoolRelPosHead):
-        super().__init__()
-        self.trunk = trunk
-        self.gpool = head.gpool.export()  # escnn.nn.MaxPoolChannels
-        self.head = head
-        self.d_model = head.proj.out_channels
-
-    def forward(self, images: torch.Tensor) -> EncoderOutput:
-        return self.head.tokens(self.gpool(self.trunk(images)))
+        pure_head = PureGPoolRelPosHead(
+            copy.deepcopy(self.head.proj), copy.deepcopy(self.head.mixer)
+        )
+        return ExportedSteerableEncoder(
+            self.trunk.export(),
+            MaxPoolChannels(self.c.N),
+            pure_head,
+            config=copy.deepcopy(self.c),
+        ).eval()
 
 
 @register_encoder("steerable")
