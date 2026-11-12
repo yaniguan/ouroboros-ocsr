@@ -23,15 +23,17 @@ from dataclasses import dataclass, field
 
 import torch
 import torch.nn.functional as F
-from escnn import gspaces
-from escnn import nn as enn
 from torch import nn
 
 from ouroboros.data.loader import rotate_images
 from ouroboros.encoder.base import EncoderOutput, ImageEncoder
 from ouroboros.encoder.baseline import BaselineConfig, BaselineEncoder
-from ouroboros.encoder.steerable import BlurPool2x2, ResBlock
+from ouroboros.encoder.steerable import BlurPool2x2, ResBlock, _ensure_escnn_2d_shim
 from ouroboros.model import register_encoder
+
+_ensure_escnn_2d_shim()
+from escnn import gspaces  # noqa: E402
+from escnn import nn as enn  # noqa: E402
 
 
 class OrientationNet(nn.Module):
