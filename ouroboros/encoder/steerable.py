@@ -79,6 +79,9 @@ def _ensure_escnn_2d_shim() -> None:
         s2_mod = sys.modules["lie_learn.spaces.S2"]
         w_mod.wigner_D_matrix = _unused_so3  # type: ignore[attr-defined]
         s2_mod.change_coordinates = _unused_so3  # type: ignore[attr-defined]
+        if "escnn.gspaces" not in sys.modules:
+            for k in [m for m in sys.modules if m == "escnn" or m.startswith("escnn.")]:
+                sys.modules.pop(k, None)
 
 
 _ensure_escnn_2d_shim()

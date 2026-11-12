@@ -27,7 +27,6 @@ from __future__ import annotations
 import copy
 
 import torch
-from escnn import nn as enn
 from torch import nn
 
 from ouroboros.encoder.base import EncoderOutput, ImageEncoder
@@ -39,8 +38,11 @@ from ouroboros.encoder.pure_torch import (
     GroupRelPosBias,
     lifted_coords,
 )
-from ouroboros.encoder.steerable import SteerableConfig, SteerableEncoder
+from ouroboros.encoder.steerable import SteerableConfig, SteerableEncoder, _ensure_escnn_2d_shim
 from ouroboros.model import register_encoder
+
+_ensure_escnn_2d_shim()
+from escnn import nn as enn  # noqa: E402
 
 _ExportedEquivAttn = ExportedEquivAttentionEncoder
 
