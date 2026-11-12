@@ -31,6 +31,7 @@ hf = ["safetensors", "huggingface_hub"]
 [tool.setuptools.package-data]
 "ouroboros" = ["weights.json"]
 "ouroboros.demo" = ["index.html"]
+"ouroboros.ui" = ["index.html"]
 
 [tool.setuptools.packages.find]
 include = ["ouroboros*"]
