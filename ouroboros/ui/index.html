@@ -1,0 +1,2124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ouroboros Workbench — Equivariant OCSR, 3D Mol Generation & Physics Compliance</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-panel: #121931;
+    --bg-card: #182240;
+    --bg-input: #0e152b;
+    --line: #283663;
+    --ink: #eef2ff;
+    --muted: #9aa8d1;
+    --accent: #38bdf8;
+    --accent-strong: #0284c7;
+    --pass-bg: rgba(16, 185, 129, 0.16);
+    --pass-fg: #34d399;
+    --pass-bd: rgba(52, 211, 153, 0.45);
+    --warn-bg: rgba(245, 158, 11, 0.16);
+    --warn-fg: #fbbf24;
+    --warn-bd: rgba(251, 191, 36, 0.45);
+    --fail-bg: rgba(244, 63, 94, 0.16);
+    --fail-fg: #fb7185;
+    --fail-bd: rgba(251, 113, 133, 0.45);
+    --mono: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: radial-gradient(circle at top right, #162247 0%, var(--bg) 52%);
+    color: var(--ink);
+    font: 14px/1.5 var(--sans);
+    min-height: 100vh;
+  }
+  header.topbar {
+    border-bottom: 1px solid var(--line);
+    background: rgba(11, 16, 32, 0.92);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .topbar-inner {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 12px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+    color: var(--ink);
+  }
+  .badge.pass { background: var(--pass-bg); color: var(--pass-fg); border-color: var(--pass-bd); }
+  .badge.warn { background: var(--warn-bg); color: var(--warn-fg); border-color: var(--warn-bd); }
+  .badge.fail { background: var(--fail-bg); color: var(--fail-fg); border-color: var(--fail-bd); }
+  .badge.info { background: rgba(56, 189, 248, 0.14); color: var(--accent); border-color: rgba(56, 189, 248, 0.4); }
+
+  nav.tabs {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    border-top: 1px solid rgba(40, 54, 99, 0.55);
+  }
+  .tab-btn {
+    appearance: none;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    padding: 11px 14px;
+    font: 600 13px/1.2 var(--sans);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .tab-btn:hover {
+    color: var(--ink);
+    background: rgba(56, 189, 248, 0.06);
+  }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: rgba(56, 189, 248, 0.09);
+  }
+
+  main {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 18px 20px 56px;
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  .banner-error {
+    display: none;
+    margin-bottom: 14px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    background: var(--fail-bg);
+    border: 1px solid var(--fail-bd);
+    color: #fecdd3;
+    font-size: 13px;
+  }
+  .banner-error.show { display: block; }
+
+  .layout-2col {
+    display: grid;
+    grid-template-columns: 370px 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  @media (max-width: 1024px) {
+    .layout-2col { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .panel h2 {
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .panel h3 {
+    margin: 14px 0 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .subnote {
+    margin: 0 0 12px;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+
+  .field { margin-bottom: 11px; }
+  .field label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  input[type="text"],
+  input[type="number"],
+  select,
+  textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--bg-input);
+    color: var(--ink);
+    font: 13px/1.4 var(--sans);
+  }
+  input.mono, textarea.mono { font-family: var(--mono); font-size: 12.5px; }
+  textarea { resize: vertical; min-height: 76px; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .checks { display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0; }
+  .checks label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  button.btn {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+    color: var(--ink);
+    padding: 8px 13px;
+    border-radius: 7px;
+    font: 600 13px/1.2 var(--sans);
+    cursor: pointer;
+    transition: filter 0.15s, border-color 0.15s, transform 0.05s;
+  }
+  button.btn:hover:not(:disabled) { border-color: var(--accent); filter: brightness(1.1); }
+  button.btn:active:not(:disabled) { transform: translateY(1px); }
+  button.btn:disabled { opacity: 0.55; cursor: wait; }
+  button.btn.primary {
+    background: linear-gradient(135deg, #0ea5e9, #2563eb);
+    border-color: #38bdf8;
+    color: #fff;
+  }
+  button.btn.accent-green {
+    background: linear-gradient(135deg, #059669, #0d9488);
+    border-color: #34d399;
+    color: #fff;
+  }
+  button.btn.sm { padding: 5px 9px; font-size: 11.5px; }
+
+  .pill-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .pill {
+    padding: 4px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--bg-input);
+    color: var(--muted);
+    font-size: 11.5px;
+    cursor: pointer;
+  }
+  .pill:hover { border-color: var(--accent); color: var(--ink); }
+  .pill.warn-pill { border-color: var(--warn-bd); color: var(--warn-fg); }
+  .pill.fail-pill { border-color: var(--fail-bd); color: var(--fail-fg); }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .card .k { font-size: 11.5px; color: var(--muted); margin-bottom: 3px; }
+  .card .v { font: 700 16px/1.25 var(--mono); color: var(--ink); word-break: break-all; }
+  .card .s { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+
+  .img-box {
+    background: #fff;
+    border-radius: 7px;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 170px;
+    border: 1px solid var(--line);
+  }
+  .img-box img {
+    max-width: 100%;
+    max-height: 220px;
+    display: block;
+    image-rendering: auto;
+  }
+  .img-box.pixelated img { image-rendering: pixelated; width: 100%; max-height: 190px; object-fit: contain; }
+
+  .gate-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .gate-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-left-width: 4px;
+    border-radius: 8px;
+    padding: 11px 13px;
+  }
+  .gate-card.pass { border-left-color: var(--pass-fg); }
+  .gate-card.warn { border-left-color: var(--warn-fg); }
+  .gate-card.fail { border-left-color: var(--fail-fg); }
+  .gate-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+  .gate-title { font-weight: 700; font-size: 13px; }
+  .gate-metric { font: 600 12px/1.35 var(--mono); color: var(--accent); margin-bottom: 3px; }
+  .gate-thr { font-size: 11.5px; color: var(--muted); }
+  .gate-detail { font-size: 12px; color: #cbd5e1; margin-top: 5px; }
+
+  .viewer-wrap {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  @media (max-width: 1120px) {
+    .viewer-wrap { grid-template-columns: 1fr; }
+  }
+  .canvas-card {
+    background: #070b17;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px;
+    position: relative;
+  }
+  canvas#molCanvas3D {
+    width: 100%;
+    height: 390px;
+    display: block;
+    cursor: grab;
+    border-radius: 6px;
+    background: radial-gradient(circle at 50% 40%, #131e3a 0%, #070b17 75%);
+  }
+  canvas#molCanvas3D:active { cursor: grabbing; }
+  .canvas-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  table.data-table th,
+  table.data-table td {
+    padding: 7px 9px;
+    border-bottom: 1px solid rgba(40, 54, 99, 0.7);
+    text-align: left;
+    vertical-align: middle;
+  }
+  table.data-table th {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  table.data-table tr.clickable-row { cursor: pointer; }
+  table.data-table tr.clickable-row:hover { background: rgba(56, 189, 248, 0.08); }
+  table.data-table tr.selected-row { background: rgba(56, 189, 248, 0.16); }
+
+  code, .mono { font-family: var(--mono); }
+  pre.codebox {
+    background: var(--bg-input);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 10px;
+    overflow: auto;
+    max-height: 250px;
+    font: 12px/1.4 var(--mono);
+    color: #dbeafe;
+    margin: 6px 0 0;
+  }
+  .verdict-banner {
+    padding: 12px 15px;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    margin-bottom: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .verdict-banner.pass { background: var(--pass-bg); border-color: var(--pass-bd); }
+  .verdict-banner.warn { background: var(--warn-bg); border-color: var(--warn-bd); }
+  .verdict-banner.fail { background: var(--fail-bg); border-color: var(--fail-bd); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <h1>
+        <span>Ouroboros Physics &amp; Equivariance Workbench</span>
+        <span class="badge info">C<sub>N</sub> 2D + E(3)/O(3) 3D</span>
+      </h1>
+      <p>全功能交互评测与等变分子生成物理合规核验台 · Optical Chemical Structure Recognition &amp; 3D Physical Compliance</p>
+    </div>
+    <div id="topStatusBadges" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+      <span class="badge" id="statusDevice">Device: loading…</span>
+      <span class="badge" id="statusCkpts">Checkpoints: …</span>
+      <span class="badge info" id="statusTimer">Ready</span>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="tab-compliance" id="tabBtnCompliance">1. 3D 等变分子生成与物理合规 (10-Gate Physics)</button>
+    <button class="tab-btn" data-tab="tab-equiv2d" id="tabBtnEquiv2d">2. 2D C_N 旋转等变与手性镜像 (2D Equivariance)</button>
+    <button class="tab-btn" data-tab="tab-ocsr" id="tabBtnOcsr">3. 视觉 OCSR 识别与退化测试 (Visual OCSR)</button>
+    <button class="tab-btn" data-tab="tab-prop" id="tabBtnProp">4. 3D 错误能量传播与立体消歧 (Error Propagation)</button>
+    <button class="tab-btn" data-tab="tab-ff" id="tabBtnFf">5. 力场数据构建与非平衡采样 (Force-Field Builder)</button>
+    <button class="tab-btn" data-tab="tab-eval" id="tabBtnEval">6. 批量评测与基准看板 (Evaluation &amp; Benchmarks)</button>
+  </nav>
+</header>
+
+<main>
+  <div id="globalError" class="banner-error"></div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 1 (DEFAULT): 3D EQUIVARIANT MOL GENERATION & 10-GATE PHYSICS      -->
+  <!-- ===================================================================== -->
+  <section class="tab-pane active" id="tab-compliance">
+    <div class="layout-2col">
+      <div class="panel">
+        <h2>3D 等变分子生成与物理审计 <span class="badge info">G1–G10</span></h2>
+        <p class="subnote">从 SMILES 生成 3D 构象系综，用保守力场或 E(3)-等变 MACE-OFF23 弛豫，并逐项检验价键拓扑、泡利排斥、三维手性保持、SE(3) 旋转平移不变/等变性、Noether 动量/角动量守恒、O(3) 宇称反射与保守力场 <code>F = -∇E</code>。</p>
+
+        <div class="field">
+          <label>快速测试预设 (点击即填入 · 含合规与故意违规算例)</label>
+          <div class="pill-bar" id="c3dQuickPills">
+            <span class="pill" data-smi="N[C@@H](C)C(=O)O" data-clash="0">L-Alanine (手性氨基酸)</span>
+            <span class="pill" data-smi="CC(C)Cc1ccc([C@@H](C)C(=O)O)cc1" data-clash="0">(S)-Ibuprofen (手性药)</span>
+            <span class="pill" data-smi="CNC(=O)C12CC(C1)C2" data-clash="0">BCP 双环戊烷 (高张力)</span>
+            <span class="pill" data-smi="NC(=O)C12C3C4C1C5C2C3C45" data-clash="0">Cubane 立方烷 (笼状)</span>
+            <span class="pill" data-smi="Fc1ccccc1S(F)(F)(F)(F)F" data-clash="0">Ar-SF5 (超价硫)</span>
+            <span class="pill" data-smi="[Boc]NCc1ccc([Ph])cc1" data-clash="0">Boc/Ph 缩写展开</span>
+            <span class="pill warn-pill" data-smi="CC(O)C(=O)O" data-clash="0">未标手性乳酸 [G3 Warn]</span>
+            <span class="pill fail-pill" data-smi="CC(=O)[O-].[Na+]" data-clash="0">乙酸钠盐 [G1/G2 Fail]</span>
+            <span class="pill fail-pill" data-smi="[CH2]c1ccccc1" data-clash="0">苄基自由基 [G2 Fail]</span>
+            <span class="pill fail-pill" data-smi="CC1(C)OB(c2ccc(F)cc2)OC1(C)C" data-clash="0" data-pot="mace-small">-Bpin 含硼 [MACE Fail]</span>
+            <span class="pill fail-pill" data-smi="N[C@@H](C)C(=O)O" data-clash="1">注入 0.45Å 原子碰撞 [G5 Fail]</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="c3dSmiles">输入分子 SMILES <span>支持手性 @/@@、双键 / \ 与缩写 *</span></label>
+          <input type="text" id="c3dSmiles" class="mono" value="N[C@@H](C)C(=O)O">
+        </div>
+
+        <div class="field">
+          <label for="c3dPotential">3D 势能面 / 等变力场 (Calculator)</label>
+          <select id="c3dPotential">
+            <option value="mmff94s">RDKit MMFF94s (解析保守力场 · 毫秒级实时)</option>
+            <option value="mace-small">MACE-OFF23-small (E(3) 等变消息传递神经网络)</option>
+            <option value="mace-medium">MACE-OFF23-medium (E(3) 等变消息传递神经网络)</option>
+            <option value="mace-large">MACE-OFF23-large (E(3) 等变消息传递神经网络)</option>
+            <option value="ani2x">TorchANI ANI-2x (8 模型神经力场系综)</option>
+          </select>
+        </div>
+
+        <div class="row-3">
+          <div class="field">
+            <label for="c3dNConf">构象数 n_conf</label>
+            <input type="number" id="c3dNConf" min="1" max="10" value="3">
+          </div>
+          <div class="field">
+            <label for="c3dFmax">收敛阈值 fmax</label>
+            <input type="number" id="c3dFmax" step="0.01" min="0.005" max="0.5" value="0.05">
+          </div>
+          <div class="field">
+            <label for="c3dSteps">最大弛豫步数</label>
+            <input type="number" id="c3dSteps" min="10" max="400" value="120">
+          </div>
+        </div>
+
+        <div class="checks">
+          <label><input type="checkbox" id="c3dRelax" checked> LBFGS 几何弛豫 (Relax)</label>
+          <label><input type="checkbox" id="c3dExpand" checked> 自动展开缩写 ([205*]=Boc 等)</label>
+        </div>
+
+        <h3>物理破坏压力测试 (Stress-Test Probes)</h3>
+        <div class="field">
+          <label for="c3dPerturb">初始非平衡原子随机微扰幅度 (Å) <span id="c3dPerturbVal">0.00 Å</span></label>
+          <input type="range" id="c3dPerturb" min="0" max="0.55" step="0.05" value="0">
+        </div>
+        <div class="checks">
+          <label style="color:var(--fail-fg);"><input type="checkbox" id="c3dClash"> 故意注入 0.45 Å 泡利空间碰撞 (测试 Gate 5 拦截)</label>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn primary" id="btnRunC3d" style="width:100%;">运行 3D 等变生成 + 10 项物理合规审计</button>
+        </div>
+      </div>
+
+      <div>
+        <div id="c3dVerdictBanner" class="verdict-banner">
+          <div>
+            <strong id="c3dVerdictTitle">准备就绪 — 正在加载初始 3D 物理合规检验…</strong>
+            <div id="c3dVerdictSub" style="font-size:12.5px;color:var(--muted);margin-top:2px;">将核验 G1–G10 全部十道物理与李群对称门控。</div>
+          </div>
+          <div id="c3dVerdictCounts" style="display:flex;gap:8px;"></div>
+        </div>
+
+        <div class="viewer-wrap">
+          <div class="canvas-card">
+            <canvas id="molCanvas3D" width="680" height="390"></canvas>
+            <div class="canvas-toolbar">
+              <span>鼠标拖拽旋转 SO(3) · 滚轮缩放</span>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+                <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:var(--ink);">
+                  <input type="checkbox" id="chkShowForces" checked> 显示核力向量 F<sub>i</sub>
+                </label>
+                <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;color:var(--ink);">
+                  <input type="checkbox" id="chkShowLabels" checked> CIP/原子标签
+                </label>
+                <button class="btn sm" id="btnRotRandom">随机 SO(3) 旋转</button>
+                <button class="btn sm" id="btnToggleMirrorView">镜像预览 (x→-x)</button>
+                <button class="btn sm" id="btnResetView">复位视角</button>
+                <button class="btn sm" id="btnDlXyz">下载 .xyz</button>
+                <button class="btn sm" id="btnDlExtxyz">下载 .extxyz</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" style="padding:13px;">
+            <h2 style="margin-bottom:8px;">2D 拓扑与李群对称实测读数</h2>
+            <div class="img-box" id="c3dDepictionBox" style="min-height:145px;margin-bottom:10px;">
+              <span style="color:#64748b;">2D 结构图</span>
+            </div>
+            <div class="cards-grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0;">
+              <div class="card" style="padding:8px 10px;">
+                <div class="k">SE(3) 能量不变性 |ΔE|</div>
+                <div class="v" id="mSe3E" style="font-size:13.5px;">—</div>
+                <div class="s">旋转 Q + 平移 t</div>
+              </div>
+              <div class="card" style="padding:8px 10px;">
+                <div class="k">SO(3) 力等变误差 max|ΔF|</div>
+                <div class="v" id="mSo3F" style="font-size:13.5px;">—</div>
+                <div class="s">F(RQᵀ+t) vs F(R)Qᵀ</div>
+              </div>
+              <div class="card" style="padding:8px 10px;">
+                <div class="k">Noether 净力 / 净力矩</div>
+                <div class="v" id="mNoether" style="font-size:12.5px;">—</div>
+                <div class="s">|∑F_i| &amp; |∑r_i×F_i|</div>
+              </div>
+              <div class="card" style="padding:8px 10px;">
+                <div class="k">保守场检验 |n·F + dE/dn|</div>
+                <div class="v" id="mConservative" style="font-size:13.5px;">—</div>
+                <div class="s">中心有限差分验证</div>
+              </div>
+              <div class="card" style="padding:8px 10px;grid-column:span 2;">
+                <div class="k">O(3) 空间反演对映体关系 (x → -x)</div>
+                <div class="v" id="mMirrorRel" style="font-size:12.5px;">—</div>
+                <div class="s" id="mFormulaInfo">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:14px;">
+          <h2>10 项物理与对称合规门控清单 (G1–G10 Physical Compliance Scorecard)</h2>
+          <div id="c3dGatesGrid" class="gate-grid"></div>
+        </div>
+
+        <div class="panel">
+          <h2>298.15 K Boltzmann 构象系综排行 <span style="font-size:12px;font-weight:400;color:var(--muted);">点击任意构象行即可切换上方 3D 画布！</span></h2>
+          <div style="overflow-x:auto;">
+            <table class="data-table" id="c3dConfTable">
+              <thead>
+                <tr>
+                  <th>Conf ID</th>
+                  <th>能量 E (eV)</th>
+                  <th>ΔE (kcal/mol)</th>
+                  <th>Boltzmann 权重</th>
+                  <th>fmax (eV/Å)</th>
+                  <th>LBFGS 步数</th>
+                  <th>3D CIP 保持</th>
+                  <th>3D 反推 SMILES</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 2: 2D C_N ROTATION EQUIVARIANCE & CHIRAL MIRROR NON-INVARIANCE    -->
+  <!-- ===================================================================== -->
+  <section class="tab-pane" id="tab-equiv2d">
+    <div class="layout-2col">
+      <div class="panel">
+        <h2>2D C<sub>N</sub> 旋转等变与手性保护核验</h2>
+        <p class="subnote">对比 Arm C (C<sub>N</sub> 可控卷积)、Arm D (群等变自注意力)、Arm E (学习规范化) 与 Arm A (普通 CNN) 的特征旋转等变误差，并验证<strong>平面镜像反射非不变性</strong>（防止楔形键对映体混淆）。</p>
+
+        <div class="field">
+          <label for="eqMode">测试模式 (Probe Mode)</label>
+          <select id="eqMode">
+            <option value="arch">架构等变性对比探针 (Arm C / D / E / A)</option>
+            <option value="checkpoint">预训练权重实测 (Ouroboros-C / B / A)</option>
+          </select>
+        </div>
+
+        <div id="eqArchBox">
+          <div class="field">
+            <label for="eqArch">2D 编码器架构 (Encoder Architecture)</label>
+            <select id="eqArch">
+              <option value="steerable">Arm C: C_N Steerable CNN + GroupPool + RelDist</option>
+              <option value="equiv_attention">Arm D: C_N Steerable + Group Equivariant Attention</option>
+              <option value="canonicalized">Arm E: Learned C_N Canonicalizer + ResNet</option>
+              <option value="baseline">Arm A: Non-Equivariant ResNet Baseline</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="eqOrder">循环群阶数 N (Cyclic Group C_N)</label>
+            <select id="eqOrder">
+              <option value="8" selected>C8 (45° 群元步长)</option>
+              <option value="4">C4 (90° 精确像素格点)</option>
+              <option value="16">C16 (22.5° 群元步长)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="eqCkptBox" style="display:none;">
+          <div class="field">
+            <label for="eqCkpt">选择预训练模型权重</label>
+            <select id="eqCkpt">
+              <option value="C">Ouroboros-C (C8 Equivariant Steerable)</option>
+              <option value="B">Ouroboros-B (Rotation-Augmented CNN)</option>
+              <option value="A">Ouroboros-A (Upright Baseline CNN)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="eqSmiles">测试手性分子 SMILES</label>
+          <input type="text" id="eqSmiles" class="mono" value="CC(C)Cc1ccc([C@@H](C)C(=O)O)cc1">
+        </div>
+
+        <div class="field">
+          <label for="eqAngle">焦点旋转角 θ <span id="eqAngleVal">90°</span></label>
+          <input type="range" id="eqAngle" min="0" max="360" step="15" value="90">
+          <div class="btn-row" style="margin-top:6px;">
+            <button class="btn sm eq-ang-btn" data-ang="0">0°</button>
+            <button class="btn sm eq-ang-btn" data-ang="30">30° (群外)</button>
+            <button class="btn sm eq-ang-btn" data-ang="45">45° (C8)</button>
+            <button class="btn sm eq-ang-btn" data-ang="90">90° (精确格点)</button>
+            <button class="btn sm eq-ang-btn" data-ang="180">180°</button>
+            <button class="btn sm eq-ang-btn" data-ang="270">270°</button>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn primary" id="btnRunEq2d" style="width:100%;">运行 2D 旋转扫描 + 镜像手性测试</button>
+        </div>
+      </div>
+
+      <div>
+        <div id="eqVerdictBanner" class="verdict-banner info">
+          <div>
+            <strong id="eqVerdictTitle">点击左侧按钮测量 2D 特征等变误差与手性镜像响应</strong>
+            <div id="eqVerdictSub" style="font-size:12.5px;color:var(--muted);">C_N 可控卷积在 90° 格点上满足机器精度等变 (&lt; 10⁻⁶)，同时拒绝平面反射不变性以区分 R/S 对映体。</div>
+          </div>
+        </div>
+
+        <div class="cards-grid" style="grid-template-columns:repeat(3, 1fr);">
+          <div class="panel">
+            <h2 style="font-size:13px;">原始图像 x (0°)</h2>
+            <div class="img-box" id="eqImgOrig"><span style="color:#64748b;">—</span></div>
+          </div>
+          <div class="panel">
+            <h2 style="font-size:13px;">旋转图像 R<sub>θ</sub>x (<span id="eqFocusLbl">90°</span>)</h2>
+            <div class="img-box" id="eqImgRot"><span style="color:#64748b;">—</span></div>
+          </div>
+          <div class="panel">
+            <h2 style="font-size:13px;">水平镜像 M<sub>x</sub>x (手性翻转探针)</h2>
+            <div class="img-box" id="eqImgMir"><span style="color:#64748b;">—</span></div>
+          </div>
+        </div>
+
+        <div class="panel" id="eqHeatmapPanel" style="margin-bottom:14px;">
+          <h2>群特征等变热力图对比: ρ(R<sub>θ</sub>)f(x) vs f(R<sub>θ</sub>x)</h2>
+          <div class="cards-grid" style="grid-template-columns:repeat(3, 1fr);margin-bottom:0;">
+            <div>
+              <div class="subnote" style="margin-bottom:4px;">理论群变换特征 ρ(R)f(x)</div>
+              <div class="img-box pixelated" id="eqMapExp"><span style="color:#64748b;">仅在群元角可用</span></div>
+            </div>
+            <div>
+              <div class="subnote" style="margin-bottom:4px;">实测旋转输入特征 f(Rx)</div>
+              <div class="img-box pixelated" id="eqMapAct"><span style="color:#64748b;">仅在群元角可用</span></div>
+            </div>
+            <div>
+              <div class="subnote" style="margin-bottom:4px;">逐通道绝对残差 |f(Rx) - ρ(R)f(x)|</div>
+              <div class="img-box pixelated" id="eqMapDiff"><span style="color:#64748b;">仅在群元角可用</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:14px;">
+          <h2>手性保护审计: 为什么只用 SO(2)/C<sub>N</sub> 而禁用 D<sub>N</sub> 反射群？</h2>
+          <div id="eqMirrorSummary" class="subnote" style="color:var(--ink);margin-bottom:0;">等待运行…</div>
+        </div>
+
+        <div class="panel">
+          <h2>多角度等变误差扫描表 (0° – 270°)</h2>
+          <div id="eqSweepSvgWrap" style="margin-bottom:10px;"></div>
+          <div style="overflow-x:auto;">
+            <table class="data-table" id="eqSweepTable">
+              <thead>
+                <tr>
+                  <th>角度 θ</th>
+                  <th>C_N 群元</th>
+                  <th>特征等变误差 ||f(Rx)-ρf(x)||</th>
+                  <th>90° Token 置换误差</th>
+                  <th>池化均值误差</th>
+                  <th>解码器首步 Logit 误差</th>
+                  <th>解码预测一致性</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 3: VISUAL OCSR STUDIO & CONFIDENCE GATE                           -->
+  <!-- ===================================================================== -->
+  <section class="tab-pane" id="tab-ocsr">
+    <div class="layout-2col">
+      <div class="panel">
+        <h2>视觉 OCSR 推理与真实退化模拟</h2>
+        <p class="subnote">支持上传分子图片或从 SMILES 渲染，叠加任意旋转、扫描仪噪点、手绘抖动与 R 基团缩写，运行 Beam Search + TTA + 置信门控，并可<strong>一键送入 3D 物理合规检查</strong>。</p>
+
+        <div class="field">
+          <label for="ocsrPreset">示例分子预设</label>
+          <select id="ocsrPreset"></select>
+        </div>
+
+        <div class="field">
+          <label for="ocsrSmiles">渲染 SMILES (未上传图片时使用)</label>
+          <input type="text" id="ocsrSmiles" class="mono" value="CC(C)Cc1ccc([C@@H](C)C(=O)O)cc1">
+        </div>
+
+        <div class="field">
+          <label for="ocsrFile">或上传本地结构图 (PNG / JPG)</label>
+          <input type="file" id="ocsrFile" accept="image/png,image/jpeg,image/webp">
+          <div class="btn-row" style="margin-top:4px;">
+            <button class="btn sm" id="btnClearUpload" type="button">清除上传图片 (改用 SMILES 渲染)</button>
+            <label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;">
+              <input type="checkbox" id="ocsrInkCrop"> --ink-crop 去白边
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="ocsrRef">Ground-Truth 参考 SMILES (用于计算评测指标，可留空)</label>
+          <input type="text" id="ocsrRef" class="mono" value="CC(C)Cc1ccc([C@@H](C)C(=O)O)cc1">
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label for="ocsrModel">OCSR 模型 / 集成</label>
+            <select id="ocsrModel"></select>
+          </div>
+          <div class="field">
+            <label for="ocsrBeam">Beam 宽度 (1–8)</label>
+            <input type="number" id="ocsrBeam" min="1" max="8" value="4">
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label for="ocsrMargin">置信门控 --min-margin</label>
+            <input type="number" id="ocsrMargin" step="0.05" min="0" max="2" value="0.20">
+          </div>
+          <div class="field">
+            <label for="ocsrRgroup">R 基团缩写替换</label>
+            <select id="ocsrRgroup">
+              <option value="">不替换 (None)</option>
+              <option value="Me">-Me ([201*])</option>
+              <option value="Et">-Et ([202*])</option>
+              <option value="OMe">-OMe ([203*])</option>
+              <option value="Ph">-Ph ([200*])</option>
+              <option value="Boc">-Boc ([205*])</option>
+              <option value="CO2Me">-CO2Me ([206*])</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="ocsrAngle">输入图像旋转角 <span id="ocsrAngleVal">0°</span></label>
+          <input type="range" id="ocsrAngle" min="0" max="359" step="1" value="0">
+          <div class="btn-row" style="margin-top:4px;">
+            <button class="btn sm ocsr-ang-btn" data-ang="0">0°</button>
+            <button class="btn sm ocsr-ang-btn" data-ang="45">45°</button>
+            <button class="btn sm ocsr-ang-btn" data-ang="90">90°</button>
+            <button class="btn sm ocsr-ang-btn" data-ang="180">180°</button>
+            <button class="btn sm ocsr-ang-btn" data-ang="270">270°</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="ocsrAug">版面退化增强 (Perturbation)</label>
+          <select id="ocsrAug">
+            <option value="none">Clean (无退化)</option>
+            <option value="scan">Scan Augment (扫描仿射 + 椒盐噪点 + 形态学腐蚀)</option>
+            <option value="handdrawn">Hand-Drawn Wobble (手绘波浪形变 + 纸张底噪)</option>
+          </select>
+        </div>
+
+        <div class="checks">
+          <label><input type="checkbox" id="ocsrTtaPad"> TTA: pad</label>
+          <label><input type="checkbox" id="ocsrTtaSharpen"> TTA: sharpen</label>
+          <label><input type="checkbox" id="ocsrMirror"> 水平镜像翻转 (测试手性反转)</label>
+          <label><input type="checkbox" id="ocsrExpand" checked> 自动展开缩写</label>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn primary" id="btnRunOcsr" style="width:100%;">运行 OCSR 识别与评测</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="cards-grid" style="grid-template-columns:repeat(3, 1fr);">
+          <div class="panel">
+            <h2 style="font-size:13px;">原始画布</h2>
+            <div class="img-box" id="ocsrImgSrc"><span style="color:#64748b;">等待运行</span></div>
+          </div>
+          <div class="panel">
+            <h2 style="font-size:13px;">退化 / 旋转后输入模型图像</h2>
+            <div class="img-box" id="ocsrImgProc"><span style="color:#64748b;">等待运行</span></div>
+          </div>
+          <div class="panel">
+            <h2 style="font-size:13px;">Top-1 识别分子 RDKit 渲染</h2>
+            <div class="img-box" id="ocsrImgPred"><span style="color:#64748b;">等待运行</span></div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:14px;">
+          <h2>
+            <span>识别结果与置信门控 (Confidence Gate)</span>
+            <span id="ocsrGateBadge" class="badge">—</span>
+          </h2>
+          <div class="cards-grid" id="ocsrResultCards"></div>
+          <div class="btn-row">
+            <button class="btn accent-green" id="btnSendTo3D" disabled>⚡ 送入 Tab 1 检查 3D 等变生成与 10 项物理合规 →</button>
+            <button class="btn" id="btnSendToProp" disabled>⚖️ 将 Top-K 候选送入 Tab 4 做 3D 能量传播对比 →</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Beam Top-K 候选结构表</h2>
+          <div style="overflow-x:auto;">
+            <table class="data-table" id="ocsrCandTable">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>2D 预览</th>
+                  <th>候选 SMILES</th>
+                  <th>Log-Prob 分数</th>
+                  <th>RDKit 合法</th>
+                  <th>相对参考类别</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 4: 3D ERROR PROPAGATION & THERMODYNAMIC DISAMBIGUATION            -->
+  <!-- ===================================================================== -->
+  <section class="tab-pane" id="tab-prop">
+    <div class="layout-2col">
+      <div class="panel">
+        <h2>OCSR 错误 3D 能量传播实验室</h2>
+        <p class="subnote">复现并交互检验仓库核心物理发现：<strong>对映异构体错误 (Enantiomer)</strong> 在标量 E(3)/O(3) 势能面上严格满足 <code>ΔE = 0</code>，而<strong>非对映异构体翻转 (Diastereomer)</strong> 与桥环碰撞会暴露显著三维内禀张力异常！</p>
+
+        <div class="field">
+          <label>多手性中心预设</label>
+          <div class="pill-bar" id="propQuickPills">
+            <span class="pill" data-smi="C[C@@H]1CC[C@H](C(C)C)[C@@H](O)C1">(-)-Menthol 薄荷醇 (3 手性中心)</span>
+            <span class="pill" data-smi="CC(C)Cc1ccc([C@@H](C)C(=O)O)cc1">(S)-Ibuprofen (单手性对映体)</span>
+            <span class="pill" data-smi="C/C=C/C(=O)O">(E)-Crotonic Acid (顺反双键)</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="propTruth">真实分子 SMILES (Ground Truth)</label>
+          <input type="text" id="propTruth" class="mono" value="C[C@@H]1CC[C@H](C(C)C)[C@@H](O)C1">
+        </div>
+
+        <div class="field">
+          <label for="propCands">候选 SMILES 列表 (每行一个；留空则自动构造“正确 + 对映体 + 非对映体”)</label>
+          <textarea id="propCands" class="mono" placeholder="留空自动生成立体异构对照集…"></textarea>
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label for="propPotential">3D 势能面</label>
+            <select id="propPotential">
+              <option value="mmff94s">RDKit MMFF94s (快速解析)</option>
+              <option value="mace-small">MACE-OFF23-small</option>
+              <option value="ani2x">TorchANI ANI-2x</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="propNConf">每分子构象数</label>
+            <input type="number" id="propNConf" min="1" max="12" value="6">
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn primary" id="btnRunProp" style="width:100%;">计算 3D 弛豫能量传播 ΔE</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel" style="margin-bottom:14px;">
+          <h2>物理对称性原理提示</h2>
+          <p id="propNote" class="subnote" style="color:var(--ink);margin-bottom:0;">点击左侧按钮计算候选异构体在三维力场下的能量残差 ΔE = E(cand) - E(truth)。</p>
+        </div>
+
+        <div class="panel">
+          <h2>候选异构体三维能量对比表</h2>
+          <div style="overflow-x:auto;">
+            <table class="data-table" id="propTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>2D 结构</th>
+                  <th>候选 SMILES</th>
+                  <th>立体/拓扑关系</th>
+                  <th>同分异构</th>
+                  <th>最低能量 E (eV)</th>
+                  <th>ΔE vs Truth (kcal/mol)</th>
+                  <th>ΔE vs 最低异构体</th>
+                  <th>3D 检查</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 5: FORCE-FIELD BUILDER & NON-EQUILIBRIUM DISPLACED SAMPLER        -->
+  <!-- ===================================================================== -->
+  <section class="tab-pane" id="tab-ff">
+    <div class="layout-2col">
+      <div class="panel">
+        <h2>力场数据集构建器 (`image_to_forcefield`)</h2>
+        <p class="subnote">批量执行别名展开、电荷/自由基/元素准入过滤、InChIKey 去重、ETKDG 构象嵌入、<strong>非平衡微扰采样 (Displaced Conformers, 含距离碰撞与立体翻转防护)</strong> 以及无泄漏连通性切分 (`connectivity_key`)。</p>
+
+        <div class="field">
+          <label for="ffSmilesList">分子 SMILES 列表 (每行一个，含缩写与盐反例演示)</label>
+          <textarea id="ffSmilesList" class="mono" rows="6">CNC(=O)C12CC(C1)C2
+N[C@@H](C)C(=O)O
+[Boc]NCc1ccc(F)cc1
+COC(=O)C12COC(C1)C2
+CC(=O)[O-].[Na+]</textarea>
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label for="ffPotential">标注力场</label>
+            <select id="ffPotential">
+              <option value="mmff94s">RDKit MMFF94s</option>
+              <option value="mace-small">MACE-OFF23-small</option>
+              <option value="ani2x">TorchANI ANI-2x</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="ffNConf">基础构象数 n_conf</label>
+            <input type="number" id="ffNConf" min="1" max="5" value="2">
+          </div>
+        </div>
+
+        <div class="row-3">
+          <div class="field">
+            <label for="ffDispN">微扰样本数/构象</label>
+            <input type="number" id="ffDispN" min="0" max="5" value="2">
+          </div>
+          <div class="field">
+            <label for="ffAmp">最大位移 (Å)</label>
+            <input type="number" id="ffAmp" step="0.02" min="0.02" max="0.4" value="0.10">
+          </div>
+          <div class="field">
+            <label for="ffMinDist">碰撞下限 (Å)</label>
+            <input type="number" id="ffMinDist" step="0.05" min="0.5" max="1.2" value="0.70">
+          </div>
+        </div>
+
+        <div class="checks">
+          <label><input type="checkbox" id="ffExpand" checked> --expand-aliases</label>
+          <label><input type="checkbox" id="ffDedupe" checked> InChIKey 去重</label>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn primary" id="btnRunFf" style="width:100%;">生成能量/力标注帧 (.extxyz + manifest)</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="cards-grid" id="ffSummaryCards"></div>
+
+        <div class="panel" style="margin-bottom:14px;">
+          <h2>
+            <span>Manifest 准入与连通性切分记录</span>
+            <div style="display:flex;gap:8px;">
+              <button class="btn sm" id="btnDlFfExtxyz" disabled>下载 dataset.extxyz</button>
+              <button class="btn sm" id="btnDlFfManifest" disabled>下载 manifest.jsonl</button>
+            </div>
+          </h2>
+          <div style="overflow-x:auto;">
+            <table class="data-table" id="ffTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>输入 SMILES</th>
+                  <th>状态</th>
+                  <th>写入帧数</th>
+                  <th>微扰通过/拒绝</th>
+                  <th>最低能量 (eV)</th>
+                  <th>无泄漏切分</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>ASE Extended XYZ (`.extxyz`) 实时预览</h2>
+          <pre class="codebox" id="ffExtxyzBox">点击左侧按钮生成包含原子坐标、能量与三维核力向量的 extxyz 数据集…</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 6: BATCH EVALUATION, SELECTIVE CURVE & BENCHMARK EXPLORER         -->
+  <!-- ===================================================================== -->
+  <section class="tab-pane" id="tab-eval">
+    <div class="layout-2col">
+      <div class="panel">
+        <h2>批量评测与选择性弃权曲线 (`eval_predictions`)</h2>
+        <p class="subnote">一键对多分子测试集运行在线 OCSR 评测，自动输出 Exact、Stereo-Free、InChIKey、Morgan Tanimoto、1,000 次 Bootstrap 95% 置信区间以及 <code>selective_report</code> 覆盖率–准确率权衡曲线。</p>
+
+        <div class="row-2">
+          <div class="field">
+            <label for="evModel">评测模型</label>
+            <select id="evModel"></select>
+          </div>
+          <div class="field">
+            <label for="evPerturb">测试条件</label>
+            <select id="evPerturb">
+              <option value="clean">Clean (0° 标准图)</option>
+              <option value="rot90">Rotated 90° (旋转鲁棒性)</option>
+              <option value="scan">Scan Noise (扫描退化)</option>
+              <option value="handdrawn">Hand-Drawn (手绘退化)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="evBeam">Beam 宽度</label>
+          <input type="number" id="evBeam" min="1" max="6" value="3">
+        </div>
+
+        <div class="field">
+          <label for="evSmilesList">评测分子集 (每行一个 Ground-Truth SMILES)</label>
+          <textarea id="evSmilesList" class="mono" rows="6">CC(C)Cc1ccc([C@@H](C)C(=O)O)cc1
+N[C@@H](C)C(=O)O
+CC(=O)Oc1ccccc1C(=O)O
+C/C=C/C(=O)O
+CNC(=O)C12CC(C1)C2
+COC(=O)C12COC(C1)C2</textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn primary" id="btnRunEval" style="width:100%;">运行在线批量评测 + Bootstrap CI</button>
+        </div>
+
+        <h3>仓库历史基准收据浏览器 (`benchmarks/*.json`)</h3>
+        <div class="field">
+          <label for="benchSelect">选择已提交的实验基准 JSON</label>
+          <select id="benchSelect"></select>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="btnLoadBench" style="width:100%;">加载仓库基准结果</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="cards-grid" id="evMetricCards"></div>
+
+        <div class="panel" style="margin-bottom:14px;">
+          <h2>选择性预测 Coverage–Precision 曲线 (`--min-margin` 扫描)</h2>
+          <div id="evCurveWrap" class="subnote">运行批量评测后自动绘制不同 margin 门限下的覆盖率与精确匹配率…</div>
+        </div>
+
+        <div class="panel" style="margin-bottom:14px;">
+          <h2>逐样本评测明细表</h2>
+          <div style="overflow-x:auto;">
+            <table class="data-table" id="evRowsTable">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Gold SMILES</th>
+                  <th>Pred SMILES</th>
+                  <th>Exact</th>
+                  <th>Flat</th>
+                  <th>Tanimoto</th>
+                  <th>Margin</th>
+                  <th>类别</th>
+                  <th>3D 核验</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>仓库基准文件内容 (`benchmarks/`)</h2>
+          <pre class="codebox" id="benchJsonBox">在左侧选择 benchmarks/*.json 查看论文与历史实验收据…</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+"use strict";
+
+/* ------------------------- Global State ------------------------- */
+const STATE = {
+  status: null,
+  uploadedDataUrl: null,
+  lastOcsr: null,
+  lastC3d: null,
+  lastFf: null,
+  viewer3d: {
+    atoms: [],
+    bonds: [],
+    clashes: [],
+    rot: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+    zoom: 1.0,
+    mirrorPreview: false,
+    dragging: false,
+    lastX: 0,
+    lastY: 0
+  }
+};
+
+const CPK_COLORS = {
+  H: "#f8fafc", C: "#64748b", N: "#3b82f6", O: "#ef4444", F: "#22c55e",
+  P: "#f97316", S: "#eab308", Cl: "#10b981", Br: "#b45309", I: "#a855f7",
+  B: "#f472b6", Si: "#94a3b8", Na: "#818cf8"
+};
+const CPK_RADII = {
+  H: 0.26, C: 0.42, N: 0.40, O: 0.38, F: 0.36, P: 0.48, S: 0.48, Cl: 0.46, Br: 0.50, I: 0.54
+};
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
+
+function fmtSci(v, digits = 2) {
+  if (v === null || v === undefined || Number.isNaN(v)) return "—";
+  if (v === 0) return "0.00";
+  return Math.abs(v) < 1e-2 || Math.abs(v) >= 1e4 ? Number(v).toExponential(digits) : Number(v).toFixed(4);
+}
+
+function showError(msg) {
+  const el = document.getElementById("globalError");
+  if (!msg) {
+    el.classList.remove("show");
+    el.textContent = "";
+  } else {
+    el.textContent = "Error: " + msg;
+    el.classList.add("show");
+  }
+}
+
+async function apiPost(endpoint, payload, btnEl = null) {
+  showError(null);
+  const timerBadge = document.getElementById("statusTimer");
+  const t0 = performance.now();
+  if (btnEl) btnEl.disabled = true;
+  timerBadge.textContent = `Running ${endpoint}…`;
+  try {
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
+    const dt = ((performance.now() - t0) / 1000).toFixed(2);
+    timerBadge.textContent = `Last run: ${dt}s`;
+    return data;
+  } catch (err) {
+    timerBadge.textContent = "Failed";
+    showError(err.message || String(err));
+    throw err;
+  } finally {
+    if (btnEl) btnEl.disabled = false;
+  }
+}
+
+function downloadText(filename, text) {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/* ------------------------- Tab Switching ------------------------- */
+function switchTab(tabId) {
+  document.querySelectorAll(".tab-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.tab === tabId);
+  });
+  document.querySelectorAll(".tab-pane").forEach(p => {
+    p.classList.toggle("active", p.id === tabId);
+  });
+  if (tabId === "tab-compliance") render3DCanvas();
+}
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+});
+
+function inspectSmilesIn3D(smiles) {
+  document.getElementById("c3dSmiles").value = smiles;
+  document.getElementById("c3dClash").checked = false;
+  switchTab("tab-compliance");
+  runCompliance3D();
+}
+
+/* ------------------------- 3D Canvas Molecular Viewer ------------------------- */
+function matMul3(A, B) {
+  const out = [[0,0,0],[0,0,0],[0,0,0]];
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      out[i][j] = A[i][0]*B[0][j] + A[i][1]*B[1][j] + A[i][2]*B[2][j];
+    }
+  }
+  return out;
+}
+
+function rotX(a) {
+  const c = Math.cos(a), s = Math.sin(a);
+  return [[1, 0, 0], [0, c, -s], [0, s, c]];
+}
+function rotY(a) {
+  const c = Math.cos(a), s = Math.sin(a);
+  return [[c, 0, s], [0, 1, 0], [-s, 0, c]];
+}
+function rotZ(a) {
+  const c = Math.cos(a), s = Math.sin(a);
+  return [[c, -s, 0], [s, c, 0], [0, 0, 1]];
+}
+
+function applyRot(R, x, y, z) {
+  return [
+    R[0][0]*x + R[0][1]*y + R[0][2]*z,
+    R[1][0]*x + R[1][1]*y + R[1][2]*z,
+    R[2][0]*x + R[2][1]*y + R[2][2]*z
+  ];
+}
+
+function setViewerFromStructure(struct3d) {
+  if (!struct3d || !struct3d.atoms || !struct3d.atoms.length) {
+    STATE.viewer3d.atoms = [];
+    STATE.viewer3d.bonds = [];
+    STATE.viewer3d.clashes = [];
+    render3DCanvas();
+    return;
+  }
+  STATE.viewer3d.atoms = struct3d.atoms.map(a => ({ ...a }));
+  STATE.viewer3d.bonds = struct3d.bonds || [];
+  STATE.viewer3d.clashes = struct3d.clashes || [];
+  STATE.viewer3d.mirrorPreview = false;
+  render3DCanvas();
+}
+
+function render3DCanvas() {
+  const canvas = document.getElementById("molCanvas3D");
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const W = Math.max(320, rect.width || 680);
+  const H = Math.max(240, rect.height || 390);
+  if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+  }
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  const atoms = STATE.viewer3d.atoms;
+  if (!atoms.length) {
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("无有效三维坐标（当分子被 Gate 1/2/4 拦截时不生成 3D 结构）", W / 2, H / 2);
+    return;
+  }
+
+  const mirSign = STATE.viewer3d.mirrorPreview ? -1.0 : 1.0;
+  let cx = 0, cy = 0, cz = 0;
+  atoms.forEach(a => { cx += mirSign * a.x; cy += a.y; cz += a.z_coord; });
+  cx /= atoms.length; cy /= atoms.length; cz /= atoms.length;
+
+  let maxSpan = 1.8;
+  const centered = atoms.map(a => {
+    const x = mirSign * a.x - cx;
+    const y = a.y - cy;
+    const z = a.z_coord - cz;
+    const r = Math.hypot(x, y, z);
+    if (r > maxSpan) maxSpan = r;
+    return { ...a, cx: x, cy: y, cz: z, mfx: mirSign * a.fx };
+  });
+
+  const scale = (Math.min(W, H) * 0.36 * STATE.viewer3d.zoom) / maxSpan;
+  const R = STATE.viewer3d.rot;
+  const camDist = 16.0;
+
+  const proj = centered.map(a => {
+    const [rx, ry, rz] = applyRot(R, a.cx, a.cy, a.cz);
+    const [rfx, rfy, rfz] = applyRot(R, a.mfx, a.fy, a.fz);
+    const persp = camDist / Math.max(4.0, camDist - rz * 0.35);
+    return {
+      ...a,
+      rx, ry, rz, rfx, rfy, rfz,
+      sx: W / 2 + rx * scale * persp,
+      sy: H / 2 - ry * scale * persp,
+      persp
+    };
+  });
+
+  // Draw covalent bonds sorted back-to-front
+  const sortedBonds = [...STATE.viewer3d.bonds].sort((b1, b2) => {
+    const z1 = (proj[b1.u].rz + proj[b1.v].rz) * 0.5;
+    const z2 = (proj[b2.u].rz + proj[b2.v].rz) * 0.5;
+    return z1 - z2;
+  });
+
+  sortedBonds.forEach(b => {
+    const p1 = proj[b.u], p2 = proj[b.v];
+    if (!p1 || !p2) return;
+    const dx = p2.sx - p1.sx, dy = p2.sy - p1.sy;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+    ctx.strokeStyle = b.deviation_a > 0.28 ? "#fb7185" : "#94a3b8";
+    ctx.lineCap = "round";
+
+    if (b.order >= 2.5) {
+      [-4, 0, 4].forEach(off => {
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.moveTo(p1.sx + nx * off, p1.sy + ny * off);
+        ctx.lineTo(p2.sx + nx * off, p2.sy + ny * off);
+        ctx.stroke();
+      });
+    } else if (b.order >= 1.4) {
+      [-3, 3].forEach(off => {
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(p1.sx + nx * off, p1.sy + ny * off);
+        ctx.lineTo(p2.sx + nx * off, p2.sy + ny * off);
+        ctx.stroke();
+      });
+    } else {
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.moveTo(p1.sx, p1.sy);
+      ctx.lineTo(p2.sx, p2.sy);
+      ctx.stroke();
+    }
+  });
+
+  // Draw steric clashes as pulsing red dashed lines
+  STATE.viewer3d.clashes.forEach(cl => {
+    const p1 = proj[cl.i], p2 = proj[cl.j];
+    if (!p1 || !p2) return;
+    ctx.save();
+    ctx.strokeStyle = "#ff2e63";
+    ctx.lineWidth = 3.0;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.moveTo(p1.sx, p1.sy);
+    ctx.lineTo(p2.sx, p2.sy);
+    ctx.stroke();
+    ctx.fillStyle = "#fecdd3";
+    ctx.font = "bold 11px monospace";
+    ctx.fillText(`CLASH ${cl.distance_a}Å`, (p1.sx + p2.sx) / 2 + 6, (p1.sy + p2.sy) / 2 - 4);
+    ctx.restore();
+  });
+
+  // Draw atoms sorted by depth
+  const showForces = document.getElementById("chkShowForces").checked;
+  const showLabels = document.getElementById("chkShowLabels").checked;
+  const maxForce = Math.max(0.05, ...proj.map(p => p.f_norm || 0));
+  const forceScalePx = 38.0 / maxForce;
+
+  const sortedAtoms = [...proj].sort((a, b) => a.rz - b.rz);
+  sortedAtoms.forEach(a => {
+    const baseR = (CPK_RADII[a.symbol] || 0.42) * scale * a.persp * 0.62;
+    const rad = Math.max(5.5, Math.min(24, baseR));
+    const col = CPK_COLORS[a.symbol] || "#38bdf8";
+
+    const grad = ctx.createRadialGradient(
+      a.sx - rad * 0.32, a.sy - rad * 0.32, rad * 0.1,
+      a.sx, a.sy, rad
+    );
+    grad.addColorStop(0, "#ffffff");
+    grad.addColorStop(0.32, col);
+    grad.addColorStop(1, "#090d16");
+
+    ctx.beginPath();
+    ctx.arc(a.sx, a.sy, rad, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.lineWidth = a.cip ? 2.2 : 1.0;
+    ctx.strokeStyle = a.cip ? "#fbbf24" : "rgba(15,23,42,0.85)";
+    ctx.stroke();
+
+    if (showForces && (a.f_norm || 0) > 1e-4) {
+      const ex = a.sx + a.rfx * forceScalePx;
+      const ey = a.sy - a.rfy * forceScalePx;
+      const ang = Math.atan2(ey - a.sy, ex - a.sx);
+      ctx.strokeStyle = "#34d399";
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.moveTo(a.sx, a.sy);
+      ctx.lineTo(ex, ey);
+      ctx.stroke();
+      ctx.fillStyle = "#34d399";
+      ctx.beginPath();
+      ctx.moveTo(ex, ey);
+      ctx.lineTo(ex - 7 * Math.cos(ang - 0.45), ey - 7 * Math.sin(ang - 0.45));
+      ctx.lineTo(ex - 7 * Math.cos(ang + 0.45), ey - 7 * Math.sin(ang + 0.45));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    if (showLabels && (a.cip || a.symbol !== "H")) {
+      ctx.font = a.cip ? "bold 11.5px monospace" : "10.5px sans-serif";
+      ctx.fillStyle = a.cip ? "#fde047" : "#e2e8f0";
+      ctx.textAlign = "center";
+      const txt = a.cip ? `${a.symbol}${a.idx}(${STATE.viewer3d.mirrorPreview ? (a.cip === "R" ? "S*" : (a.cip === "S" ? "R*" : a.cip)) : a.cip})` : `${a.symbol}${a.idx}`;
+      ctx.fillText(txt, a.sx, a.sy - rad - 4);
+    }
+  });
+
+  // Overlay HUD inside 3D canvas
+  ctx.textAlign = "left";
+  ctx.font = "11.5px monospace";
+  ctx.fillStyle = "#9aa8d1";
+  ctx.fillText(
+    `Atoms: ${atoms.length} | Bonds: ${STATE.viewer3d.bonds.length} | View: ${STATE.viewer3d.mirrorPreview ? "MIRRORED O(3) (x -> -x)" : "PROPER SE(3)"}`,
+    12, 20
+  );
+  if (showForces) {
+    ctx.fillStyle = "#34d399";
+    ctx.fillText(`Green arrows: F_i = -dE/dR_i (max |F| = ${maxForce.toFixed(4)} eV/Å)`, 12, 36);
+  }
+}
+
+(() => {
+  const c = document.getElementById("molCanvas3D");
+  c.addEventListener("mousedown", e => {
+    STATE.viewer3d.dragging = true;
+    STATE.viewer3d.lastX = e.clientX;
+    STATE.viewer3d.lastY = e.clientY;
+  });
+  window.addEventListener("mouseup", () => { STATE.viewer3d.dragging = false; });
+  window.addEventListener("mousemove", e => {
+    if (!STATE.viewer3d.dragging) return;
+    const dx = (e.clientX - STATE.viewer3d.lastX) * 0.012;
+    const dy = (e.clientY - STATE.viewer3d.lastY) * 0.012;
+    STATE.viewer3d.lastX = e.clientX;
+    STATE.viewer3d.lastY = e.clientY;
+    STATE.viewer3d.rot = matMul3(rotX(dy), matMul3(rotY(dx), STATE.viewer3d.rot));
+    render3DCanvas();
+  });
+  c.addEventListener("wheel", e => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    STATE.viewer3d.zoom = Math.max(0.45, Math.min(2.8, STATE.viewer3d.zoom * factor));
+    render3DCanvas();
+  }, { passive: false });
+  window.addEventListener("resize", render3DCanvas);
+
+  document.getElementById("chkShowForces").addEventListener("change", render3DCanvas);
+  document.getElementById("chkShowLabels").addEventListener("change", render3DCanvas);
+  document.getElementById("btnResetView").addEventListener("click", () => {
+    STATE.viewer3d.rot = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+    STATE.viewer3d.zoom = 1.0;
+    STATE.viewer3d.mirrorPreview = false;
+    render3DCanvas();
+  });
+  document.getElementById("btnRotRandom").addEventListener("click", () => {
+    const a = Math.random() * 6.28, b = Math.random() * 6.28, g = Math.random() * 6.28;
+    STATE.viewer3d.rot = matMul3(rotZ(g), matMul3(rotY(b), rotX(a)));
+    render3DCanvas();
+  });
+  document.getElementById("btnToggleMirrorView").addEventListener("click", () => {
+    STATE.viewer3d.mirrorPreview = !STATE.viewer3d.mirrorPreview;
+    render3DCanvas();
+  });
+  document.getElementById("btnDlXyz").addEventListener("click", () => {
+    if (STATE.lastC3d?.exports?.xyz) downloadText("molecule_3d.xyz", STATE.lastC3d.exports.xyz);
+  });
+  document.getElementById("btnDlExtxyz").addEventListener("click", () => {
+    if (STATE.lastC3d?.exports?.extxyz) downloadText("molecule_3d.extxyz", STATE.lastC3d.exports.extxyz);
+  });
+})();
+
+/* ------------------------- Tab 1 (Compliance 3D) Logic ------------------------- */
+document.getElementById("c3dPerturb").addEventListener("input", e => {
+  document.getElementById("c3dPerturbVal").textContent = `${Number(e.target.value).toFixed(2)} Å`;
+});
+
+document.querySelectorAll("#c3dQuickPills .pill").forEach(pill => {
+  pill.addEventListener("click", () => {
+    document.getElementById("c3dSmiles").value = pill.dataset.smi;
+    document.getElementById("c3dClash").checked = pill.dataset.clash === "1";
+    if (pill.dataset.pot) {
+      document.getElementById("c3dPotential").value = pill.dataset.pot;
+    }
+    runCompliance3D();
+  });
+});
+
+async function runCompliance3D() {
+  const btn = document.getElementById("btnRunC3d");
+  const payload = {
+    smiles: document.getElementById("c3dSmiles").value.trim(),
+    potential: document.getElementById("c3dPotential").value,
+    n_conf: Number(document.getElementById("c3dNConf").value),
+    fmax: Number(document.getElementById("c3dFmax").value),
+    steps: Number(document.getElementById("c3dSteps").value),
+    relax: document.getElementById("c3dRelax").checked,
+    expand_aliases: document.getElementById("c3dExpand").checked,
+    perturb_amplitude_a: Number(document.getElementById("c3dPerturb").value),
+    inject_steric_clash: document.getElementById("c3dClash").checked
+  };
+  const res = await apiPost("api/compliance3d", payload, btn);
+  STATE.lastC3d = res;
+
+  const banner = document.getElementById("c3dVerdictBanner");
+  banner.className = `verdict-banner ${res.overall_status}`;
+  const statusMap = {
+    pass: "✅ 全部物理与李群等变合规通过 (ALL GATES PASSED)",
+    warn: "⚠️ 物理生成完成但含立体化学/收敛告警 (PASSED WITH WARNING)",
+    fail: "❌ 物理合规拦截触发 — 检测到违反化学/立体/空间排斥约束 (COMPLIANCE REJECTED)"
+  };
+  document.getElementById("c3dVerdictTitle").textContent = statusMap[res.overall_status] || res.overall_status;
+  document.getElementById("c3dVerdictSub").textContent =
+    `输入: ${res.input_smiles} | 标准化: ${res.standardized_smiles || "—"} | 势能面: ${res.potential_label || payload.potential} | 耗时: ${res.elapsed_seconds}s`;
+
+  const counts = res.summary_counts || {
+    pass: (res.gates || []).filter(g => g.status === "pass").length,
+    warn: (res.gates || []).filter(g => g.status === "warn").length,
+    fail: (res.gates || []).filter(g => g.status === "fail").length
+  };
+  document.getElementById("c3dVerdictCounts").innerHTML = `
+    <span class="badge pass">PASS: ${counts.pass}</span>
+    <span class="badge warn">WARN: ${counts.warn}</span>
+    <span class="badge fail">FAIL: ${counts.fail}</span>
+  `;
+
+  // 2D depiction & symmetry readouts
+  const depBox = document.getElementById("c3dDepictionBox");
+  depBox.innerHTML = res.depiction_2d
+    ? `<img src="${res.depiction_2d}" alt="2D Depiction">`
+    : `<span style="color:#64748b;">无法绘制有效 2D 分子图</span>`;
+
+  const eq = res.equivariance_metrics || {};
+  document.getElementById("mSe3E").textContent = eq.se3_energy_abs_err_ev !== undefined ? `${fmtSci(eq.se3_energy_abs_err_ev)} eV` : "—";
+  document.getElementById("mSo3F").textContent = eq.so3_force_max_err_ev_a !== undefined ? `${fmtSci(eq.so3_force_max_err_ev_a)} eV/Å` : "—";
+  document.getElementById("mNoether").textContent = eq.net_force_norm_ev_a !== undefined
+    ? `${fmtSci(eq.net_force_norm_ev_a)} / ${fmtSci(eq.net_torque_norm_ev)}`
+    : "—";
+  document.getElementById("mConservative").textContent = eq.conservative_grad_fd_err_ev_a !== undefined
+    ? `${fmtSci(eq.conservative_grad_fd_err_ev_a)} eV/Å`
+    : "—";
+  document.getElementById("mMirrorRel").textContent = res.mirror_relation
+    ? `${res.mirror_relation.toUpperCase()} (${res.mirror_3d_smiles || ""})`
+    : "—";
+  document.getElementById("mFormulaInfo").textContent = res.formula
+    ? `${res.formula} · MW ${res.molecular_weight} Da · ${res.inchikey || ""}`
+    : "未进入三维阶段";
+
+  // 10-gate cards
+  const gGrid = document.getElementById("c3dGatesGrid");
+  gGrid.innerHTML = (res.gates || []).map(g => `
+    <div class="gate-card ${esc(g.status)}">
+      <div class="gate-top">
+        <span class="gate-title">${esc(g.title)}</span>
+        <span class="badge ${esc(g.status)}">${esc(g.status.toUpperCase())}</span>
+      </div>
+      <div class="gate-metric">${esc(g.metric)}</div>
+      <div class="gate-thr">物理标准: ${esc(g.threshold)}</div>
+      <div class="gate-detail">${esc(g.detail)}</div>
+    </div>
+  `).join("");
+
+  // 3D canvas + conformer table
+  setViewerFromStructure(res.structure_3d);
+  const tbody = document.querySelector("#c3dConfTable tbody");
+  const confs = res.conformers || [];
+  tbody.innerHTML = confs.map((c, idx) => `
+    <tr class="clickable-row ${idx === 0 ? "selected-row" : ""}" data-cidx="${idx}">
+      <td class="mono">#${c.conf_id}</td>
+      <td class="mono">${c.energy_ev.toFixed(5)}</td>
+      <td class="mono">+${c.rel_energy_kcal.toFixed(3)}</td>
+      <td class="mono">${(c.boltzmann_weight * 100).toFixed(1)}%</td>
+      <td class="mono">${c.fmax_ev_a.toFixed(4)}</td>
+      <td class="mono">${c.steps}</td>
+      <td><span class="badge ${c.stereo_ok_final ? "pass" : "fail"}">${c.stereo_ok_final ? "MATCH" : "FLIPPED"}</span></td>
+      <td class="mono">${esc(c.smiles_from_3d)}</td>
+    </tr>
+  `).join("");
+
+  tbody.querySelectorAll("tr.clickable-row").forEach(tr => {
+    tr.addEventListener("click", () => {
+      tbody.querySelectorAll("tr").forEach(r => r.classList.remove("selected-row"));
+      tr.classList.add("selected-row");
+      const c = confs[Number(tr.dataset.cidx)];
+      if (c && c.coords && res.structure_3d) {
+        const updatedAtoms = res.structure_3d.atoms.map((a, i) => {
+          const [x, y, zc] = c.coords[i];
+          const [fx, fy, fz] = c.forces_vec[i];
+          return { ...a, x, y, z_coord: zc, fx, fy, fz, f_norm: Math.hypot(fx, fy, fz) };
+        });
+        setViewerFromStructure({ ...res.structure_3d, atoms: updatedAtoms });
+      }
+    });
+  });
+}
+
+document.getElementById("btnRunC3d").addEventListener("click", runCompliance3D);
+
+/* ------------------------- Tab 2: 2D Equivariance Logic ------------------------- */
+document.getElementById("eqMode").addEventListener("change", e => {
+  const isCkpt = e.target.value === "checkpoint";
+  document.getElementById("eqArchBox").style.display = isCkpt ? "none" : "block";
+  document.getElementById("eqCkptBox").style.display = isCkpt ? "block" : "none";
+});
+
+document.getElementById("eqAngle").addEventListener("input", e => {
+  document.getElementById("eqAngleVal").textContent = `${e.target.value}°`;
+});
+document.querySelectorAll(".eq-ang-btn").forEach(b => {
+  b.addEventListener("click", () => {
+    document.getElementById("eqAngle").value = b.dataset.ang;
+    document.getElementById("eqAngleVal").textContent = `${b.dataset.ang}°`;
+    runEquivariance2D();
+  });
+});
+
+function buildEqSweepSvg(rows) {
+  const W = 680, H = 135, padL = 48, padR = 16, padT = 14, padB = 26;
+  const maxErr = Math.max(0.05, ...rows.map(r => Math.max(r.feature_rel_error || 0, r.mean_token_rel_error || 0)));
+  const bw = (W - padL - padR) / Math.max(1, rows.length);
+  const bars = rows.map((r, i) => {
+    const val = r.feature_rel_error !== null && r.feature_rel_error !== undefined ? r.feature_rel_error : r.mean_token_rel_error;
+    const h = Math.max(2, ((val || 0) / maxErr) * (H - padT - padB));
+    const x = padL + i * bw + bw * 0.18;
+    const y = H - padB - h;
+    const col = r.on_grid90 ? "#34d399" : (r.on_group ? "#38bdf8" : "#fbbf24");
+    return `
+      <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw * 0.64).toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${col}"></rect>
+      <text x="${(x + bw * 0.32).toFixed(1)}" y="${H - 8}" fill="#9aa8d1" font-size="11" text-anchor="middle">${r.angle_deg}°</text>
+      <text x="${(x + bw * 0.32).toFixed(1)}" y="${Math.max(11, y - 4).toFixed(1)}" fill="#e2e8f0" font-size="10" font-family="monospace" text-anchor="middle">${fmtSci(val, 1)}</text>
+    `;
+  }).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;background:#0b1226;border-radius:6px;border:1px solid var(--line);">${bars}</svg>`;
+}
+
+async function runEquivariance2D() {
+  const btn = document.getElementById("btnRunEq2d");
+  const payload = {
+    mode: document.getElementById("eqMode").value,
+    arch: document.getElementById("eqArch").value,
+    order: Number(document.getElementById("eqOrder").value),
+    checkpoint_id: document.getElementById("eqCkpt").value,
+    smiles: document.getElementById("eqSmiles").value.trim(),
+    angle_deg: Number(document.getElementById("eqAngle").value)
+  };
+  const res = await apiPost("api/equivariance2d", payload, btn);
+
+  document.getElementById("eqFocusLbl").textContent = `${res.focus_angle_deg}°`;
+  document.getElementById("eqImgOrig").innerHTML = `<img src="${res.original_image}" alt="0 deg">`;
+  document.getElementById("eqImgRot").innerHTML = `<img src="${res.rotated_image}" alt="Rotated">`;
+  document.getElementById("eqImgMir").innerHTML = `<img src="${res.mirrored_image}" alt="Mirrored">`;
+
+  const sv = res.symmetry_verdict || {};
+  const banner = document.getElementById("eqVerdictBanner");
+  const isEquiv = sv.exact_c4_grid_equivariant === true;
+  banner.className = `verdict-banner ${isEquiv ? "pass" : "warn"}`;
+  document.getElementById("eqVerdictTitle").textContent = isEquiv
+    ? `✅ ${res.label}: 90° 精确格点群等变核验通过 (max error = ${fmtSci(sv.max_grid90_feature_err)})`
+    : `ℹ️ ${res.label}: 非精确群等变基线或插值架构 (焦点角 Logit 变化 = ${fmtSci(res.focus_logit_error)})`;
+  document.getElementById("eqVerdictSub").textContent =
+    `焦点角 ${res.focus_angle_deg}° 特征等变相对误差: ${fmtSci(res.focus_feature_error)} | 平面镜像特征分离度: ${fmtSci(res.mirror_probe?.mean_token_rel_diff)}`;
+
+  if (res.feature_maps) {
+    document.getElementById("eqMapExp").innerHTML = `<img src="${res.feature_maps.expected}" alt="Expected">`;
+    document.getElementById("eqMapAct").innerHTML = `<img src="${res.feature_maps.actual}" alt="Actual">`;
+    document.getElementById("eqMapDiff").innerHTML = `<img src="${res.feature_maps.difference}" alt="Diff">`;
+  } else {
+    const msg = `<span style="color:#64748b;padding:12px;text-align:center;">当前角度 (${res.focus_angle_deg}°) 不在离散循环群 C_${res.group_order || "N"} 纤维元上，或当前编码器不含 escnn 群特征张量。</span>`;
+    document.getElementById("eqMapExp").innerHTML = msg;
+    document.getElementById("eqMapAct").innerHTML = msg;
+    document.getElementById("eqMapDiff").innerHTML = msg;
+  }
+
+  const mp = res.mirror_probe || {};
+  document.getElementById("eqMirrorSummary").innerHTML = `
+    <span class="badge ${mp.reflection_non_invariant_ok ? "pass" : "fail"}">
+      ${mp.reflection_non_invariant_ok ? "PASS: 镜像非不变 (手性敏感)" : "WARN: 镜像塌缩"}
+    </span>
+    &nbsp; 水平翻转输入后编码器 Token 相对差异 <code>||T̄(M_x x) - T̄(x)|| = ${fmtSci(mp.mean_token_rel_diff)}</code>。
+    ${mp.upright_prediction ? `<br>预训练解码对比 — 正向图预测: <code>${esc(mp.upright_prediction)}</code> vs 镜像图预测: <code>${esc(mp.mirrored_prediction)}</code> (关系: <strong>${esc(mp.prediction_relation || "—")}</strong>)` : ""}
+    <div style="color:var(--muted);margin-top:4px;">${esc(mp.explanation || "")}</div>
+  `;
+
+  document.getElementById("eqSweepSvgWrap").innerHTML = buildEqSweepSvg(res.sweep || []);
+  document.querySelector("#eqSweepTable tbody").innerHTML = (res.sweep || []).map(r => `
+    <tr>
+      <td class="mono">${r.angle_deg}°</td>
+      <td><span class="badge ${r.on_grid90 ? "pass" : (r.on_group ? "info" : "warn")}">${r.on_grid90 ? "C4 精确格点" : (r.on_group ? "C_N 群元" : "群外插值")}</span></td>
+      <td class="mono">${fmtSci(r.feature_rel_error)}</td>
+      <td class="mono">${fmtSci(r.token_perm_rel_error)}</td>
+      <td class="mono">${fmtSci(r.mean_token_rel_error)}</td>
+      <td class="mono">${fmtSci(r.logit_rel_error)}</td>
+      <td class="mono">${r.invariant_to_0deg === null ? "—" : (r.invariant_to_0deg ? "✅ 一致" : "⚠️ 变化")}</td>
+    </tr>
+  `).join("");
+}
+
+document.getElementById("btnRunEq2d").addEventListener("click", runEquivariance2D);
+
+/* ------------------------- Tab 3: Visual OCSR Studio Logic ------------------------- */
+document.getElementById("ocsrAngle").addEventListener("input", e => {
+  document.getElementById("ocsrAngleVal").textContent = `${e.target.value}°`;
+});
+document.querySelectorAll(".ocsr-ang-btn").forEach(b => {
+  b.addEventListener("click", () => {
+    document.getElementById("ocsrAngle").value = b.dataset.ang;
+    document.getElementById("ocsrAngleVal").textContent = `${b.dataset.ang}°`;
+  });
+});
+
+document.getElementById("ocsrFile").addEventListener("change", e => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => { STATE.uploadedDataUrl = String(reader.result); };
+  reader.readAsDataURL(file);
+});
+document.getElementById("btnClearUpload").addEventListener("click", () => {
+  STATE.uploadedDataUrl = null;
+  document.getElementById("ocsrFile").value = "";
+});
+
+async function runOcsrStudio() {
+  const btn = document.getElementById("btnRunOcsr");
+  const tta = [];
+  if (document.getElementById("ocsrTtaPad").checked) tta.push("pad");
+  if (document.getElementById("ocsrTtaSharpen").checked) tta.push("sharpen");
+
+  const payload = {
+    model: document.getElementById("ocsrModel").value,
+    beam: Number(document.getElementById("ocsrBeam").value),
+    tta,
+    min_margin: Number(document.getElementById("ocsrMargin").value),
+    angle_deg: Number(document.getElementById("ocsrAngle").value),
+    augment_mode: document.getElementById("ocsrAug").value,
+    mirror_flip: document.getElementById("ocsrMirror").checked,
+    rgroup_label: document.getElementById("ocsrRgroup").value,
+    expand_aliases: document.getElementById("ocsrExpand").checked,
+    ink_crop: document.getElementById("ocsrInkCrop").checked,
+    smiles: document.getElementById("ocsrSmiles").value.trim(),
+    reference_smiles: document.getElementById("ocsrRef").value.trim(),
+    image_data_url: STATE.uploadedDataUrl
+  };
+  const res = await apiPost("api/ocsr", payload, btn);
+  STATE.lastOcsr = res;
+
+  document.getElementById("ocsrImgSrc").innerHTML = `<img src="${res.source_image}" alt="Source">`;
+  document.getElementById("ocsrImgProc").innerHTML = `<img src="${res.processed_image}" alt="Processed">`;
+  document.getElementById("ocsrImgPred").innerHTML = res.predicted_depiction
+    ? `<img src="${res.predicted_depiction}" alt="Predicted">`
+    : `<span style="color:var(--fail-fg);">预测 SMILES 语法无效</span>`;
+
+  const cg = res.confidence_gate || {};
+  const gateBadge = document.getElementById("ocsrGateBadge");
+  gateBadge.className = `badge ${cg.accepted ? "pass" : "warn"}`;
+  gateBadge.textContent = cg.accepted
+    ? `ACCEPTED (margin=${cg.margin ?? "∞"})`
+    : `ABSTAINED (${(cg.reasons || []).join(", ")})`;
+
+  const ev = res.evaluation?.pair_score;
+  document.getElementById("ocsrResultCards").innerHTML = `
+    <div class="card">
+      <div class="k">Top-1 识别 SMILES (${esc(res.model_label)})</div>
+      <div class="v" style="font-size:13.5px;">${esc(res.expanded_smiles || res.predicted_smiles)}</div>
+      <div class="s">耗时 ${res.elapsed_seconds}s · Beam ${res.beam}</div>
+    </div>
+    <div class="card">
+      <div class="k">对比 Ground Truth</div>
+      <div class="v" style="font-size:14px;">${ev ? (ev.exact ? "✅ Exact Match" : (ev.exact_flat ? "⚠️ 仅平面连通匹配 (手性差)" : `❌ ${esc(res.evaluation.category)}`)) : "未提供参考"}</div>
+      <div class="s">${ev ? `Tanimoto=${ev.tanimoto.toFixed(3)} · Stereo=${ev.stereo_correct}/${ev.stereo_total}` : "—"}</div>
+    </div>
+  `;
+
+  document.getElementById("btnSendTo3D").disabled = !res.standardized_smiles;
+  document.getElementById("btnSendToProp").disabled = !(res.candidates && res.candidates.length);
+
+  const tbody = document.querySelector("#ocsrCandTable tbody");
+  tbody.innerHTML = (res.candidates || []).map(c => `
+    <tr>
+      <td class="mono">#${c.rank}</td>
+      <td>${c.depiction ? `<img src="${c.depiction}" style="height:54px;background:#fff;border-radius:4px;padding:2px;">` : "—"}</td>
+      <td class="mono">${esc(c.smiles)}</td>
+      <td class="mono">${c.score.toFixed(4)}</td>
+      <td><span class="badge ${c.valid ? "pass" : "fail"}">${c.valid ? "VALID" : "INVALID"}</span></td>
+      <td>${c.category_vs_ref ? `<span class="badge info">${esc(c.category_vs_ref)}</span>` : "—"}</td>
+      <td>${c.valid ? `<button class="btn sm cand-3d-btn" data-smi="${esc(c.smiles)}">送入 3D 核验</button>` : ""}</td>
+    </tr>
+  `).join("");
+  tbody.querySelectorAll(".cand-3d-btn").forEach(b => {
+    b.addEventListener("click", () => inspectSmilesIn3D(b.dataset.smi));
+  });
+}
+
+document.getElementById("btnRunOcsr").addEventListener("click", runOcsrStudio);
+document.getElementById("btnSendTo3D").addEventListener("click", () => {
+  if (STATE.lastOcsr) inspectSmilesIn3D(STATE.lastOcsr.expanded_smiles || STATE.lastOcsr.predicted_smiles);
+});
+document.getElementById("btnSendToProp").addEventListener("click", () => {
+  if (!STATE.lastOcsr) return;
+  const ref = document.getElementById("ocsrRef").value.trim() || STATE.lastOcsr.standardized_smiles || "";
+  document.getElementById("propTruth").value = ref;
+  document.getElementById("propCands").value = (STATE.lastOcsr.candidates || []).map(c => c.smiles).join("\n");
+  switchTab("tab-prop");
+  runPropagation();
+});
+
+/* ------------------------- Tab 4: Error Propagation Logic ------------------------- */
+document.querySelectorAll("#propQuickPills .pill").forEach(pill => {
+  pill.addEventListener("click", () => {
+    document.getElementById("propTruth").value = pill.dataset.smi;
+    document.getElementById("propCands").value = "";
+    runPropagation();
+  });
+});
+
+async function runPropagation() {
+  const btn = document.getElementById("btnRunProp");
+  const candsRaw = document.getElementById("propCands").value
+    .split(/\r?\n/)
+    .map(s => s.trim())
+    .filter(Boolean);
+  const payload = {
+    truth_smiles: document.getElementById("propTruth").value.trim(),
+    candidate_smiles: candsRaw,
+    potential: document.getElementById("propPotential").value,
+    n_conf: Number(document.getElementById("propNConf").value),
+    relax: true
+  };
+  const res = await apiPost("api/propagation", payload, btn);
+  document.getElementById("propNote").textContent = `${res.enantiomer_blindness_note} (势能面: ${res.potential_label}, Truth E = ${res.truth_energy_ev?.toFixed(5) ?? "—"} eV)`;
+
+  const tbody = document.querySelector("#propTable tbody");
+  tbody.innerHTML = (res.candidates || []).map(r => {
+    const catCls = r.category === "correct" ? "pass" : (r.category === "enantiomer" ? "info" : "warn");
+    return `
+      <tr>
+        <td class="mono">#${r.rank_input}</td>
+        <td>${r.depiction ? `<img src="${r.depiction}" style="height:56px;background:#fff;border-radius:4px;padding:2px;">` : "—"}</td>
+        <td class="mono">${esc(r.smiles)}</td>
+        <td><span class="badge ${catCls}">${esc(r.category)}</span></td>
+        <td>${r.same_formula ? "✅ Yes" : "❌ No"}</td>
+        <td class="mono">${r.energy_ev !== null && r.energy_ev !== undefined ? r.energy_ev.toFixed(5) : "—"}</td>
+        <td class="mono" style="font-weight:700;color:${Math.abs(r.delta_e_kcal || 0) > 0.5 ? "var(--warn-fg)" : "var(--pass-fg)"};">
+          ${r.delta_e_kcal !== null && r.delta_e_kcal !== undefined ? `${r.delta_e_kcal >= 0 ? "+" : ""}${r.delta_e_kcal.toFixed(3)} kcal/mol` : "N/A (异分子式)"}
+        </td>
+        <td class="mono">${r.rel_to_lowest_isomer_kcal !== null && r.rel_to_lowest_isomer_kcal !== undefined ? `+${r.rel_to_lowest_isomer_kcal.toFixed(3)}` : "—"}</td>
+        <td><button class="btn sm prop-3d-btn" data-smi="${esc(r.smiles)}">3D 审计</button></td>
+      </tr>
+    `;
+  }).join("");
+  tbody.querySelectorAll(".prop-3d-btn").forEach(b => {
+    b.addEventListener("click", () => inspectSmilesIn3D(b.dataset.smi));
+  });
+}
+document.getElementById("btnRunProp").addEventListener("click", runPropagation);
+
+/* ------------------------- Tab 5: Force-Field Builder Logic ------------------------- */
+async function runForceFieldBuilder() {
+  const btn = document.getElementById("btnRunFf");
+  const list = document.getElementById("ffSmilesList").value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  const payload = {
+    smiles_list: list,
+    potential: document.getElementById("ffPotential").value,
+    n_conf: Number(document.getElementById("ffNConf").value),
+    displaced_samples: Number(document.getElementById("ffDispN").value),
+    max_displacement: Number(document.getElementById("ffAmp").value),
+    min_distance: Number(document.getElementById("ffMinDist").value),
+    expand_aliases: document.getElementById("ffExpand").checked,
+    dedupe_inchikey: document.getElementById("ffDedupe").checked
+  };
+  const res = await apiPost("api/forcefield", payload, btn);
+  STATE.lastFf = res;
+
+  document.getElementById("ffSummaryCards").innerHTML = `
+    <div class="card"><div class="k">输入分子总数</div><div class="v">${res.total_inputs}</div></div>
+    <div class="card"><div class="k">物理准入通过分子</div><div class="v" style="color:var(--pass-fg);">${res.accepted_molecules}</div></div>
+    <div class="card"><div class="k">导出总帧数 (含非平衡微扰)</div><div class="v" style="color:var(--accent);">${res.total_frames_written}</div></div>
+  `;
+
+  document.getElementById("btnDlFfExtxyz").disabled = !res.extxyz_preview;
+  document.getElementById("btnDlFfManifest").disabled = !res.manifest_jsonl;
+
+  document.querySelector("#ffTable tbody").innerHTML = (res.rows || []).map(r => `
+    <tr>
+      <td class="mono">${esc(r.id)}</td>
+      <td class="mono">${esc(r.input_smiles)}${r.expanded_smiles ? `<div style="color:var(--accent);font-size:11px;">→ ${esc(r.expanded_smiles)}</div>` : ""}</td>
+      <td><span class="badge ${r.status === "ok" ? "pass" : "fail"}">${esc(r.status)}</span></td>
+      <td class="mono">${r.n_frames}</td>
+      <td class="mono">${r.displaced_accepted ?? 0} / ${r.displaced_rejected ?? 0}</td>
+      <td class="mono">${r.min_energy_ev ?? "—"}</td>
+      <td>${r.connectivity_split ? `<span class="badge info">${esc(r.connectivity_split)}</span>` : "—"}</td>
+    </tr>
+  `).join("");
+
+  document.getElementById("ffExtxyzBox").textContent = res.extxyz_preview
+    ? res.extxyz_preview.slice(0, 4200) + (res.extxyz_preview.length > 4200 ? "\n... [truncated preview, click Download for full extxyz]" : "")
+    : "无准入帧输出。";
+}
+document.getElementById("btnRunFf").addEventListener("click", runForceFieldBuilder);
+document.getElementById("btnDlFfExtxyz").addEventListener("click", () => {
+  if (STATE.lastFf?.extxyz_preview) downloadText("ouroboros_forcefield.extxyz", STATE.lastFf.extxyz_preview);
+});
+document.getElementById("btnDlFfManifest").addEventListener("click", () => {
+  if (STATE.lastFf?.manifest_jsonl) downloadText("ouroboros_forcefield.manifest.jsonl", STATE.lastFf.manifest_jsonl);
+});
+
+/* ------------------------- Tab 6: Batch Evaluation & Benchmarks ------------------------- */
+function renderSelectiveCurveSvg(curve) {
+  if (!curve || !curve.length) return "无曲线数据";
+  const allRows = curve.filter(r => r.subset === "all");
+  const rows = allRows.length ? allRows : curve;
+  const cards = rows.map(r => `
+    <div class="card" style="padding:9px;">
+      <div class="k">Margin ≥ ${r.min_margin}</div>
+      <div class="v" style="font-size:14px;">Cov ${(r.coverage * 100).toFixed(0)}% · Exact ${r.exact_accepted !== null ? (r.exact_accepted * 100).toFixed(1) + "%" : "—"}</div>
+      <div class="s">Accepted ${r.accepted}/${r.total}</div>
+    </div>
+  `).join("");
+  return `<div class="cards-grid" style="margin-bottom:0;">${cards}</div>`;
+}
+
+async function runBatchEval() {
+  const btn = document.getElementById("btnRunEval");
+  const list = document.getElementById("evSmilesList").value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  const payload = {
+    mode: "live_ocsr",
+    model: document.getElementById("evModel").value,
+    perturbation: document.getElementById("evPerturb").value,
+    beam: Number(document.getElementById("evBeam").value),
+    smiles_list: list
+  };
+  const res = await apiPost("api/evaluate", payload, btn);
+  const agg = res.aggregate || {};
+  const ci = res.bootstrap_95ci || {};
+
+  document.getElementById("evMetricCards").innerHTML = `
+    <div class="card">
+      <div class="k">Exact Match (含立体化学)</div>
+      <div class="v" style="color:var(--pass-fg);">${((agg.exact || 0) * 100).toFixed(1)}%</div>
+      <div class="s">95% CI [${((ci.exact?.[0] || 0) * 100).toFixed(1)}%, ${((ci.exact?.[1] || 0) * 100).toFixed(1)}%]</div>
+    </div>
+    <div class="card">
+      <div class="k">Exact Flat (平面连通)</div>
+      <div class="v">${((agg.exact_flat || 0) * 100).toFixed(1)}%</div>
+      <div class="s">InChIKey: ${((agg.inchikey || 0) * 100).toFixed(1)}%</div>
+    </div>
+    <div class="card">
+      <div class="k">Morgan Tanimoto 相似度</div>
+      <div class="v" style="color:var(--accent);">${(agg.tanimoto || 0).toFixed(3)}</div>
+      <div class="s">Validity: ${((agg.validity || 0) * 100).toFixed(1)}%</div>
+    </div>
+    <div class="card">
+      <div class="k">立体中心准确率</div>
+      <div class="v">${agg.stereo_accuracy !== null && agg.stereo_accuracy !== undefined ? (agg.stereo_accuracy * 100).toFixed(1) + "%" : "N/A"}</div>
+      <div class="s">样本数 N=${res.n} · 耗时 ${res.elapsed_seconds}s</div>
+    </div>
+  `;
+
+  document.getElementById("evCurveWrap").innerHTML = renderSelectiveCurveSvg(res.selective_curve);
+
+  const tbody = document.querySelector("#evRowsTable tbody");
+  tbody.innerHTML = (res.rows || []).map(r => `
+    <tr>
+      <td class="mono">${esc(r.id)}</td>
+      <td class="mono">${esc(r.gold)}</td>
+      <td class="mono">${esc(r.pred)}</td>
+      <td>${r.exact ? "✅" : "❌"}</td>
+      <td>${r.exact_flat ? "✅" : "❌"}</td>
+      <td class="mono">${Number(r.tanimoto || 0).toFixed(3)}</td>
+      <td class="mono">${r.margin !== null && r.margin !== undefined ? Number(r.margin).toFixed(3) : "—"}</td>
+      <td><span class="badge ${r.category === "correct" ? "pass" : "warn"}">${esc(r.category)}</span></td>
+      <td><button class="btn sm ev-3d-btn" data-smi="${esc(r.pred)}">3D 核验</button></td>
+    </tr>
+  `).join("");
+  tbody.querySelectorAll(".ev-3d-btn").forEach(b => {
+    b.addEventListener("click", () => inspectSmilesIn3D(b.dataset.smi));
+  });
+}
+
+document.getElementById("btnRunEval").addEventListener("click", runBatchEval);
+
+document.getElementById("btnLoadBench").addEventListener("click", async () => {
+  const path = document.getElementById("benchSelect").value;
+  if (!path) return;
+  const res = await apiPost("api/benchmark", { path }, document.getElementById("btnLoadBench"));
+  document.getElementById("benchJsonBox").textContent = JSON.stringify(res.data, null, 2);
+});
+
+/* ------------------------- Initial Bootstrap ------------------------- */
+async function initWorkbench() {
+  try {
+    const resp = await fetch("api/status");
+    const st = await resp.json();
+    STATE.status = st;
+
+    document.getElementById("statusDevice").textContent = `Device: ${st.device}`;
+    const ck = st.checkpoints_found || [];
+    const ckBadge = document.getElementById("statusCkpts");
+    ckBadge.textContent = ck.length ? `Pretrained: ${ck.join(", ")}` : "Checkpoints: demo mode";
+    ckBadge.className = `badge ${ck.length ? "pass" : "warn"}`;
+
+    // Populate OCSR model dropdowns
+    const modelHtml = (st.ocsr_models || []).map(m => `<option value="${esc(m.id)}">${esc(m.label)}</option>`).join("");
+    document.getElementById("ocsrModel").innerHTML = modelHtml;
+    document.getElementById("evModel").innerHTML = modelHtml;
+    if (ck.includes("A") && ck.includes("C")) {
+      document.getElementById("ocsrModel").value = "AC";
+      document.getElementById("evModel").value = "AC";
+    }
+
+    // Populate OCSR preset selector
+    const presetGroups = st.presets || {};
+    const optGroups = Object.entries(presetGroups).map(([grp, items]) => {
+      const opts = items.map(it => `<option value="${esc(it.smiles)}">${esc(it.name)}</option>`).join("");
+      return `<optgroup label="${esc(grp)}">${opts}</optgroup>`;
+    }).join("");
+    const ocsrPre = document.getElementById("ocsrPreset");
+    ocsrPre.innerHTML = optGroups;
+    ocsrPre.addEventListener("change", () => {
+      document.getElementById("ocsrSmiles").value = ocsrPre.value;
+      document.getElementById("ocsrRef").value = ocsrPre.value;
+    });
+
+    // Populate repo benchmarks dropdown
+    const benchSel = document.getElementById("benchSelect");
+    benchSel.innerHTML = (st.repo_benchmarks || []).map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join("");
+
+    // Run fast initial 3D compliance audit so the 3D viewer and 10 gates are populated immediately!
+    await runCompliance3D();
+  } catch (err) {
+    showError("初始化状态失败: " + (err.message || err));
+  }
+}
+
+initWorkbench();
+</script>
+</body>
+</html>

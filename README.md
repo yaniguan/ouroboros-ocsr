@@ -52,7 +52,9 @@ for angle in (0, 90, 180):
 180 CC(=O)Oc1ccccc1C(=O)O feature error: 8.1e-07
 ```
 
-Want a UI? `python -m ouroboros.demo --checkpoint checkpoints/ouroboros-C.pt` opens a local rotation lab ([guide](docs/rotation-demo.md)).
+Want a UI?
+- **Full Physics & Equivariance Workbench (`ouroboros.ui`):** `python -m ouroboros.ui --port 8787` launches an interactive 6-tab web workbench covering visual OCSR (`A/B/C/AC/ABC`, beam search, TTA, confidence gates), 2D $C_N$ rotation & chiral mirror equivariance probes, interactive 3D equivariant molecule generation with a **10-gate physical compliance audit** (valence/topology, charge/spin domain, CIP stereo, ETKDGv3, Pauli steric clearance, covalent geometry, 3D chirality retention, LBFGS stationary convergence, live $SE(3)$ rotation/translation + Noether momentum conservation, and $O(3)$ parity + conservative $\mathbf{F} = -\nabla_{\mathbf{R}} E$ finite-difference verification), 3D error propagation, force-field `extxyz` dataset building, and batch evaluation.
+- **Minimal 2D Rotation Demo (`ouroboros.demo`):** `python -m ouroboros.demo --checkpoint checkpoints/ouroboros-C.pt` opens a lightweight rotation lab ([guide](docs/rotation-demo.md)).
 
 ## Key features
 
