@@ -1,4 +1,4 @@
-"""Tests for the Interactive Physics & Equivariance Workbench UI (ouroboros.ui)."""
+"""Tests for the local web UI and 3D physics checks (ouroboros.ui)."""
 
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ def test_3d_compliance_all_10_gates_pass_chiral_molecule():
     assert len(res["gates"]) == 10
     assert all(g["status"] == "pass" for g in res["gates"])
 
-    # Verify live SE(3)/O(3) equivariance, Noether conservation & conservative force field
+    # Check 3D rotation/shift, zero net push/twist, mirror energy, and force = -dE/dx
     eq = res["equivariance_metrics"]
     assert eq["se3_energy_abs_err_ev"] < 1e-4
     assert eq["so3_force_max_err_ev_a"] < 1e-4
@@ -48,7 +48,7 @@ def test_3d_compliance_all_10_gates_pass_chiral_molecule():
     assert eq["parity_force_max_err_ev_a"] < 1e-4
     assert eq["conservative_grad_fd_err_ev_a"] < 2e-3
 
-    # Mirroring L-Alanine in 3D yields its enantiomer D-Alanine
+    # Mirroring L-Alanine in 3D gives its mirror twin D-Alanine
     assert res["mirror_relation"] == "enantiomer"
     assert res["structure_3d"]["n_atoms"] == 13
     assert res["standardized_smiles"] in res["exports"]["xyz"]
@@ -58,7 +58,7 @@ def test_3d_compliance_all_10_gates_pass_chiral_molecule():
     assert "forces_vec" in res["conformers"][0]
 
 
-def test_3d_compliance_catches_pauli_steric_clash():
+def test_3d_compliance_catches_atom_crash():
     res = audit_3d_physical_compliance(
         "N[C@@H](C)C(=O)O",
         potential="mmff94s",
@@ -83,9 +83,7 @@ def test_3d_compliance_catches_pauli_steric_clash():
         ("CC1(C)OB(c2ccc(F)cc2)OC1(C)C", "mace-small", "G2_DOMAIN_ELIGIBILITY"),
     ],
 )
-def test_3d_compliance_rejects_invalid_salt_radical_and_unsupported_element(
-    smiles, potential, expected_failed_gate
-):
+def test_3d_compliance_rejects_bad_inputs(smiles, potential, expected_failed_gate):
     res = audit_3d_physical_compliance(smiles, potential=potential, n_conf=1)
     assert res["ok"] is False
     assert res["overall_status"] == "fail"
@@ -93,7 +91,7 @@ def test_3d_compliance_rejects_invalid_salt_radical_and_unsupported_element(
     assert gate_by_id[expected_failed_gate]["status"] == "fail"
 
 
-def test_3d_compliance_unassigned_stereo_warns_and_alias_expands():
+def test_3d_compliance_unlabeled_stereo_warns_and_shorthand_expands():
     warn_res = audit_3d_physical_compliance("CC(O)C(=O)O", potential="mmff94s", n_conf=1)
     assert warn_res["ok"] is True
     assert warn_res["overall_status"] == "warn"
@@ -107,7 +105,7 @@ def test_3d_compliance_unassigned_stereo_warns_and_alias_expands():
     assert "*" not in alias_res["standardized_smiles"]
 
 
-def test_2d_equivariance_steerable_vs_baseline_and_mirror_probe(engine):
+def test_2d_rotation_and_mirror_checks(engine):
     c8 = engine.run_2d_equivariance(
         {
             "mode": "arch",
@@ -134,7 +132,7 @@ def test_2d_equivariance_steerable_vs_baseline_and_mirror_probe(engine):
     assert base["focus_logit_error"] > 1e-4
 
 
-def test_error_propagation_enantiomer_zero_strain_vs_diastereomer(engine):
+def test_3d_energy_comparison_mirror_vs_flipped_center(engine):
     prop = engine.run_error_propagation(
         {
             "truth_smiles": "C[C@@H]1CC[C@H](C(C)C)[C@@H](O)C1",
@@ -147,13 +145,11 @@ def test_error_propagation_enantiomer_zero_strain_vs_diastereomer(engine):
     assert "correct" in by_cat
     assert "enantiomer" in by_cat
     assert "diastereomer" in by_cat
-    # Enantiomer must have exact 0 energy difference up to numerical tolerance
     assert abs(by_cat["enantiomer"]["delta_e_kcal"]) < 0.05
-    # Diastereomer has distinct internal distances and non-zero energy gap
     assert abs(by_cat["diastereomer"]["delta_e_kcal"]) > 0.2
 
 
-def test_ocsr_forcefield_and_batch_eval_workflows(engine):
+def test_image_reader_dataset_builder_and_batch_score(engine):
     ocsr_res = engine.run_ocsr(
         {
             "model": "demo_c8",
@@ -202,7 +198,7 @@ def test_ocsr_forcefield_and_batch_eval_workflows(engine):
         assert bench["path"].startswith("benchmarks/")
 
 
-def test_workbench_http_handler_in_memory(engine):
+def test_http_handler_in_memory(engine):
     server = SimpleNamespace(prefix="/wb-test/", engine=engine)
 
     class MemConn:
@@ -230,7 +226,7 @@ def test_workbench_http_handler_in_memory(engine):
 
     code, html_body = send("/wb-test/")
     assert code == 200
-    assert b"Ouroboros Physics" in html_body
+    assert b"3D Physics Lab" in html_body
 
     code, health_body = send("/wb-test/api/health")
     assert code == 200 and json.loads(health_body)["ready"] is True

@@ -1,20 +1,4 @@
-"""3D Equivariant Molecule Generation & 10-Gate Physical Compliance Engine.
-
-Verifies fundamental chemical, stereochemical, geometric, thermodynamic, and Lie-group
-symmetry laws on generated 3D molecular conformers:
-  G1. Valence, Octet & Kekulization Topology (single neutral/valid molecular graph)
-  G2. Calculator Physical Domain Eligibility (formal charge, spin radicals, element support)
-  G3. Stereochemical Specification Completeness (CIP R/S & E/Z vs unassigned stereocenters)
-  G4. Distance-Geometry 3D Embedding (ETKDGv3 chirality-enforced conformer generation)
-  G5. Pauli Exclusion & Steric Clearance (all-pair d_min >= 0.75 A, nonbonded >= 1.35 A)
-  G6. Covalent Bond-Length & Ring/Cage Angle Plausibility (deviation vs covalent radii)
-  G7. 3D Chirality & Double-Bond Retention (3D-only CIP re-perception pre/post relaxation)
-  G8. Stationary-Point Force Convergence (finite E/F, LBFGS fmax <= threshold, Boltzmann weights)
-  G9. Live SE(3) Equivariance & Noether Conservation (SO(3) rotation, R^3 translation,
-      zero net force sum_i F_i = 0, zero net torque sum_i r_i x F_i = 0)
-  G10. O(3) Reflection Parity & Conservative Potential Field (mirror E invariance, chiral
-       enantiomer inversion, and central finite-difference F = -grad_R E verification)
-"""
+"""Build a 3D molecule from SMILES and check 10 basic rules of chemistry and physics."""
 
 from __future__ import annotations
 
@@ -27,8 +11,9 @@ from typing import Any
 import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import Calculator, all_changes
+from ase.io import write as ase_write
 from rdkit import Chem
-from rdkit.Chem import AllChem, Descriptors, rdMolTransforms
+from rdkit.Chem import AllChem, Descriptors, rdCIPLabeler, rdMolTransforms
 from rdkit.Chem.rdMolDescriptors import CalcMolFormula
 
 from ouroboros.data.render import RenderStyle, encode_png, render
@@ -56,75 +41,65 @@ MACE_ELEMENTS = frozenset({"H", "C", "N", "O", "F", "P", "S", "Cl", "Br", "I"})
 ANI2X_ELEMENTS = frozenset({"H", "C", "N", "O", "F", "S", "Cl"})
 
 PRESET_MOLECULES: dict[str, list[dict[str, str]]] = {
-    "chiral_drugs": [
+    "Everyday chiral molecules": [
         {
-            "name": "(S)-Ibuprofen (1 chiral center)",
-            "smiles": "CC(C)Cc1ccc([C@@H](C)C(=O)O)cc1",
-            "note": "Classic chiral NSAID; tests C_N rotation stability & O(3) mirror inversion.",
-        },
-        {
-            "name": "L-Alanine (zwitterion-free neutral)",
+            "name": "L-Alanine (amino acid)",
             "smiles": "N[C@@H](C)C(=O)O",
-            "note": "Compact chiral amino acid ideal for fast MACE-OFF23 relaxation.",
+            "note": "Small chiral molecule; fast to relax in 3D.",
         },
         {
-            "name": "(R)-Thalidomide (glutarimide chiral center)",
-            "smiles": "O=C1CC[C@@H](N2C(=O)c3ccccc3C2=O)C(=O)N1",
-            "note": "Bicyclic chiral drug where enantiomer distinction is critical.",
+            "name": "(S)-Ibuprofen (pain reliever)",
+            "smiles": "CC(C)Cc1ccc([C@@H](C)C(=O)O)cc1",
+            "note": "Has one chiral carbon center.",
         },
         {
-            "name": "(E)-Resveratrol (trans-alkene stereo)",
+            "name": "(E)-Resveratrol (double-bond geometry)",
             "smiles": "Oc1ccc(/C=C/c2cc(O)cc(O)c2)cc1",
-            "note": "Tests E/Z double-bond stereochemical preservation in 2D and 3D.",
+            "note": "Tests trans (E) double-bond shape.",
         },
     ],
-    "strained_3d_bioisosteres": [
+    "Tight 3D ring cages": [
         {
-            "name": "Bicyclo[1.1.1]pentane (BCP) Carboxamide",
+            "name": "BCP cage (bicyclo[1.1.1]pentane)",
             "smiles": "CNC(=O)C12CC(C1)C2",
-            "note": "Post-2020 phenyl bioisostere with 1.87 A transannular C1...C3 compression.",
+            "note": "Compact 3D cage with tight angles.",
         },
         {
-            "name": "Cubane Carboxamide (Oh strained cage)",
+            "name": "Cubane amide (cube-shaped carbon cage)",
             "smiles": "NC(=O)C12C3C4C1C5C2C3C45",
-            "note": "90-degree cyclobutane cage (~155 kcal/mol ring strain); tests MLIP stiffness.",
+            "note": "Carbon atoms arranged at 90-degree corners of a cube.",
         },
         {
-            "name": "2-Oxabicyclo[2.1.1]hexane Ester",
-            "smiles": "COC(=O)C12COC(C1)C2",
-            "note": "Ortho-substituted benzene bioisostere with oxygen-bridged strained cage.",
-        },
-        {
-            "name": "ortho-F-Phenyl-SF5 (Hypervalent S(VI))",
+            "name": "Phenyl-SF5 (6-bond sulfur)",
             "smiles": "Fc1ccccc1S(F)(F)(F)(F)F",
-            "note": "Octahedral hypervalent sulfur bioisostere; tests MLIP element coverage.",
+            "note": "Sulfur bonded to five fluorines and one carbon.",
         },
     ],
-    "abbreviations_and_compliance_edges": [
+    "Edge cases & rule breakers": [
         {
-            "name": "Racemic / Unassigned Lactic Acid (Stereo Warn)",
+            "name": "Unlabeled lactic acid (warns on rule 3)",
             "smiles": "CC(O)C(=O)O",
-            "note": "Triggers Gate 3 warning: unassigned tetrahedral stereocenter.",
+            "note": "Chiral carbon is missing @ or @@.",
         },
         {
-            "name": "Abbreviated Boc-Bn-Ph ([Boc] & [Ph] aliases)",
+            "name": "Boc & Ph shorthand ([Boc], [Ph])",
             "smiles": "[Boc]NCc1ccc([Ph])cc1",
-            "note": "Tests expand_aliases ([Boc], [Ph]) before 3D generation.",
+            "note": "Expands common chemistry shorthand groups before building 3D.",
         },
         {
-            "name": "Sodium Acetate Salt (Charge Rejection)",
+            "name": "Sodium acetate salt (fails rule 1)",
             "smiles": "CC(=O)[O-].[Na+]",
-            "note": "Triggers Gate 1/2 rejection: disconnected salt & unsupported Na+.",
+            "note": "Two separate charged ions instead of one neutral molecule.",
         },
         {
-            "name": "Benzyl Radical (Open-Shell Spin Rejection)",
+            "name": "Benzyl radical (fails rule 2)",
             "smiles": "[CH2]c1ccccc1",
-            "note": "Triggers Gate 2 rejection: non-zero radical electron on benzylic carbon.",
+            "note": "Has an unpaired electron.",
         },
         {
-            "name": "Arylboronic Pinacol Ester (-Bpin, Element B)",
+            "name": "Boron ester (fails rule 2 on MACE)",
             "smiles": "CC1(C)OB(c2ccc(F)cc2)OC1(C)C",
-            "note": "Triggers Gate 2 domain rejection for MACE-OFF23/ANI-2x (Boron unsupported).",
+            "note": "MACE-OFF23 does not support boron (B).",
         },
     ],
 }
@@ -143,12 +118,7 @@ def png_data_url(smiles_or_mol: str | Chem.Mol, size: int = 300) -> str | None:
 
 
 class MMFF94sASECalculator(Calculator):
-    """Analytical conservative MMFF94s ASE calculator on fixed RDKit molecular topology.
-
-    Because MMFF94s evaluates internal coordinates (bond lengths, bond angles, dihedrals,
-    out-of-plane, van der Waals, electrostatics), it is exact SE(3)/O(3) invariant in energy
-    and exact SO(3)/O(3) equivariant in Cartesian nuclear forces F = -dE/dR!
-    """
+    """Fast RDKit MMFF94s force field wrapped as an ASE Calculator."""
 
     implemented_properties = ["energy", "forces"]
     supported_elements = frozenset({"H", "C", "N", "O", "F", "Si", "P", "S", "Cl", "Br", "I"})
@@ -157,10 +127,8 @@ class MMFF94sASECalculator(Calculator):
         super().__init__()
         self._mol = Chem.Mol(template_mol_h)
         if self._mol.GetNumConformers() == 0:
-            conf = Chem.Conformer(self._mol.GetNumAtoms())
-            self._mol.AddConformer(conf, assignId=True)
-        self._props = AllChem.MMFFGetMoleculeProperties(self._mol, mmffVariant="MMFF94s")
-        self._use_uff = self._props is None
+            self._mol.AddConformer(Chem.Conformer(self._mol.GetNumAtoms()), assignId=True)
+        self._use_uff = AllChem.MMFFGetMoleculeProperties(self._mol, mmffVariant="MMFF94s") is None
 
     def calculate(
         self,
@@ -173,8 +141,8 @@ class MMFF94sASECalculator(Calculator):
         pos = np.asarray(target.get_positions(), dtype=np.float64)
         mol = Chem.Mol(self._mol)
         conf = mol.GetConformer(0)
-        for idx, xyz in enumerate(pos):
-            conf.SetAtomPosition(idx, [float(xyz[0]), float(xyz[1]), float(xyz[2])])
+        for i, xyz in enumerate(pos):
+            conf.SetAtomPosition(i, [float(xyz[0]), float(xyz[1]), float(xyz[2])])
 
         if not self._use_uff:
             props = AllChem.MMFFGetMoleculeProperties(mol, mmffVariant="MMFF94s")
@@ -182,11 +150,11 @@ class MMFF94sASECalculator(Calculator):
         else:
             ff = AllChem.UFFGetMoleculeForceField(mol, confId=0)
         if ff is None:
-            raise RuntimeError("RDKit force field initialization failed for topology")
+            raise RuntimeError("Could not set up RDKit force field for this molecule.")
 
-        e_kcal = float(ff.CalcEnergy())
+        energy_kcal = float(ff.CalcEnergy())
         grad_kcal_a = np.asarray(ff.CalcGrad(), dtype=np.float64).reshape(-1, 3)
-        self.results["energy"] = e_kcal / EV_TO_KCAL
+        self.results["energy"] = energy_kcal / EV_TO_KCAL
         self.results["forces"] = -grad_kcal_a / EV_TO_KCAL
 
 
@@ -194,7 +162,7 @@ _ANI_CACHE: dict[str, Any] = {}
 
 
 class ANI2xASECalculator(Calculator):
-    """Exact conservative 8-member TorchANI ANI-2x ASE calculator."""
+    """TorchANI ANI-2x neural potential wrapped as an ASE Calculator."""
 
     implemented_properties = ["energy", "forces"]
     supported_elements = ANI2X_ELEMENTS
@@ -206,7 +174,7 @@ class ANI2xASECalculator(Calculator):
         try:
             import torchani
         except ImportError as exc:
-            raise RuntimeError("Optional dependency 'torchani' is not installed.") from exc
+            raise RuntimeError("Optional package 'torchani' is not installed.") from exc
 
         if device not in _ANI_CACHE:
             _ANI_CACHE[device] = (
@@ -225,7 +193,7 @@ class ANI2xASECalculator(Calculator):
         super().calculate(atoms, properties, system_changes)
         target = atoms if atoms is not None else self.atoms
         torch = self._torch
-        sp = torch.tensor(
+        numbers = torch.tensor(
             [target.get_atomic_numbers().tolist()], dtype=torch.long, device=self._device
         )
         coords = torch.tensor(
@@ -234,10 +202,10 @@ class ANI2xASECalculator(Calculator):
             device=self._device,
             requires_grad=True,
         )
-        e_h = self._model((sp, coords)).energies
-        grad_h_a = torch.autograd.grad(e_h.sum(), coords)[0][0].detach().cpu().numpy()
-        self.results["energy"] = float(e_h.item()) * HARTREE_TO_EV
-        self.results["forces"] = (-grad_h_a * HARTREE_TO_EV).astype(np.float64)
+        e_hartree = self._model((numbers, coords)).energies
+        grad = torch.autograd.grad(e_hartree.sum(), coords)[0][0].detach().cpu().numpy()
+        self.results["energy"] = float(e_hartree.item()) * HARTREE_TO_EV
+        self.results["forces"] = (-grad * HARTREE_TO_EV).astype(np.float64)
 
 
 def get_3d_calculator(
@@ -246,56 +214,50 @@ def get_3d_calculator(
     key = potential.strip().lower()
     if key == "mmff94s":
         calc = MMFF94sASECalculator(template_mol_h)
-        return calc, "RDKit MMFF94s (Analytical)", calc.supported_elements
+        return calc, "MMFF94s (fast rule-based forces)", calc.supported_elements
     if key in ("mace-small", "small"):
         return (
             mace_calculator("small", device=device, dtype="float64"),
-            "MACE-OFF23-small (E(3) MPNN)",
+            "MACE-OFF23-small",
             MACE_ELEMENTS,
         )
     if key in ("mace-medium", "medium"):
         return (
             mace_calculator("medium", device=device, dtype="float64"),
-            "MACE-OFF23-medium (E(3) MPNN)",
+            "MACE-OFF23-medium",
             MACE_ELEMENTS,
         )
     if key in ("mace-large", "large"):
         return (
             mace_calculator("large", device=device, dtype="float64"),
-            "MACE-OFF23-large (E(3) MPNN)",
+            "MACE-OFF23-large",
             MACE_ELEMENTS,
         )
     if key in ("ani2x", "ani-2x"):
         calc = ANI2xASECalculator(device=device)
-        return calc, "TorchANI ANI-2x (8-Model Ensemble)", ANI2X_ELEMENTS
-    raise ValueError(
-        f"Unknown potential {potential!r}; choose mmff94s, mace-small, mace-medium, "
-        "mace-large, or ani2x."
-    )
+        return calc, "ANI-2x", ANI2X_ELEMENTS
+    raise ValueError(f"Unknown force model: {potential!r}")
 
 
-def _random_so3_matrix(seed: int = 42) -> np.ndarray:
+def _random_rotation_matrix(seed: int = 42) -> np.ndarray:
+    """Build a random 3D rotation matrix (det = +1, no mirror flip)."""
     rng = np.random.default_rng(seed)
-    a = rng.normal(size=(3, 3))
-    q, r = np.linalg.qr(a)
-    d = np.diag(np.sign(np.diag(r)))
-    q = q @ d
+    q, r = np.linalg.qr(rng.normal(size=(3, 3)))
+    q = q @ np.diag(np.sign(np.diag(r)))
     if np.linalg.det(q) < 0:
         q[:, 0] *= -1.0
     return q
 
 
-def _cip_summary(mol_no_h: Chem.Mol) -> dict[str, Any]:
-    from rdkit.Chem import rdCIPLabeler
-
+def _stereo_info(mol_no_h: Chem.Mol) -> dict[str, Any]:
     m = Chem.Mol(mol_no_h)
     rdCIPLabeler.AssignCIPLabels(m)
-    chiral_centers = [
+    centers = [
         {"atom_idx": a.GetIdx(), "symbol": a.GetSymbol(), "cip": a.GetProp("_CIPCode")}
         for a in m.GetAtoms()
         if a.HasProp("_CIPCode")
     ]
-    stereo_bonds = [
+    bonds = [
         {
             "bond_idx": b.GetIdx(),
             "atoms": [b.GetBeginAtomIdx(), b.GetEndAtomIdx()],
@@ -306,40 +268,49 @@ def _cip_summary(mol_no_h: Chem.Mol) -> dict[str, Any]:
     ]
     unassigned_tet = 0
     unassigned_db = 0
-    for el in Chem.FindPotentialStereo(Chem.Mol(m)):
-        if el.specified == Chem.StereoSpecified.Unspecified:
-            if el.type == Chem.StereoType.Atom_Tetrahedral:
+    for item in Chem.FindPotentialStereo(Chem.Mol(m)):
+        if item.specified == Chem.StereoSpecified.Unspecified:
+            if item.type == Chem.StereoType.Atom_Tetrahedral:
                 unassigned_tet += 1
-            elif el.type == Chem.StereoType.Bond_Double:
+            elif item.type == Chem.StereoType.Bond_Double:
                 unassigned_db += 1
     return {
-        "chiral_centers": chiral_centers,
-        "stereo_bonds": stereo_bonds,
-        "n_specified": len(chiral_centers) + len(stereo_bonds),
+        "chiral_centers": centers,
+        "stereo_bonds": bonds,
+        "n_specified": len(centers) + len(bonds),
         "n_unassigned_tetrahedral": unassigned_tet,
         "n_unassigned_double_bonds": unassigned_db,
     }
 
 
-def _format_xyz(symbols: list[str], positions: np.ndarray, comment: str) -> str:
+def _to_xyz(symbols: list[str], pos: np.ndarray, comment: str) -> str:
     lines = [str(len(symbols)), comment]
-    for sym, (x, y, z) in zip(symbols, positions, strict=True):
+    for sym, (x, y, z) in zip(symbols, pos, strict=True):
         lines.append(f"{sym:<3s} {x:12.6f} {y:12.6f} {z:12.6f}")
     return "\n".join(lines) + "\n"
 
 
-def _format_extxyz(
-    symbols: list[str], positions: np.ndarray, forces: np.ndarray, energy_ev: float, smiles: str
+def _to_extxyz(
+    symbols: list[str], pos: np.ndarray, forces: np.ndarray, energy_ev: float, smiles: str
 ) -> str:
-    from ase.io import write
-
-    atoms = Atoms(symbols=symbols, positions=positions)
+    atoms = Atoms(symbols=symbols, positions=pos)
     atoms.info["smiles"] = smiles
     atoms.info["mace_energy"] = float(energy_ev)
     atoms.arrays["mace_forces"] = np.asarray(forces, dtype=np.float64)
     buf = io.StringIO()
-    write(buf, atoms, format="extxyz")
+    ase_write(buf, atoms, format="extxyz")
     return buf.getvalue()
+
+
+def _gate(gate_id: str, title: str, status: str, metric: str, threshold: str, detail: str) -> dict:
+    return {
+        "id": gate_id,
+        "title": title,
+        "status": status,
+        "metric": metric,
+        "threshold": threshold,
+        "detail": detail,
+    }
 
 
 def audit_3d_physical_compliance(
@@ -356,53 +327,35 @@ def audit_3d_physical_compliance(
     seed: int = 0,
     device: str = "cpu",
 ) -> dict[str, Any]:
-    """Run 3D molecule generation + 10-gate physical & equivariance compliance audit."""
-    t_start = time.perf_counter()
+    """Build 3D conformers from SMILES and check 10 basic rules of chemistry and physics."""
+    t0 = time.perf_counter()
     raw_input = (smiles or "").strip()
+    if not raw_input:
+        raise ValueError("Please enter a SMILES string.")
+
     gates: list[dict[str, Any]] = []
 
-    def add_gate(
-        gate_id: str,
-        title: str,
-        status: str,
-        metric: str,
-        threshold: str,
-        detail: str,
-    ) -> None:
-        gates.append(
-            {
-                "id": gate_id,
-                "title": title,
-                "status": status,  # "pass" | "warn" | "fail"
-                "metric": metric,
-                "threshold": threshold,
-                "detail": detail,
-            }
-        )
-
-    if not raw_input:
-        raise ValueError("Please provide a non-empty SMILES string.")
-
-    # Optional alias expansion ([Boc], [Ph], [OMe], etc.)
+    # Expand shorthand labels like [Boc] or [Ph] if requested
     working_smiles = raw_input
-    expanded_note = None
-    labelled_probe = parse_labelled(raw_input) if expand_abbrev else None
-    has_labelled_alias = bool(
-        labelled_probe is not None and any(a.GetAtomicNum() == 0 for a in labelled_probe.GetAtoms())
+    expanded_note = ""
+    labelled = parse_labelled(raw_input) if expand_abbrev else None
+    has_alias = bool(
+        labelled is not None and any(a.GetAtomicNum() == 0 for a in labelled.GetAtoms())
     )
-    if expand_abbrev and (has_labelled_alias or "*" in raw_input):
+    if expand_abbrev and (has_alias or "*" in raw_input):
         try:
-            exp_mol = expand_aliases(raw_input)
-            working_smiles = Chem.MolToSmiles(exp_mol)
-            expanded_note = f"Expanded alias SMILES -> {working_smiles}"
+            working_smiles = Chem.MolToSmiles(expand_aliases(raw_input))
+            expanded_note = f"Expanded shorthand to {working_smiles}"
         except ValueError as exc:
-            add_gate(
-                "G1_VALENCE_TOPOLOGY",
-                "1. Valence, Octet & Single-Component Topology",
-                "fail",
-                str(exc),
-                "Valid Kekule valence, single molecule",
-                f"Alias expansion rejected {raw_input!r}: {exc}",
+            gates.append(
+                _gate(
+                    "G1_VALENCE_TOPOLOGY",
+                    "1. Valid chemical bonds",
+                    "fail",
+                    str(exc),
+                    "Valid bonds, one connected molecule",
+                    f"Could not expand shorthand in {raw_input!r}.",
+                )
             )
             return {
                 "ok": False,
@@ -410,19 +363,21 @@ def audit_3d_physical_compliance(
                 "input_smiles": raw_input,
                 "standardized_smiles": None,
                 "gates": gates,
-                "elapsed_seconds": round(time.perf_counter() - t_start, 3),
+                "elapsed_seconds": round(time.perf_counter() - t0, 3),
             }
 
-    # Gate 1: Valence, Kekulization & Single-Component Check
+    # Check 1: Valid chemical bonds and single connected molecule
     raw_mol = Chem.MolFromSmiles(working_smiles)
     if raw_mol is None or raw_mol.GetNumAtoms() == 0:
-        add_gate(
-            "G1_VALENCE_TOPOLOGY",
-            "1. Valence, Octet & Single-Component Topology",
-            "fail",
-            "Unparsable / valence violation",
-            "RDKit sanitization & Kekulization",
-            f"RDKit rejected {working_smiles!r} due to syntax or atomic valence violation.",
+        gates.append(
+            _gate(
+                "G1_VALENCE_TOPOLOGY",
+                "1. Valid chemical bonds",
+                "fail",
+                "Invalid SMILES or impossible bond count",
+                "Valid bonds, one connected molecule",
+                f"RDKit could not parse {working_smiles!r}.",
+            )
         )
         return {
             "ok": False,
@@ -430,39 +385,42 @@ def audit_3d_physical_compliance(
             "input_smiles": raw_input,
             "standardized_smiles": None,
             "gates": gates,
-            "elapsed_seconds": round(time.perf_counter() - t_start, 3),
+            "elapsed_seconds": round(time.perf_counter() - t0, 3),
         }
 
     frags = Chem.GetMolFrags(raw_mol)
     has_dummy = any(a.GetAtomicNum() == 0 for a in raw_mol.GetAtoms())
     std = standardize(working_smiles)
     if len(frags) > 1 or has_dummy or not std.valid:
-        reason = (
-            f"Multi-fragment mixture/salt ({len(frags)} fragments)"
+        why = (
+            f"Contains {len(frags)} separate pieces (salt or mixture)"
             if len(frags) > 1
-            else ("Contains unexpanded R-group dummy (*)" if has_dummy else std.reason)
+            else ("Contains unknown * group" if has_dummy else std.reason)
         )
-        add_gate(
-            "G1_VALENCE_TOPOLOGY",
-            "1. Valence, Octet & Single-Component Topology",
-            "fail",
-            reason,
-            "1 covalently connected component, 0 dummy atoms",
-            "3D gas-phase MLIPs require a single well-defined covalent graph without counterions.",
+        gates.append(
+            _gate(
+                "G1_VALENCE_TOPOLOGY",
+                "1. Valid chemical bonds",
+                "fail",
+                why,
+                "One connected molecule, no * placeholders",
+                "3D force models expect one connected molecule, not separate ions.",
+            )
         )
-        # Also evaluate Gate 2 on raw_mol so the user sees charge/element diagnostics!
         net_q = sum(a.GetFormalCharge() for a in raw_mol.GetAtoms())
         n_rad = sum(a.GetNumRadicalElectrons() for a in raw_mol.GetAtoms())
-        req_els = {a.GetSymbol() for a in raw_mol.GetAtoms() if a.GetAtomicNum() > 0}
-        target_els = ANI2X_ELEMENTS if "ani" in potential.lower() else MACE_ELEMENTS
-        unsup = sorted(req_els - target_els)
-        add_gate(
-            "G2_DOMAIN_ELIGIBILITY",
-            "2. Calculator Physical Domain Eligibility",
-            "fail" if (net_q != 0 or n_rad != 0 or unsup) else "warn",
-            f"Q={net_q:+d}, radicals={n_rad}, unsup={unsup or 'none'}",
-            "Net charge Q=0, spin singlet (radicals=0), supported elements",
-            f"Elements present: {sorted(req_els)}.",
+        present = {a.GetSymbol() for a in raw_mol.GetAtoms() if a.GetAtomicNum() > 0}
+        allowed = ANI2X_ELEMENTS if "ani" in potential.lower() else MACE_ELEMENTS
+        unsup = sorted(present - allowed)
+        gates.append(
+            _gate(
+                "G2_DOMAIN_ELIGIBILITY",
+                "2. Neutral charge & supported elements",
+                "fail" if (net_q != 0 or n_rad != 0 or unsup) else "warn",
+                f"charge={net_q:+d}, radicals={n_rad}, unsupported={unsup or 'none'}",
+                "Charge = 0, no unpaired electrons, supported elements",
+                f"Elements found: {sorted(present)}.",
+            )
         )
         return {
             "ok": False,
@@ -471,49 +429,49 @@ def audit_3d_physical_compliance(
             "standardized_smiles": std.smiles if std.valid else None,
             "depiction_2d": png_data_url(raw_mol),
             "gates": gates,
-            "elapsed_seconds": round(time.perf_counter() - t_start, 3),
+            "elapsed_seconds": round(time.perf_counter() - t0, 3),
         }
 
-    add_gate(
-        "G1_VALENCE_TOPOLOGY",
-        "1. Valence, Octet & Single-Component Topology",
-        "pass",
-        f"{std.mol.GetNumAtoms()} heavy atoms, 1 component",
-        "Valid Kekule & valence rules",
-        expanded_note or f"Canonical isomeric SMILES: {std.smiles}",
-    )
-
-    # Gate 2: Calculator Domain Eligibility (Charge, Radicals, Supported Elements)
-    target_els = (
-        ANI2X_ELEMENTS
-        if "ani" in potential.lower()
-        else (
-            MMFF94sASECalculator.supported_elements
-            if potential.lower() == "mmff94s"
-            else MACE_ELEMENTS
+    gates.append(
+        _gate(
+            "G1_VALENCE_TOPOLOGY",
+            "1. Valid chemical bonds",
+            "pass",
+            f"{std.mol.GetNumAtoms()} non-H atoms, 1 molecule",
+            "Valid bonds, one connected molecule",
+            expanded_note or f"Clean SMILES: {std.smiles}",
         )
     )
+
+    # Check 2: Neutral charge, no radicals, supported elements
+    if "ani" in potential.lower():
+        allowed_els = ANI2X_ELEMENTS
+    elif potential.lower() == "mmff94s":
+        allowed_els = MMFF94sASECalculator.supported_elements
+    else:
+        allowed_els = MACE_ELEMENTS
+
     policy = EligibilityPolicy(
-        supported_elements=target_els,
+        supported_elements=allowed_els,
         require_assigned_stereo=False,
         allow_charge=False,
         allow_radicals=False,
     )
-    elig_reasons = policy.reasons(std.mol)
-    net_charge = sum(a.GetFormalCharge() for a in std.mol.GetAtoms())
-    n_radicals = sum(a.GetNumRadicalElectrons() for a in std.mol.GetAtoms())
-    mol_h_probe = Chem.AddHs(Chem.Mol(std.mol))
-    formula = CalcMolFormula(mol_h_probe)
-    mw = float(Descriptors.MolWt(mol_h_probe))
+    reasons = policy.reasons(std.mol)
+    mol_with_h = Chem.AddHs(Chem.Mol(std.mol))
+    formula = CalcMolFormula(mol_with_h)
+    mw = float(Descriptors.MolWt(mol_with_h))
 
-    if elig_reasons:
-        add_gate(
-            "G2_DOMAIN_ELIGIBILITY",
-            "2. Calculator Physical Domain Eligibility",
-            "fail",
-            "; ".join(elig_reasons),
-            f"Q=0, singlet, Z in {sorted(target_els)}",
-            f"Formula {formula} (MW={mw:.2f} Da), Q={net_charge:+d}, radicals={n_radicals}.",
+    if reasons:
+        gates.append(
+            _gate(
+                "G2_DOMAIN_ELIGIBILITY",
+                "2. Neutral charge & supported elements",
+                "fail",
+                "; ".join(reasons),
+                f"Charge = 0, no radicals, elements in {sorted(allowed_els)}",
+                f"Formula {formula} ({mw:.1f} Da).",
+            )
         )
         return {
             "ok": False,
@@ -525,54 +483,58 @@ def audit_3d_physical_compliance(
             "molecular_weight": round(mw, 3),
             "depiction_2d": png_data_url(std.mol),
             "gates": gates,
-            "elapsed_seconds": round(time.perf_counter() - t_start, 3),
+            "elapsed_seconds": round(time.perf_counter() - t0, 3),
         }
 
-    add_gate(
-        "G2_DOMAIN_ELIGIBILITY",
-        "2. Calculator Physical Domain Eligibility",
-        "pass",
-        f"Q=0, radicals=0, {formula} ({mw:.1f} Da)",
-        f"Neutral singlet in {potential} domain",
-        f"All elements supported by {potential}; InChIKey={standard_inchikey(std)}.",
+    gates.append(
+        _gate(
+            "G2_DOMAIN_ELIGIBILITY",
+            "2. Neutral charge & supported elements",
+            "pass",
+            f"charge=0, radicals=0, {formula} ({mw:.1f} Da)",
+            "Neutral molecule with supported atoms",
+            f"All atoms are supported by {potential}.",
+        )
     )
 
-    # Gate 3: Stereochemical Specification Completeness
-    cip_info = _cip_summary(std.mol)
+    # Check 3: Left/right handedness (R/S and E/Z) labeled
+    cip_info = _stereo_info(std.mol)
     n_unassigned = cip_info["n_unassigned_tetrahedral"] + cip_info["n_unassigned_double_bonds"]
     if n_unassigned > 0:
-        add_gate(
-            "G3_STEREO_SPECIFICATION",
-            "3. Stereochemical Specification Completeness",
-            "warn",
-            f"{n_unassigned} unassigned ({cip_info['n_specified']} specified)",
-            "0 unassigned stereogenic centers/bonds",
-            f"Unspecified tetrahedral={cip_info['n_unassigned_tetrahedral']}, "
-            f"double-bond={cip_info['n_unassigned_double_bonds']}; ETKDG picks one isomer.",
+        gates.append(
+            _gate(
+                "G3_STEREO_SPECIFICATION",
+                "3. Left/right handedness labeled",
+                "warn",
+                f"{n_unassigned} unlabeled stereo site(s)",
+                "Every chiral center or E/Z bond is labeled",
+                "Missing @/@@ or /\\ labels means 3D builder has to guess one side.",
+            )
         )
     else:
-        add_gate(
-            "G3_STEREO_SPECIFICATION",
-            "3. Stereochemical Specification Completeness",
-            "pass",
-            f"{cip_info['n_specified']} specified, 0 unassigned",
-            "All stereocenters & E/Z bonds explicit",
-            "Unambiguous 3D stereoisomer mapping guaranteed.",
+        gates.append(
+            _gate(
+                "G3_STEREO_SPECIFICATION",
+                "3. Left/right handedness labeled",
+                "pass",
+                f"{cip_info['n_specified']} labeled, 0 missing",
+                "Every chiral center or E/Z bond is labeled",
+                "No missing 3D handedness labels.",
+            )
         )
 
-    # Gate 4: Distance-Geometry 3D Embedding (ETKDGv3)
-    embed_diag: list[dict] = []
-    mol_3d, embed_status = embed(
-        std.smiles, n_conf=max(1, int(n_conf)), seed=seed, diagnostics=embed_diag
-    )
+    # Check 4: Build 3D coordinates
+    mol_3d, embed_status = embed(std.smiles, n_conf=max(1, int(n_conf)), seed=seed)
     if mol_3d is None:
-        add_gate(
-            "G4_ETKDG_3D_EMBEDDING",
-            "4. ETKDGv3 3D Conformer Embedding",
-            "fail",
-            embed_status,
-            ">= 1 valid 3D conformer",
-            "Distance-geometry triangle bounds failed (anti-Bredt or impossible cage).",
+        gates.append(
+            _gate(
+                "G4_ETKDG_3D_EMBEDDING",
+                "4. 3D shape can be built",
+                "fail",
+                embed_status,
+                "At least 1 valid 3D shape",
+                "Could not place atoms in 3D without impossible ring strain.",
+            )
         )
         return {
             "ok": False,
@@ -584,323 +546,324 @@ def audit_3d_physical_compliance(
             "molecular_weight": round(mw, 3),
             "depiction_2d": png_data_url(std.mol),
             "gates": gates,
-            "elapsed_seconds": round(time.perf_counter() - t_start, 3),
+            "elapsed_seconds": round(time.perf_counter() - t0, 3),
         }
 
     cids = [c.GetId() for c in mol_3d.GetConformers()]
-    embed_stereo_flags = stereo_preserved(mol_3d, std.smiles)
-    n_st_ok = sum(embed_stereo_flags)
-    add_gate(
-        "G4_ETKDG_3D_EMBEDDING",
-        "4. ETKDGv3 3D Conformer Embedding",
-        "pass",
-        f"{len(cids)}/{n_conf} conformers embedded",
-        ">= 1 chirality-enforced conformer",
-        f"Embedded {len(cids)} conformers ({n_st_ok}/{len(cids)} match 2D CIP tags).",
+    embed_stereo_ok = stereo_preserved(mol_3d, std.smiles)
+    gates.append(
+        _gate(
+            "G4_ETKDG_3D_EMBEDDING",
+            "4. 3D shape can be built",
+            "pass",
+            f"Built {len(cids)} 3D shape(s)",
+            "At least 1 valid 3D shape",
+            f"{sum(embed_stereo_ok)}/{len(cids)} initial shapes match 2D handedness.",
+        )
     )
 
-    # Instantiate 3D potential calculator
     calc, calc_label, _ = get_3d_calculator(potential, mol_3d, device=device)
     symbols = [a.GetSymbol() for a in mol_3d.GetAtoms()]
-    atomic_numbers = [int(a.GetAtomicNum()) for a in mol_3d.GetAtoms()]
+    atomic_nums = [int(a.GetAtomicNum()) for a in mol_3d.GetAtoms()]
 
-    # Evaluate / relax conformers
+    # Score and relax each 3D conformer
     conf_records: list[dict[str, Any]] = []
-    best_entry: dict[str, Any] | None = None
+    best: dict[str, Any] | None = None
     rng = np.random.default_rng(seed + 17)
 
-    for cid, st_embed_ok in zip(cids, embed_stereo_flags, strict=True):
-        pos_init = np.asarray(mol_3d.GetConformer(cid).GetPositions(), dtype=np.float64)
+    for cid, ok_before in zip(cids, embed_stereo_ok, strict=True):
+        pos_start = np.asarray(mol_3d.GetConformer(cid).GetPositions(), dtype=np.float64)
         if perturb_amplitude_a > 0.0:
-            dirs = rng.normal(size=pos_init.shape)
+            dirs = rng.normal(size=pos_start.shape)
             dirs /= np.maximum(np.linalg.norm(dirs, axis=1, keepdims=True), 1e-12)
-            pos_init = pos_init + dirs * rng.uniform(
-                0.0, perturb_amplitude_a, size=(len(pos_init), 1)
+            pos_start = pos_start + dirs * rng.uniform(
+                0.0, perturb_amplitude_a, size=(len(pos_start), 1)
             )
-        if inject_steric_clash and len(pos_init) >= 2:
-            # Deliberately place last atom 0.45 A from atom 0 to demonstrate Pauli clash gate!
-            pos_init = pos_init.copy()
-            pos_init[-1] = pos_init[0] + np.array([0.45, 0.0, 0.0])
+        if inject_steric_clash and len(pos_start) >= 2:
+            pos_start = pos_start.copy()
+            pos_start[-1] = pos_start[0] + np.array([0.45, 0.0, 0.0])
 
-        atoms_obj = Atoms(symbols=symbols, positions=pos_init)
+        atoms_obj = Atoms(symbols=symbols, positions=pos_start)
         if do_relax and not inject_steric_clash:
-            r = relax(atoms_obj, calc, fmax=fmax, steps=steps)
-            e_ev = r.energy
-            f_ev_a = r.forces
-            pos_final = r.positions
-            conv = r.converged and (r.fmax <= fmax * 1.02)
-            fmax_val = r.fmax
-            n_steps = r.steps
+            res = relax(atoms_obj, calc, fmax=fmax, steps=steps)
+            energy_ev = res.energy
+            forces = res.forces
+            pos_end = res.positions
+            fmax_val = res.fmax
+            converged = res.converged and (res.fmax <= fmax * 1.02)
+            n_steps = res.steps
         else:
             atoms_obj.calc = calc
-            e_ev = float(atoms_obj.get_potential_energy())
-            f_ev_a = np.asarray(atoms_obj.get_forces(), dtype=np.float64)
-            pos_final = pos_init
-            fmax_val = float(np.linalg.norm(f_ev_a, axis=1).max())
-            conv = fmax_val <= fmax
+            energy_ev = float(atoms_obj.get_potential_energy())
+            forces = np.asarray(atoms_obj.get_forces(), dtype=np.float64)
+            pos_end = pos_start
+            fmax_val = float(np.linalg.norm(forces, axis=1).max())
+            converged = fmax_val <= fmax
             n_steps = 0
 
         mol_after = Chem.Mol(mol_3d)
         conf_after = mol_after.GetConformer(cid)
-        for idx, xyz in enumerate(pos_final):
-            conf_after.SetAtomPosition(idx, [float(xyz[0]), float(xyz[1]), float(xyz[2])])
-        st_final_ok = bool(stereo_matches(mol_after, std.smiles, cid))
+        for i, xyz in enumerate(pos_end):
+            conf_after.SetAtomPosition(i, [float(xyz[0]), float(xyz[1]), float(xyz[2])])
+        ok_after = bool(stereo_matches(mol_after, std.smiles, cid))
         smi_3d = stereo_from_3d(mol_after, cid)
 
-        entry = {
+        item = {
             "conf_id": int(cid),
-            "energy_ev": float(e_ev),
-            "energy_kcal": float(e_ev * EV_TO_KCAL),
+            "energy_ev": float(energy_ev),
+            "energy_kcal": float(energy_ev * EV_TO_KCAL),
             "fmax_ev_a": float(fmax_val),
-            "rms_force_ev_a": float(np.sqrt(np.mean(np.sum(f_ev_a**2, axis=1)))),
-            "converged": bool(conv),
+            "rms_force_ev_a": float(np.sqrt(np.mean(np.sum(forces**2, axis=1)))),
+            "converged": bool(converged),
             "steps": int(n_steps),
-            "stereo_ok_embed": bool(st_embed_ok),
-            "stereo_ok_final": st_final_ok,
+            "stereo_ok_embed": bool(ok_before),
+            "stereo_ok_final": ok_after,
             "smiles_from_3d": smi_3d,
-            "positions": pos_final,
-            "forces": f_ev_a,
+            "positions": pos_end,
+            "forces": forces,
         }
-        conf_records.append(entry)
-        if best_entry is None or entry["energy_ev"] < best_entry["energy_ev"]:
-            best_entry = entry
+        conf_records.append(item)
+        if best is None or item["energy_ev"] < best["energy_ev"]:
+            best = item
 
-    assert best_entry is not None
-    e_min_ev = min(c["energy_ev"] for c in conf_records)
-    boltz_raw = [
-        math.exp(-max(0.0, c["energy_ev"] - e_min_ev) / (KB_EV_PER_K * 298.15))
-        for c in conf_records
+    assert best is not None
+    e_min = min(c["energy_ev"] for c in conf_records)
+    weights = [
+        math.exp(-max(0.0, c["energy_ev"] - e_min) / (KB_EV_PER_K * 298.15)) for c in conf_records
     ]
-    z_part = sum(boltz_raw) or 1.0
-    for c, bw in zip(conf_records, boltz_raw, strict=True):
-        c["rel_energy_kcal"] = round((c["energy_ev"] - e_min_ev) * EV_TO_KCAL, 4)
-        c["boltzmann_weight"] = round(bw / z_part, 4)
+    w_sum = sum(weights) or 1.0
+    for c, w in zip(conf_records, weights, strict=True):
+        c["rel_energy_kcal"] = round((c["energy_ev"] - e_min) * EV_TO_KCAL, 4)
+        c["boltzmann_weight"] = round(w / w_sum, 4)
 
-    pos_best = np.asarray(best_entry["positions"], dtype=np.float64)
-    forces_best = np.asarray(best_entry["forces"], dtype=np.float64)
+    pos_best = np.asarray(best["positions"], dtype=np.float64)
+    forces_best = np.asarray(best["forces"], dtype=np.float64)
 
-    # Gate 5: Pauli Exclusion & Nonbonded Steric Clearance
-    diff_mat = pos_best[:, None, :] - pos_best[None, :, :]
-    dist_mat = np.linalg.norm(diff_mat, axis=-1)
+    # Check 5: Atoms do not crash into each other
+    dist_mat = np.linalg.norm(pos_best[:, None, :] - pos_best[None, :, :], axis=-1)
     np.fill_diagonal(dist_mat, np.inf)
-    d_min_global = float(dist_mat.min())
+    d_min = float(dist_mat.min())
 
-    bonded_pairs: set[tuple[int, int]] = set()
+    bonded: set[tuple[int, int]] = set()
     neighbors: dict[int, list[int]] = {i: [] for i in range(len(symbols))}
     for b in mol_3d.GetBonds():
         u, v = b.GetBeginAtomIdx(), b.GetEndAtomIdx()
-        bonded_pairs.add((min(u, v), max(u, v)))
+        bonded.add((min(u, v), max(u, v)))
         neighbors[u].append(v)
         neighbors[v].append(u)
-    one_three_pairs: set[tuple[int, int]] = set()
-    for _center_idx, nbrs in neighbors.items():
-        for i_idx in range(len(nbrs)):
-            for j_idx in range(i_idx + 1, len(nbrs)):
-                a1, a2 = nbrs[i_idx], nbrs[j_idx]
-                one_three_pairs.add((min(a1, a2), max(a1, a2)))
+
+    one_three: set[tuple[int, int]] = set()
+    for nbrs in neighbors.values():
+        for i in range(len(nbrs)):
+            for j in range(i + 1, len(nbrs)):
+                one_three.add((min(nbrs[i], nbrs[j]), max(nbrs[i], nbrs[j])))
 
     clashes: list[dict[str, Any]] = []
-    min_nonbond_a = float("inf")
+    min_nonbond = float("inf")
     for i in range(len(symbols)):
         for j in range(i + 1, len(symbols)):
             pair = (i, j)
-            d_ij = float(dist_mat[i, j])
-            if pair not in bonded_pairs and pair not in one_three_pairs:
-                min_nonbond_a = min(min_nonbond_a, d_ij)
-                thr = 1.15 if ("H" in (symbols[i], symbols[j])) else 1.40
-                if d_ij < thr:
+            d = float(dist_mat[i, j])
+            if pair not in bonded and pair not in one_three:
+                min_nonbond = min(min_nonbond, d)
+                limit = 1.15 if ("H" in (symbols[i], symbols[j])) else 1.40
+                if d < limit:
                     clashes.append(
                         {
                             "i": i,
                             "j": j,
                             "pair": f"{symbols[i]}{i}-{symbols[j]}{j}",
-                            "distance_a": round(d_ij, 4),
+                            "distance_a": round(d, 4),
                         }
                     )
-            elif d_ij < 0.75:
+            elif d < 0.75:
                 clashes.append(
                     {
                         "i": i,
                         "j": j,
                         "pair": f"{symbols[i]}{i}-{symbols[j]}{j}",
-                        "distance_a": round(d_ij, 4),
+                        "distance_a": round(d, 4),
                     }
                 )
 
-    steric_ok = (d_min_global >= 0.75) and (len(clashes) == 0)
-    add_gate(
-        "G5_PAULI_STERIC_CLEARANCE",
-        "5. Pauli Exclusion & Nonbonded Steric Clearance",
-        "pass" if steric_ok else "fail",
-        f"d_min={d_min_global:.3f} A, nonbond_min={min_nonbond_a:.3f} A ({len(clashes)} clashes)",
-        "d_min >= 0.75 A & 0 nonbonded clashes",
-        "No atomic overlaps detected." if steric_ok else f"Clashes detected: {clashes[:3]}",
+    no_crash = (d_min >= 0.75) and (len(clashes) == 0)
+    gates.append(
+        _gate(
+            "G5_PAULI_STERIC_CLEARANCE",
+            "5. Atoms do not crash into each other",
+            "pass" if no_crash else "fail",
+            f"closest pair = {d_min:.3f} A ({len(clashes)} clashes)",
+            "Closest atoms >= 0.75 A, 0 non-bonded clashes",
+            "All atoms have enough space." if no_crash else f"Too close: {clashes[:3]}",
+        )
     )
 
-    # Gate 6: Covalent Bond-Length & Bond-Angle Plausibility
+    # Check 6: Normal bond lengths and angles
     pt = Chem.GetPeriodicTable()
     mol_best = Chem.Mol(mol_3d)
-    conf_best = mol_best.GetConformer(best_entry["conf_id"])
-    for idx, xyz in enumerate(pos_best):
-        conf_best.SetAtomPosition(idx, [float(xyz[0]), float(xyz[1]), float(xyz[2])])
+    conf_best = mol_best.GetConformer(best["conf_id"])
+    for i, xyz in enumerate(pos_best):
+        conf_best.SetAtomPosition(i, [float(xyz[0]), float(xyz[1]), float(xyz[2])])
 
-    bonds_payload: list[dict[str, Any]] = []
-    max_cov_dev = 0.0
+    bonds_out: list[dict[str, Any]] = []
+    max_dev = 0.0
     for b in mol_best.GetBonds():
         u, v = b.GetBeginAtomIdx(), b.GetEndAtomIdx()
-        r_uv = float(np.linalg.norm(pos_best[u] - pos_best[v]))
-        r_cov_sum = float(pt.GetRcovalent(atomic_numbers[u]) + pt.GetRcovalent(atomic_numbers[v]))
-        # Multiple bonds are shorter than single-bond covalent sum by ~0.08-0.22 A
-        bo = float(b.GetBondTypeAsDouble())
-        expected_r = r_cov_sum - (0.11 * max(0.0, bo - 1.0))
-        dev = abs(r_uv - expected_r)
-        max_cov_dev = max(max_cov_dev, dev)
-        bonds_payload.append(
+        length = float(np.linalg.norm(pos_best[u] - pos_best[v]))
+        cov_sum = float(pt.GetRcovalent(atomic_nums[u]) + pt.GetRcovalent(atomic_nums[v]))
+        order = float(b.GetBondTypeAsDouble())
+        expected = cov_sum - (0.11 * max(0.0, order - 1.0))
+        dev = abs(length - expected)
+        max_dev = max(max_dev, dev)
+        bonds_out.append(
             {
                 "u": u,
                 "v": v,
-                "order": bo,
-                "length_a": round(r_uv, 4),
-                "expected_a": round(expected_r, 4),
+                "order": order,
+                "length_a": round(length, 4),
+                "expected_a": round(expected, 4),
                 "deviation_a": round(dev, 4),
             }
         )
 
-    angles_deg: list[float] = []
-    for center_idx, nbrs in neighbors.items():
-        if len(nbrs) < 2:
-            continue
-        for i_idx in range(len(nbrs)):
-            for j_idx in range(i_idx + 1, len(nbrs)):
-                ang = float(
-                    rdMolTransforms.GetAngleDeg(conf_best, nbrs[i_idx], center_idx, nbrs[j_idx])
+    angles: list[float] = []
+    for center, nbrs in neighbors.items():
+        for i in range(len(nbrs)):
+            for j in range(i + 1, len(nbrs)):
+                angles.append(
+                    float(rdMolTransforms.GetAngleDeg(conf_best, nbrs[i], center, nbrs[j]))
                 )
-                angles_deg.append(ang)
-    min_ang = min(angles_deg) if angles_deg else 109.5
-    max_ang = max(angles_deg) if angles_deg else 109.5
-    geom_status = "pass" if max_cov_dev <= 0.30 else ("warn" if max_cov_dev <= 0.45 else "fail")
-    add_gate(
-        "G6_COVALENT_GEOMETRY",
-        "6. Covalent Bond-Length & Angle Plausibility",
-        geom_status,
-        f"max |dR_cov|={max_cov_dev:.3f} A, angles=[{min_ang:.1f} deg, {max_ang:.1f} deg]",
-        "max |dR_cov| <= 0.30 A",
-        f"Audited {len(bonds_payload)} covalent bonds and {len(angles_deg)} valence angles.",
+    min_ang = min(angles) if angles else 109.5
+    max_ang = max(angles) if angles else 109.5
+    gates.append(
+        _gate(
+            "G6_COVALENT_GEOMETRY",
+            "6. Normal bond lengths & angles",
+            "pass" if max_dev <= 0.30 else ("warn" if max_dev <= 0.45 else "fail"),
+            f"max bond diff = {max_dev:.3f} A, angles = {min_ang:.1f}-{max_ang:.1f} deg",
+            "Bond length within 0.30 A of typical value",
+            f"Checked {len(bonds_out)} bonds and {len(angles)} bond angles.",
+        )
     )
 
-    # Gate 7: 3D Chirality & E/Z Retention (Pre/Post Relaxation)
-    st_ok = best_entry["stereo_ok_embed"] and best_entry["stereo_ok_final"]
-    add_gate(
-        "G7_3D_CHIRALITY_RETENTION",
-        "7. 3D Chirality & Double-Bond Stereo Retention",
-        "pass" if st_ok else "fail",
-        f"embed={best_entry['stereo_ok_embed']}, final={best_entry['stereo_ok_final']}",
-        "3D CIP matches 2D input before & after relaxation",
-        f"3D-reperceived SMILES: {best_entry['smiles_from_3d']}",
+    # Check 7: 3D handedness kept after relaxing
+    stereo_ok = best["stereo_ok_embed"] and best["stereo_ok_final"]
+    gates.append(
+        _gate(
+            "G7_3D_CHIRALITY_RETENTION",
+            "7. 3D handedness kept after relaxing",
+            "pass" if stereo_ok else "fail",
+            "kept" if stereo_ok else "flipped",
+            "3D R/S and E/Z match input SMILES",
+            f"SMILES read back from 3D coordinates: {best['smiles_from_3d']}",
+        )
     )
 
-    # Gate 8: Stationary-Point Force Convergence & Finite Energetics
-    finite_ef = bool(
-        np.isfinite(best_entry["energy_ev"])
+    # Check 8: Settled to a low-energy shape
+    finite_ok = bool(
+        np.isfinite(best["energy_ev"])
         and np.isfinite(pos_best).all()
         and np.isfinite(forces_best).all()
     )
-    if not finite_ef:
+    if not finite_ok:
         g8_status = "fail"
     elif do_relax and not inject_steric_clash:
-        g8_status = "pass" if best_entry["converged"] else "warn"
+        g8_status = "pass" if best["converged"] else "warn"
     else:
-        g8_status = "pass" if best_entry["fmax_ev_a"] < 5.0 else "warn"
-    add_gate(
-        "G8_STATIONARY_CONVERGENCE",
-        "8. Potential Energy & Stationary-Point Force Check",
-        g8_status,
-        f"E={best_entry['energy_ev']:.4f} eV, fmax={best_entry['fmax_ev_a']:.4f} eV/A",
-        f"Finite E/F; relaxed fmax <= {fmax:.3f} eV/A" if do_relax else "Finite single-point E/F",
-        f"{calc_label} ({best_entry['steps']} LBFGS steps, {len(conf_records)} conformers ranked).",
+        g8_status = "pass" if best["fmax_ev_a"] < 5.0 else "warn"
+    gates.append(
+        _gate(
+            "G8_STATIONARY_CONVERGENCE",
+            "8. Settled to a stable low-energy shape",
+            g8_status,
+            f"E = {best['energy_ev']:.4f} eV, max force = {best['fmax_ev_a']:.4f} eV/A",
+            f"Max atom force <= {fmax:.3f} eV/A" if do_relax else "Finite energy and forces",
+            f"{calc_label} ({best['steps']} relax steps).",
+        )
     )
 
-    # Gate 9: Live SE(3) Rotation/Translation Equivariance & Noether Momentum Conservation
-    q_rot = _random_so3_matrix(seed=seed + 101)
-    t_vec = np.array([2.35, -1.65, 3.10], dtype=np.float64)
-    pos_se3 = pos_best @ q_rot.T + t_vec[None, :]
+    # Check 9: Rotating or shifting in 3D space does not change physics
+    rot = _random_rotation_matrix(seed=seed + 101)
+    shift = np.array([2.35, -1.65, 3.10], dtype=np.float64)
+    pos_moved = pos_best @ rot.T + shift[None, :]
 
     at_orig = Atoms(symbols=symbols, positions=pos_best)
     at_orig.calc = calc
     e_orig = float(at_orig.get_potential_energy())
     f_orig = np.asarray(at_orig.get_forces(), dtype=np.float64)
 
-    at_rot = Atoms(symbols=symbols, positions=pos_se3)
-    at_rot.calc = calc
-    e_rot = float(at_rot.get_potential_energy())
-    f_rot = np.asarray(at_rot.get_forces(), dtype=np.float64)
+    at_moved = Atoms(symbols=symbols, positions=pos_moved)
+    at_moved.calc = calc
+    e_moved = float(at_moved.get_potential_energy())
+    f_moved = np.asarray(at_moved.get_forces(), dtype=np.float64)
 
-    f_expected_rot = f_orig @ q_rot.T
-    se3_e_err = abs(e_rot - e_orig)
-    so3_f_err = float(np.linalg.norm(f_rot - f_expected_rot, axis=1).max())
+    se3_e_err = abs(e_moved - e_orig)
+    so3_f_err = float(np.linalg.norm(f_moved - (f_orig @ rot.T), axis=1).max())
     net_force = float(np.linalg.norm(f_orig.sum(axis=0)))
-    com = pos_best.mean(axis=0, keepdims=True)
-    net_torque = float(np.linalg.norm(np.cross(pos_best - com, f_orig).sum(axis=0)))
+    center_of_pos = pos_best.mean(axis=0, keepdims=True)
+    net_torque = float(np.linalg.norm(np.cross(pos_best - center_of_pos, f_orig).sum(axis=0)))
 
     se3_ok = (
         (se3_e_err < 1e-4) and (so3_f_err < 1e-4) and (net_force < 1e-3) and (net_torque < 1e-3)
     )
-    add_gate(
-        "G9_SE3_EQUIVARIANCE_CONSERVATION",
-        "9. SE(3) Equivariance & Momentum Conservation",
-        "pass" if se3_ok else "fail",
-        f"|dE|={se3_e_err:.2e} eV, max|dF_rot|={so3_f_err:.2e} eV/A",
-        "|E(RQ+t)-E(R)| < 1e-4 eV & |F(RQ+t)-F(R)Q| < 1e-4",
-        f"Noether: |sum F_i|={net_force:.2e} eV/A, |sum r_i x F_i|={net_torque:.2e} eV.",
+    gates.append(
+        _gate(
+            "G9_SE3_EQUIVARIANCE_CONSERVATION",
+            "9. Moving or rotating in 3D keeps physics unchanged",
+            "pass" if se3_ok else "fail",
+            f"energy diff = {se3_e_err:.2e} eV, force diff = {so3_f_err:.2e} eV/A",
+            "Energy & rotated force diff < 1e-4; total force & torque < 1e-3",
+            f"Total force = {net_force:.2e} eV/A, total torque = {net_torque:.2e} eV.",
+        )
     )
 
-    # Gate 10: O(3) Reflection Parity + Conservative Gradient F = -grad_R E
+    # Check 10: Mirror-image energy & force matches energy slope (F = -dE/dx)
     pos_mir = mirror_positions(pos_best)
     at_mir = Atoms(symbols=symbols, positions=pos_mir)
     at_mir.calc = calc
     e_mir = float(at_mir.get_potential_energy())
     f_mir = np.asarray(at_mir.get_forces(), dtype=np.float64)
-    f_mir_expected = mirror_positions(f_orig)
     parity_e_err = abs(e_mir - e_orig)
-    parity_f_err = float(np.linalg.norm(f_mir - f_mir_expected, axis=1).max())
+    parity_f_err = float(np.linalg.norm(f_mir - mirror_positions(f_orig), axis=1).max())
 
     mol_mir = Chem.Mol(mol_3d)
-    conf_mir = mol_mir.GetConformer(best_entry["conf_id"])
-    for idx, xyz in enumerate(pos_mir):
-        conf_mir.SetAtomPosition(idx, [float(xyz[0]), float(xyz[1]), float(xyz[2])])
-    smi_mir_3d = stereo_from_3d(mol_mir, best_entry["conf_id"])
-    mir_rel = categorize(smi_mir_3d, best_entry["smiles_from_3d"])
+    conf_mir = mol_mir.GetConformer(best["conf_id"])
+    for i, xyz in enumerate(pos_mir):
+        conf_mir.SetAtomPosition(i, [float(xyz[0]), float(xyz[1]), float(xyz[2])])
+    smi_mir = stereo_from_3d(mol_mir, best["conf_id"])
+    mir_rel = categorize(smi_mir, best["smiles_from_3d"])
 
-    # Central finite-difference directional derivative check along random unit vector
-    u_dir = rng.normal(size=pos_best.shape)
-    u_dir /= max(float(np.linalg.norm(u_dir)), 1e-12)
-    delta_fd = 1e-3
-    at_plus = Atoms(symbols=symbols, positions=pos_best + delta_fd * u_dir)
+    step_dir = rng.normal(size=pos_best.shape)
+    step_dir /= max(float(np.linalg.norm(step_dir)), 1e-12)
+    eps = 1e-3
+    at_plus = Atoms(symbols=symbols, positions=pos_best + eps * step_dir)
     at_plus.calc = calc
-    at_minus = Atoms(symbols=symbols, positions=pos_best - delta_fd * u_dir)
+    at_minus = Atoms(symbols=symbols, positions=pos_best - eps * step_dir)
     at_minus.calc = calc
-    fd_grad = (float(at_plus.get_potential_energy()) - float(at_minus.get_potential_energy())) / (
-        2.0 * delta_fd
+    slope_num = (float(at_plus.get_potential_energy()) - float(at_minus.get_potential_energy())) / (
+        2.0 * eps
     )
-    anal_grad = float(-np.sum(f_orig * u_dir))
-    grad_err = abs(fd_grad - anal_grad)
+    slope_force = float(-np.sum(f_orig * step_dir))
+    grad_err = abs(slope_num - slope_force)
 
     g10_ok = (parity_e_err < 1e-4) and (parity_f_err < 1e-4) and (grad_err < 2e-3)
-    add_gate(
-        "G10_PARITY_AND_CONSERVATIVE_FORCE",
-        "10. O(3) Reflection Parity & Conservative F = -grad E",
-        "pass" if g10_ok else "fail",
-        f"|dE_mir|={parity_e_err:.2e} eV, |F + dE/dR|={grad_err:.2e} eV/A",
-        "|E(-x)-E(x)| < 1e-4 eV & conservative FD err < 2e-3",
-        f"Mirror: {mir_rel} ({smi_mir_3d}); anal={anal_grad:.5f} vs FD={fd_grad:.5f} eV/A.",
+    gates.append(
+        _gate(
+            "G10_PARITY_AND_CONSERVATIVE_FORCE",
+            "10. Mirror test & force matches energy slope",
+            "pass" if g10_ok else "fail",
+            f"mirror E diff = {parity_e_err:.2e} eV, slope diff = {grad_err:.2e} eV/A",
+            "Mirror energy diff < 1e-4 eV & force-slope diff < 2e-3 eV/A",
+            f"Mirror twin is '{mir_rel}' ({smi_mir}).",
+        )
     )
 
     cip_by_atom = {c["atom_idx"]: c["cip"] for c in cip_info["chiral_centers"]}
-    atoms_payload = [
+    atoms_out = [
         {
             "idx": i,
             "symbol": symbols[i],
-            "z": atomic_numbers[i],
+            "z": atomic_nums[i],
             "x": round(float(pos_best[i, 0]), 5),
             "y": round(float(pos_best[i, 1]), 5),
             "z_coord": round(float(pos_best[i, 2]), 5),
@@ -915,18 +878,19 @@ def audit_3d_physical_compliance(
 
     statuses = [g["status"] for g in gates]
     overall = "fail" if "fail" in statuses else ("warn" if "warn" in statuses else "pass")
-    n_pass = sum(s == "pass" for s in statuses)
-    n_warn = sum(s == "warn" for s in statuses)
-    n_fail = sum(s == "fail" for s in statuses)
-
     return {
         "ok": overall != "fail",
         "overall_status": overall,
-        "summary_counts": {"pass": n_pass, "warn": n_warn, "fail": n_fail, "total": len(gates)},
+        "summary_counts": {
+            "pass": statuses.count("pass"),
+            "warn": statuses.count("warn"),
+            "fail": statuses.count("fail"),
+            "total": len(gates),
+        },
         "input_smiles": raw_input,
         "standardized_smiles": std.smiles,
-        "smiles_from_3d": best_entry["smiles_from_3d"],
-        "mirror_3d_smiles": smi_mir_3d,
+        "smiles_from_3d": best["smiles_from_3d"],
+        "mirror_3d_smiles": smi_mir,
         "mirror_relation": mir_rel,
         "inchikey": standard_inchikey(std),
         "formula": formula,
@@ -945,14 +909,14 @@ def audit_3d_physical_compliance(
             "conservative_grad_fd_err_ev_a": grad_err,
         },
         "structure_3d": {
-            "n_atoms": len(atoms_payload),
-            "atoms": atoms_payload,
-            "bonds": bonds_payload,
+            "n_atoms": len(atoms_out),
+            "atoms": atoms_out,
+            "bonds": bonds_out,
             "clashes": clashes,
-            "d_min_a": round(d_min_global, 4),
-            "energy_ev": round(best_entry["energy_ev"], 6),
-            "energy_kcal": round(best_entry["energy_kcal"], 4),
-            "fmax_ev_a": round(best_entry["fmax_ev_a"], 5),
+            "d_min_a": round(d_min, 4),
+            "energy_ev": round(best["energy_ev"], 6),
+            "energy_kcal": round(best["energy_kcal"], 4),
+            "fmax_ev_a": round(best["fmax_ev_a"], 5),
         },
         "conformers": [
             {
@@ -963,14 +927,12 @@ def audit_3d_physical_compliance(
             for c in sorted(conf_records, key=lambda r: r["energy_ev"])
         ],
         "exports": {
-            "xyz": _format_xyz(
+            "xyz": _to_xyz(
                 symbols,
                 pos_best,
-                f"{std.smiles} | {calc_label} | E={best_entry['energy_ev']:.6f} eV",
+                f"{std.smiles} | {calc_label} | E={best['energy_ev']:.6f} eV",
             ),
-            "extxyz": _format_extxyz(
-                symbols, pos_best, forces_best, best_entry["energy_ev"], std.smiles
-            ),
+            "extxyz": _to_extxyz(symbols, pos_best, forces_best, best["energy_ev"], std.smiles),
         },
-        "elapsed_seconds": round(time.perf_counter() - t_start, 3),
+        "elapsed_seconds": round(time.perf_counter() - t0, 3),
     }
