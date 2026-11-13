@@ -256,8 +256,11 @@ class WorkbenchEngine:
             mol = Chem.MolFromSmiles(src_smi)
             if mol is None:
                 raise ValueError(f"Invalid SMILES: {src_smi!r}")
-            if rgroup_label:
-                mol = substitute(mol, random.Random(0), label=rgroup_label)
+            if rgroup_label and rgroup_label.lower() != "none":
+                if rgroup_label.lower() == "random":
+                    mol = substitute(mol, random.Random(0))
+                else:
+                    mol = substitute(mol, random.Random(0), label=rgroup_label)
                 ref_smiles = labelled_smiles(mol)
             elif not ref_smiles:
                 ref_smiles = src_smi
