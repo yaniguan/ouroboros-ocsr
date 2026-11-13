@@ -158,11 +158,22 @@ def test_image_reader_dataset_builder_and_batch_score(engine):
             "reference_smiles": "N[C@@H](C)C(=O)O",
             "angle_deg": 90.0,
             "augment_mode": "scan",
+            "rgroup_label": "none",
         }
     )
     assert ocsr_res["source_image"].startswith("data:image/png;base64,")
     assert ocsr_res["processed_image"].startswith("data:image/png;base64,")
     assert "confidence_gate" in ocsr_res
+
+    ocsr_rand = engine.run_ocsr(
+        {
+            "model": "demo_c8",
+            "beam": 1,
+            "smiles": "CC(C)Cc1ccc(C(=O)O)cc1",
+            "rgroup_label": "random",
+        }
+    )
+    assert ocsr_rand["source_image"].startswith("data:image/png;base64,")
 
     ff_res = engine.run_forcefield_builder(
         {

@@ -331,7 +331,7 @@
   canvas#molCanvas3D {
     display: block;
     width: 100%;
-    height: 350px;
+    height: 300px;
     cursor: grab;
   }
   canvas#molCanvas3D:active { cursor: grabbing; }
@@ -665,13 +665,11 @@
             <button class="btn sm active-toggle" id="btnToggleLabels">Labels</button>
             <button class="btn sm" id="btnToggleMirrorView">Mirror</button>
             <button class="btn sm" id="btnResetView">Reset</button>
-            <button class="btn sm" id="btnDlXyz">.xyz</button>
-            <button class="btn sm" id="btnDlExtxyz">.extxyz</button>
           </div>
         </div>
 
         <div class="viewport-wrap">
-          <canvas id="molCanvas3D" width="640" height="350"></canvas>
+          <canvas id="molCanvas3D" width="640" height="300"></canvas>
           <div class="viewport-caption" id="c3dCanvasMeta">Drag to rotate · Scroll to zoom</div>
         </div>
 
@@ -699,6 +697,10 @@
           <div class="mol-meta">
             <div class="smi" id="c3dCleanSmiles">—</div>
             <div id="c3dMirrorInfo">—</div>
+          </div>
+          <div class="toolbar">
+            <button class="btn sm" id="btnDlXyz">.xyz</button>
+            <button class="btn sm" id="btnDlExtxyz">.extxyz</button>
           </div>
         </div>
       </div>
@@ -884,8 +886,11 @@
           <div class="field-mini">
             <label for="ocsrRgroup">Shorthand</label>
             <select id="ocsrRgroup">
-              <option value="none">None</option>
-              <option value="random">Random [Boc]/[Ph]/…</option>
+              <option value="">None</option>
+              <option value="Boc">[Boc]</option>
+              <option value="Ph">[Ph]</option>
+              <option value="OMe">[OMe]</option>
+              <option value="random">Random shorthand</option>
             </select>
           </div>
           <div class="field-mini">
@@ -1567,7 +1572,7 @@ async function runCompliance3D() {
     : (res.overall_status === "warn" ? `${passCount} / ${gates.length} · 1 warning` : "Check failed");
 
   document.getElementById("c3dMolTitle").textContent = res.formula
-    ? `${res.formula} · ${res.molecular_weight} Da`
+    ? `${res.formula} · ${Number(res.molecular_weight).toFixed(1)} Da`
     : "3D Structure";
 
   document.getElementById("c3dDepictionBox").innerHTML = res.depiction_2d
