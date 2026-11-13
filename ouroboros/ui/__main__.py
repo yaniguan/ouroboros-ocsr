@@ -1,4 +1,4 @@
-"""Run the Ouroboros web app on localhost.
+"""Run the Ouroboros local web app.
 
 Example:
     python -m ouroboros.ui --port 8787
@@ -11,6 +11,8 @@ import errno
 import json
 import math
 import secrets
+import socket
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -35,6 +37,7 @@ def _clean_numbers(value: Any) -> Any:
 
 class WorkbenchServer(ThreadingHTTPServer):
     daemon_threads = True
+    allow_reuse_address = sys.platform != "win32"
 
     def __init__(
         self,
@@ -47,6 +50,11 @@ class WorkbenchServer(ThreadingHTTPServer):
         self.engine = engine
         self.prefix = f"/{secrets.token_urlsafe(18)}/" if use_token else "/"
         super().__init__((host, port), WorkbenchHandler)
+
+    def server_bind(self) -> None:
+        if sys.platform == "win32" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
 
     @property
     def url(self) -> str:
@@ -62,7 +70,8 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
         self.wfile.write(body)
@@ -155,7 +164,7 @@ def main(argv: list[str] | None = None) -> None:
     try:
         server = WorkbenchServer(args.port, engine, host=args.host, use_token=args.token)
     except OSError as exc:
-        if exc.errno == errno.EADDRINUSE:
+        if exc.errno in (errno.EADDRINUSE, errno.EACCES):
             parser.error(f"Port {args.port} is busy. Try another --port or use --port 0.")
         raise
 

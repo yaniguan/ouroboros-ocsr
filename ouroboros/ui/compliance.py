@@ -350,7 +350,7 @@ def audit_3d_physical_compliance(
             gates.append(
                 _gate(
                     "G1_VALENCE_TOPOLOGY",
-                    "1. Valid chemical bonds",
+                    "Valid chemical bonds",
                     "fail",
                     str(exc),
                     "Valid bonds, one connected molecule",
@@ -372,9 +372,9 @@ def audit_3d_physical_compliance(
         gates.append(
             _gate(
                 "G1_VALENCE_TOPOLOGY",
-                "1. Valid chemical bonds",
+                "Valid chemical bonds",
                 "fail",
-                "Invalid SMILES or impossible bond count",
+                "Invalid SMILES",
                 "Valid bonds, one connected molecule",
                 f"RDKit could not parse {working_smiles!r}.",
             )
@@ -393,14 +393,14 @@ def audit_3d_physical_compliance(
     std = standardize(working_smiles)
     if len(frags) > 1 or has_dummy or not std.valid:
         why = (
-            f"Contains {len(frags)} separate pieces (salt or mixture)"
+            f"{len(frags)} disconnected pieces"
             if len(frags) > 1
-            else ("Contains unknown * group" if has_dummy else std.reason)
+            else ("Unknown * group" if has_dummy else std.reason)
         )
         gates.append(
             _gate(
                 "G1_VALENCE_TOPOLOGY",
-                "1. Valid chemical bonds",
+                "Valid chemical bonds",
                 "fail",
                 why,
                 "One connected molecule, no * placeholders",
@@ -415,11 +415,11 @@ def audit_3d_physical_compliance(
         gates.append(
             _gate(
                 "G2_DOMAIN_ELIGIBILITY",
-                "2. Neutral charge & supported elements",
+                "Neutral & supported atoms",
                 "fail" if (net_q != 0 or n_rad != 0 or unsup) else "warn",
-                f"charge={net_q:+d}, radicals={n_rad}, unsupported={unsup or 'none'}",
+                f"charge {net_q:+d} · radicals {n_rad}",
                 "Charge = 0, no unpaired electrons, supported elements",
-                f"Elements found: {sorted(present)}.",
+                f"Elements found: {', '.join(sorted(present))}.",
             )
         )
         return {
@@ -435,9 +435,9 @@ def audit_3d_physical_compliance(
     gates.append(
         _gate(
             "G1_VALENCE_TOPOLOGY",
-            "1. Valid chemical bonds",
+            "Valid chemical bonds",
             "pass",
-            f"{std.mol.GetNumAtoms()} non-H atoms, 1 molecule",
+            f"{std.mol.GetNumAtoms()} heavy atoms",
             "Valid bonds, one connected molecule",
             expanded_note or f"Clean SMILES: {std.smiles}",
         )
@@ -466,7 +466,7 @@ def audit_3d_physical_compliance(
         gates.append(
             _gate(
                 "G2_DOMAIN_ELIGIBILITY",
-                "2. Neutral charge & supported elements",
+                "Neutral & supported atoms",
                 "fail",
                 "; ".join(reasons),
                 f"Charge = 0, no radicals, elements in {sorted(allowed_els)}",
@@ -489,11 +489,11 @@ def audit_3d_physical_compliance(
     gates.append(
         _gate(
             "G2_DOMAIN_ELIGIBILITY",
-            "2. Neutral charge & supported elements",
+            "Neutral & supported atoms",
             "pass",
-            f"charge=0, radicals=0, {formula} ({mw:.1f} Da)",
+            f"{formula} · {mw:.1f} Da",
             "Neutral molecule with supported atoms",
-            f"All atoms are supported by {potential}.",
+            f"Net charge 0, paired electrons, supported by {potential}.",
         )
     )
 
@@ -504,22 +504,22 @@ def audit_3d_physical_compliance(
         gates.append(
             _gate(
                 "G3_STEREO_SPECIFICATION",
-                "3. Left/right handedness labeled",
+                "Chiral centers labeled",
                 "warn",
-                f"{n_unassigned} unlabeled stereo site(s)",
+                f"{n_unassigned} unlabeled",
                 "Every chiral center or E/Z bond is labeled",
-                "Missing @/@@ or /\\ labels means 3D builder has to guess one side.",
+                "Missing @/@@ or /\\ labels means 3D builder chooses one stereoisomer.",
             )
         )
     else:
         gates.append(
             _gate(
                 "G3_STEREO_SPECIFICATION",
-                "3. Left/right handedness labeled",
+                "Chiral centers labeled",
                 "pass",
-                f"{cip_info['n_specified']} labeled, 0 missing",
+                f"{cip_info['n_specified']} labeled",
                 "Every chiral center or E/Z bond is labeled",
-                "No missing 3D handedness labels.",
+                "All stereocenters and double bonds are explicitly specified.",
             )
         )
 
@@ -529,7 +529,7 @@ def audit_3d_physical_compliance(
         gates.append(
             _gate(
                 "G4_ETKDG_3D_EMBEDDING",
-                "4. 3D shape can be built",
+                "3D conformer generated",
                 "fail",
                 embed_status,
                 "At least 1 valid 3D shape",
@@ -554,11 +554,11 @@ def audit_3d_physical_compliance(
     gates.append(
         _gate(
             "G4_ETKDG_3D_EMBEDDING",
-            "4. 3D shape can be built",
+            "3D conformer generated",
             "pass",
-            f"Built {len(cids)} 3D shape(s)",
+            f"{len(cids)} conformer(s)",
             "At least 1 valid 3D shape",
-            f"{sum(embed_stereo_ok)}/{len(cids)} initial shapes match 2D handedness.",
+            f"{sum(embed_stereo_ok)}/{len(cids)} initial shapes match 2D stereochemistry.",
         )
     )
 
@@ -690,11 +690,13 @@ def audit_3d_physical_compliance(
     gates.append(
         _gate(
             "G5_PAULI_STERIC_CLEARANCE",
-            "5. Atoms do not crash into each other",
+            "No atom collisions",
             "pass" if no_crash else "fail",
-            f"closest pair = {d_min:.3f} A ({len(clashes)} clashes)",
-            "Closest atoms >= 0.75 A, 0 non-bonded clashes",
-            "All atoms have enough space." if no_crash else f"Too close: {clashes[:3]}",
+            f"min {d_min:.2f} Å" if no_crash else f"{len(clashes)} clash(es) · {d_min:.2f} Å",
+            "Closest atoms >= 0.75 Å, zero non-bonded overlaps",
+            "All atoms have clear steric spacing."
+            if no_crash
+            else f"Collision pairs: {clashes[:3]}",
         )
     )
 
@@ -738,10 +740,10 @@ def audit_3d_physical_compliance(
     gates.append(
         _gate(
             "G6_COVALENT_GEOMETRY",
-            "6. Normal bond lengths & angles",
+            "Realistic bond geometry",
             "pass" if max_dev <= 0.30 else ("warn" if max_dev <= 0.45 else "fail"),
-            f"max bond diff = {max_dev:.3f} A, angles = {min_ang:.1f}-{max_ang:.1f} deg",
-            "Bond length within 0.30 A of typical value",
+            f"Δr {max_dev:.3f} Å · {min_ang:.0f}–{max_ang:.0f}°",
+            "Bond length within 0.30 Å of covalent radii",
             f"Checked {len(bonds_out)} bonds and {len(angles)} bond angles.",
         )
     )
@@ -751,11 +753,11 @@ def audit_3d_physical_compliance(
     gates.append(
         _gate(
             "G7_3D_CHIRALITY_RETENTION",
-            "7. 3D handedness kept after relaxing",
+            "3D chirality preserved",
             "pass" if stereo_ok else "fail",
-            "kept" if stereo_ok else "flipped",
+            "Preserved" if stereo_ok else "Inverted",
             "3D R/S and E/Z match input SMILES",
-            f"SMILES read back from 3D coordinates: {best['smiles_from_3d']}",
+            f"SMILES perceived from 3D: {best['smiles_from_3d']}",
         )
     )
 
@@ -774,11 +776,11 @@ def audit_3d_physical_compliance(
     gates.append(
         _gate(
             "G8_STATIONARY_CONVERGENCE",
-            "8. Settled to a stable low-energy shape",
+            "Relaxed to low energy",
             g8_status,
-            f"E = {best['energy_ev']:.4f} eV, max force = {best['fmax_ev_a']:.4f} eV/A",
-            f"Max atom force <= {fmax:.3f} eV/A" if do_relax else "Finite energy and forces",
-            f"{calc_label} ({best['steps']} relax steps).",
+            f"fmax {best['fmax_ev_a']:.4f} eV/Å",
+            f"Max atom force <= {fmax:.3f} eV/Å" if do_relax else "Finite energy and forces",
+            f"E = {best['energy_ev']:.4f} eV on {calc_label} ({best['steps']} steps).",
         )
     )
 
@@ -809,11 +811,14 @@ def audit_3d_physical_compliance(
     gates.append(
         _gate(
             "G9_SE3_EQUIVARIANCE_CONSERVATION",
-            "9. Moving or rotating in 3D keeps physics unchanged",
+            "3D rotation & shift invariance",
             "pass" if se3_ok else "fail",
-            f"energy diff = {se3_e_err:.2e} eV, force diff = {so3_f_err:.2e} eV/A",
-            "Energy & rotated force diff < 1e-4; total force & torque < 1e-3",
-            f"Total force = {net_force:.2e} eV/A, total torque = {net_torque:.2e} eV.",
+            f"ΔE {se3_e_err:.1e} eV",
+            "Energy & rotated force diff < 1e-4; net force & torque < 1e-3",
+            (
+                f"Rotated force diff {so3_f_err:.2e} eV/Å · "
+                f"net force {net_force:.2e} eV/Å · net torque {net_torque:.2e} eV."
+            ),
         )
     )
 
@@ -850,11 +855,11 @@ def audit_3d_physical_compliance(
     gates.append(
         _gate(
             "G10_PARITY_AND_CONSERVATIVE_FORCE",
-            "10. Mirror test & force matches energy slope",
+            "Mirror symmetry & F = −∇E",
             "pass" if g10_ok else "fail",
-            f"mirror E diff = {parity_e_err:.2e} eV, slope diff = {grad_err:.2e} eV/A",
-            "Mirror energy diff < 1e-4 eV & force-slope diff < 2e-3 eV/A",
-            f"Mirror twin is '{mir_rel}' ({smi_mir}).",
+            f"slope {grad_err:.1e} eV/Å",
+            "Mirror energy diff < 1e-4 eV & force-slope diff < 2e-3 eV/Å",
+            f"Mirror ΔE = {parity_e_err:.2e} eV · mirror relation: {mir_rel} ({smi_mir}).",
         )
     )
 
