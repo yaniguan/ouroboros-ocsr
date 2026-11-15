@@ -4,7 +4,7 @@ trap 'status=$?; printf "ERROR container CUDA probe line=%s exit=%s\n" "$LINENO"
 export LC_ALL=C LANG=C
 : "${OURO_ROOT:?}"
 test -f "$OURO_ROOT/reports/container-setup.ok"
-source /u/local/Modules/default/init/modules.sh
+source "${MODULES_INIT:-/etc/profile.d/modules.sh}"
 module load apptainer/1.2.2
 export PATH="$OURO_ROOT/container-bin:$PATH"
 export APPTAINER_CACHEDIR="$OURO_ROOT/cache/apptainer"

@@ -1,6 +1,6 @@
 seed: 0
 data:
-  synthetic_root: /u/scratch/y/yaniguan/ouroboros-v0-20261001/data/full/shards
+  synthetic_root: /scratch/ouroboros-v0-20261001/data/full/shards
   synthetic_max_samples: 200000
   real_roots: []
   real_fraction: 0.0
@@ -35,7 +35,7 @@ eval:
   batch_size: 32
   sets:
     rendered_test:
-      root: /u/scratch/y/yaniguan/ouroboros-v0-20261001/data/full/shards
+      root: /scratch/ouroboros-v0-20261001/data/full/shards
       split: test
       kind: rendered
       max_samples: null
@@ -43,7 +43,7 @@ eval:
   sweep_max_samples: 2000
 validation:
   enabled: true
-  root: /u/scratch/y/yaniguan/ouroboros-v0-20261001/data/full/shards
+  root: /scratch/ouroboros-v0-20261001/data/full/shards
   split: val
   samples: 1000
   batch_size: 32
