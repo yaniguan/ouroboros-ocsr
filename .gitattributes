@@ -1,0 +1,2 @@
+# Keep frozen manifests byte-identical across Windows, macOS, and Linux checkouts.
+benchmarks/frozen-test-v2/manifest.csv text eol=lf

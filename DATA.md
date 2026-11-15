@@ -2,8 +2,10 @@
 
 ## Nothing data-like is committed to git
 
-Datasets, rendered shards, real document images, manifests of real data, pools, checkpoints and
-run outputs never enter the repository. This is enforced twice:
+Datasets, rendered shards, real document images, training manifests, pools, checkpoints and run
+outputs never enter the repository. The one committed manifest is the image-free evaluation list
+[`benchmarks/frozen-test-v2/manifest.csv`](benchmarks/frozen-test-v2/manifest.csv), which stores
+only public `Keylab/OCSR-Benchmarks` row IDs and SMILES (no images). This rule is enforced twice:
 
 1. `.gitignore` excludes `/data/`, `/data_cache/`, `/real_data/`, `/real/`, `shards/`, `runs/`,
    `checkpoints/`, `*.tar`, `*.idx.json`, `*.tsv.gz`, `*.ckpt`, `*.pt`.
@@ -66,13 +68,47 @@ held-out test molecule, from train AND val; drops overlong labels; makes val mol
 train) and ingests it with `scripts/ingest_real.py`. Train rows are used for training, val rows only for
 checkpoint selection. Images, parquet and shards stay on the Colab disk / Drive.
 
+## Real evaluation sets (`dev-test` vs `frozen-test-v2`)
+
+Two seeded samples from `Keylab/OCSR-Benchmarks` (`USPTO`, `UOB`, `ACS`) are used for real-figure
+evaluation:
+
+- **`subset100` (`dev-test`, 298 valid images: ACS 100, UOB 100, USPTO 98):** `seed=0` sample with
+  pinned manifest SHA-256 `957f0042825dab214aad2463de2974d7b4f23a1fcbf5d52ab78be2526cc3fc61`
+  (`EXPECTED_DEV_TEST_MANIFEST_SHA256` in `ouroboros/data/real.py`). Because many rounds of model
+  and decoding choices were compared on this set, keep it as a `dev-test` set for quick checks and
+  historical comparison, not as a clean held-out set.
+- **`frozen-test-v2` (held-out release test, 300 valid images: ACS 100, UOB 100, USPTO 100):**
+  `seed=2026` sample in
+  [`benchmarks/frozen-test-v2/manifest.csv`](benchmarks/frozen-test-v2/manifest.csv), pinned as
+  `EXPECTED_FROZEN_TEST_V2_MANIFEST_SHA256`
+  (`e4a24c68b3d893498b0df727bdb5b77eed0b98e66f6898f21d17aecf01ee5e1a`). It has zero row, full
+  InChIKey, or 14-character connectivity-block overlap with `subset100`, `yaniguan/ocsr-dataset`
+  (`train` and `val`), and `zinc250k` (see
+  [`benchmarks/frozen-test-v2/leakage.json`](benchmarks/frozen-test-v2/leakage.json)).
+
+**Score-once rule:** keep `frozen-test-v2` untouched during development. Score it **at most once per
+release**, only after all training, checkpoint, and decoding choices are fixed on validation.
+Materialize its images locally on demand (never into git) with:
+
+```bash
+python scripts/fetch_real_subset.py \
+    --from-manifest benchmarks/frozen-test-v2/manifest.csv \
+    --out real_data/frozen_test_v2
+python scripts/ingest_real.py \
+    --manifest real_data/frozen_test_v2/manifest.csv \
+    --out real/frozen_test_v2
+```
+
 ## Leakage control
 
 `scripts/check_leakage.py` compares standard InChIKeys of every real-document eval set with every
-training set (synthetic and real), prints the overlap table and exits nonzero on any overlap.
-`--dump-eval-keys` writes the eval keys, which `scripts/build_dataset.py --exclude-keys` removes
-(by InChIKey connectivity block, i.e. including stereoisomers) from all synthetic splits before
-composition. Shards rendered earlier can instead be filtered at load time
+training set (synthetic and real), prints the overlap table and exits nonzero on any overlap
+(`--fail-on-connectivity` also rejects stereoisomer / connectivity-block matches).
+`--dump-eval-keys` writes the eval keys (include both `subset100` and
+`benchmarks/frozen-test-v2/manifest.csv`), which `scripts/build_dataset.py --exclude-keys` and
+`scripts/prepare_pmc.py --exclude-keys` remove by connectivity block before building splits.
+Shards rendered earlier can instead be filtered at load time
 (`ShardDataset(..., exclude_key14=...)`).
 
 ## Model weights
