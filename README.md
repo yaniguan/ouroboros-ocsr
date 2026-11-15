@@ -114,7 +114,7 @@ tests/        pytest suite
 ## Limitations / status
 
 - **Research preview.** The GitHub release (v0.1.0-alpha) ships the synthetic-only A/B/C checkpoints. The fine-tuned v2 checkpoints behind the 54.0% result are not released yet.
-- **Weak spots on real figures:** stereochemistry (18% exact on the 49 images with stereo), long patent molecules, and R-groups / abbreviations (ACS).
+- **Weak spots on real figures:** stereochemistry (the fine-tuned v2 `has_stereo` subset score is not yet reproduced in a committed report; released arm A scored [2.0% on the 49 stereo figures](benchmarks/real-subset100-rgroups/A_report.json)), long patent molecules, and R-groups / abbreviations (ACS).
 - On upright real figures arm A beats arm C (51.0% vs 37.6% greedy); the rotation prior pays off on rotated drawings.
 - C8 is a discrete rotation prior; rasterization means predictions need not match at every angle.
 - Hand-drawn structures are not measured yet. Optional 3D/MACE tools are outside the release scope ([DATA.md](DATA.md)).

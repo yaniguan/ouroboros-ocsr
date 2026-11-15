@@ -110,6 +110,54 @@
    "n_rows": 24,
    "n_pred_blank": 0,
    "n_gold_invalid": 0
+  },
+  {
+   "subset": "has_stereo",
+   "kind": null,
+   "n": 57,
+   "exact": 0.543859649122807,
+   "exact_flat": 0.8070175438596491,
+   "inchikey": 0.543859649122807,
+   "tanimoto": 0.8219823606202439,
+   "tanimoto_1": 0.8070175438596491,
+   "valid": 0.8596491228070176,
+   "invalid_rate": 0.14035087719298245,
+   "n_stereo_elements": 105,
+   "stereo_elem_acc_strict": 0.5047619047619047,
+   "stereo_elem_acc_given_flat": 0.6385542168674698,
+   "n_with_stereo": 57,
+   "exact_on_stereo_subset": 0.543859649122807,
+   "exact_ci95": [
+    0.4206140350877193,
+    0.6491228070175439
+   ],
+   "n_rows": 57,
+   "n_pred_blank": 4,
+   "n_gold_invalid": 0
+  },
+  {
+   "subset": "no_stereo",
+   "kind": null,
+   "n": 15,
+   "exact": 0.9333333333333333,
+   "exact_flat": 0.9333333333333333,
+   "inchikey": 0.9333333333333333,
+   "tanimoto": 0.981159420289855,
+   "tanimoto_1": 0.9333333333333333,
+   "valid": 1.0,
+   "invalid_rate": 0.0,
+   "n_stereo_elements": 0,
+   "stereo_elem_acc_strict": NaN,
+   "stereo_elem_acc_given_flat": NaN,
+   "n_with_stereo": 0,
+   "exact_on_stereo_subset": NaN,
+   "exact_ci95": [
+    0.8,
+    1.0
+   ],
+   "n_rows": 15,
+   "n_pred_blank": 0,
+   "n_gold_invalid": 0
   }
  ],
  "metrics": {
