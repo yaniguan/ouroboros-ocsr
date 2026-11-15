@@ -1,8 +1,9 @@
 """Leakage check: InChIKey overlap between every eval set and every training set (Am1-A).
 
 A set is given as ``NAME=SPEC`` where SPEC is one of
-  * ``path/to/manifest.tsv[:N]``   synthetic manifest (``smiles`` column), optional first-N prefix
-  * ``path/to/shards_dir:SPLIT[:N]`` WebDataset shards (synthetic or real), optional prefix
+  * ``path/to/manifest.tsv[:N]``         synthetic TSV manifest, optional first-N prefix
+  * ``path/to/manifest.csv[:SPLIT][:N]`` real CSV manifest, optional split and prefix
+  * ``path/to/shards_dir:SPLIT[:N]``     WebDataset shards, optional prefix
 
 Labelled dummy molecules use canonical-label SHA256 identities because InChI cannot
 represent them; these are overlap keys only, never InChI metric values. Their first
@@ -23,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 import sys
 from pathlib import Path
 
@@ -38,13 +40,27 @@ def _key(smiles: str) -> str | None:
 
 
 def load_keys(spec: str) -> set[str]:
-    parts = spec.split(":")
-    path = Path(parts[0])
+    drive, rest = os.path.splitdrive(spec)
+    parts = rest.split(":")
+    path = Path(drive + parts[0])
     if path.suffix == ".tsv":
         limit = int(parts[1]) if len(parts) > 1 else None
         with open(path, newline="") as f:
             smiles = [r["smiles"] for r in csv.DictReader(f, delimiter="\t")]
         smiles = smiles[:limit] if limit else smiles
+    elif path.suffix == ".csv":
+        with open(path, newline="") as f:
+            rows = list(csv.DictReader(f))
+        if len(parts) > 1 and not parts[1].isdigit():
+            split = parts[1]
+            rows = [r for r in rows if (r.get("split") or "test").strip() == split]
+            limit = int(parts[2]) if len(parts) > 2 else None
+        else:
+            limit = int(parts[1]) if len(parts) > 1 else None
+        smiles = [
+            (r.get("smiles") or r.get("SMILES") or "")
+            for r in (rows[:limit] if limit else rows)
+        ]
     else:
         from ouroboros.data.loader import ShardDataset
 

@@ -47,6 +47,20 @@ from ouroboros.eval.standardize import standardize
 SPLITS = ("train", "val", "test")
 EXTRA_COLUMNS = ("pmcid", "n_agree", "n_agree_open", "inchikey")
 
+KEYLAB_BENCHMARKS_REPO = "Keylab/OCSR-Benchmarks"
+KEYLAB_BENCHMARKS_REVISION = "2fdcdc59067acb36d84ddc82c1ace24c91d5ad71"
+EXPECTED_DEV_TEST_MANIFEST_SHA256 = (
+    "957f0042825dab214aad2463de2974d7b4f23a1fcbf5d52ab78be2526cc3fc61"
+)
+EXPECTED_TEST_MANIFEST_SHA256 = EXPECTED_DEV_TEST_MANIFEST_SHA256
+
+FROZEN_TEST_V2_MANIFEST = "benchmarks/frozen-test-v2/manifest.csv"
+FROZEN_TEST_V2_SEED = 2026
+FROZEN_TEST_V2_COUNTS = {"USPTO": 100, "UOB": 100, "ACS": 100}
+EXPECTED_FROZEN_TEST_V2_MANIFEST_SHA256 = (
+    "e4a24c68b3d893498b0df727bdb5b77eed0b98e66f6898f21d17aecf01ee5e1a"
+)
+
 
 def read_real_manifest(path: str | Path) -> list[dict]:
     path = Path(path)
