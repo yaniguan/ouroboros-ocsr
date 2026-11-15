@@ -22,7 +22,7 @@
 
 ## What it does
 
-Ouroboros is optical chemical structure recognition (OCSR): it turns an image of a molecule into a SMILES string, stereochemistry included. Its main encoder is a C8 steerable CNN, so a rotated drawing gives rotated features by construction instead of by data augmentation. A fine-tuned ensemble now reads **54.0%** of 298 real figures from papers and patents exactly.
+Ouroboros turns an image of a molecule into a SMILES string with stereochemistry. On synthetic rotated drawings, its C8 steerable CNN (arm C) matches rotation augmentation without rotating training images ([65.8% vs 65.7%](docs/v0-results.md) across 24 angles). On 298 upright real figures from papers and patents, a fine-tuned A + C ensemble reaches [**54.0%**](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-ttapad-report.md) exact match, where the plain CNN arm A is the stronger single model ([51.0%](benchmarks/finetune-v2-oct30/A-selected-report.md) vs [37.6%](benchmarks/finetune-v2-oct30/C-selected-report.md) for C).
 
 ## Quickstart
 
@@ -76,7 +76,7 @@ Real images: 298 figures (ACS 100, UOB 100, USPTO 98), a seeded sample of public
 | A alone, greedy | 51.0% | 38% | 84% | 30.6% | [`benchmarks/finetune-v2-oct30/A-selected-report.md`](benchmarks/finetune-v2-oct30/A-selected-report.md) |
 | C alone, greedy | 37.6% | 20% | 74% | 18.4% | [`benchmarks/finetune-v2-oct30/C-selected-report.md`](benchmarks/finetune-v2-oct30/C-selected-report.md) |
 
-Made by [`colab/finetune_v2.ipynb`](colab/finetune_v2.ipynb) (real-data fine-tune v2 of arms A and C) with `scripts/predict_real.py` and `scripts/eval_predictions.py`. Synthetic rotation results for the v0.1.0-alpha checkpoints: [`docs/v0-results.md`](docs/v0-results.md) and [`benchmarks/v0.1.0-alpha/`](benchmarks/v0.1.0-alpha/).
+Made by [`colab/finetune_v2.ipynb`](colab/finetune_v2.ipynb) (real-data fine-tune v2 of arms A and C) with `scripts/predict_real.py` and `scripts/eval_predictions.py`. The Quickstart above downloads the synthetic `v0.1.0-alpha` checkpoint, not the unreleased fine-tuned v2 weights behind the 54.0% model. Synthetic rotation results for the `v0.1.0-alpha` checkpoints: [`docs/v0-results.md`](docs/v0-results.md) and [`benchmarks/v0.1.0-alpha/`](benchmarks/v0.1.0-alpha/).
 
 Published systems report higher numbers on the full benchmark sets with their own scoring; our sample is small (95% CIs of about ±10 points per source) and scoring parity is not verified.
 
