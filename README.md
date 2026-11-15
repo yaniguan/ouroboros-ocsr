@@ -76,7 +76,7 @@ Real images: 298 figures (ACS 100, UOB 100, USPTO 98), a seeded sample of public
 | A alone, greedy | 51.0% | 38% | 84% | 30.6% | [`benchmarks/finetune-v2-oct30/A-selected-report.md`](benchmarks/finetune-v2-oct30/A-selected-report.md) |
 | C alone, greedy | 37.6% | 20% | 74% | 18.4% | [`benchmarks/finetune-v2-oct30/C-selected-report.md`](benchmarks/finetune-v2-oct30/C-selected-report.md) |
 
-Made by [`colab/finetune_v2.ipynb`](colab/finetune_v2.ipynb) (real-data fine-tune v2 of arms A and C) with `scripts/predict_real.py` and `scripts/eval_predictions.py`. The Quickstart above downloads the synthetic `v0.1.0-alpha` checkpoint, not the unreleased fine-tuned v2 weights behind the 54.0% model. Synthetic rotation results for the `v0.1.0-alpha` checkpoints: [`docs/v0-results.md`](docs/v0-results.md) and [`benchmarks/v0.1.0-alpha/`](benchmarks/v0.1.0-alpha/).
+Made by [`colab/finetune_v2.ipynb`](colab/finetune_v2.ipynb) (real-data fine-tune v2 of arms A and C) with `scripts/predict_real.py` and `scripts/eval_predictions.py`. Decoding settings in this table were compared on the 298-image test set, so treat the top row as optimistic (the notebook now selects the decoding variant on validation and scores test once). The Quickstart above downloads the synthetic `v0.1.0-alpha` checkpoint, not the unreleased fine-tuned v2 weights behind the 54.0% model. Synthetic rotation results for the `v0.1.0-alpha` checkpoints: [`docs/v0-results.md`](docs/v0-results.md) and [`benchmarks/v0.1.0-alpha/`](benchmarks/v0.1.0-alpha/).
 
 Published systems report higher numbers on the full benchmark sets with their own scoring; our sample is small (95% CIs of about ±10 points per source) and scoring parity is not verified.
 
