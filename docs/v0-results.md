@@ -13,7 +13,7 @@ Raw summaries, logs, configs and weight receipts: `benchmarks/v0.1.0-alpha/`.
 
 Rotation sweep: fixed 2,000-example test prefix, 24 angles (0–345°, 15° steps); the mean is an
 equal-weight average over angles, not 48,000 independent molecules. A/C ran on Colab A100-40GB;
-B ran on Hoffman2 (A6000 queue), so wall-clock numbers are not comparable across A/C and B.
+B ran on a separate A6000 GPU cluster, so wall-clock numbers are not comparable across A/C and B.
 
 ## Reading the numbers (what is and is not supported)
 

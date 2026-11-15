@@ -119,7 +119,7 @@ tests/        pytest suite
 - C8 is a discrete rotation prior; rasterization means predictions need not match at every angle.
 - Hand-drawn structures are not measured yet. Optional 3D/MACE tools are outside the release scope ([DATA.md](DATA.md)).
 
-Weights and provenance: [MODEL_CARD.md](MODEL_CARD.md). Training protocol: [docs/v0-release.md](docs/v0-release.md). History: [TASK.md](TASK.md), [CHANGELOG.md](CHANGELOG.md).
+Weights and provenance: [MODEL_CARD.md](MODEL_CARD.md). Training protocol: [docs/v0-release.md](docs/v0-release.md). History: [CHANGELOG.md](CHANGELOG.md).
 
 ## Optional tools
 

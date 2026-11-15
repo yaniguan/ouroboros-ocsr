@@ -19,7 +19,7 @@ Empty / zero-atom output counts as invalid                             UNVERIFIE
 No tautomer canonicalization                                           UNVERIFIED (our choice)
 ====================================================================  ==========================
 
-Per-sample parity with the paper's scoring code is pending (TASK.md, Am1-C / U3). Until it is
+Per-sample parity with the paper's scoring code is pending. Until it is
 established every results table must carry the footnote in ``PARITY_FOOTNOTE``.
 """
 
@@ -27,14 +27,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ouroboros.labels import parse_labelled, labelled_smiles
 from rdkit import Chem, RDLogger
 from rdkit.Chem.MolStandardize import rdMolStandardize
+
+from ouroboros.labels import labelled_smiles, parse_labelled
 
 RDLogger.DisableLog("rdApp.*")
 
 PARITY_VERIFIED = False
-PARITY_FOOTNOTE = "Scoring parity with arXiv:2608.09100 is unverified (see TASK.md Am1-C)."
+PARITY_FOOTNOTE = "Scoring parity with arXiv:2608.09100 is unverified."
 
 
 @dataclass(frozen=True)

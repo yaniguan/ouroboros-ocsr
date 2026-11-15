@@ -73,7 +73,7 @@ shown with every comparison.
 4. Synthetic data aimed at the measured failures: R-group / abbreviation substitution with
    ACS-like fonts, long molecules (curriculum on token length), wedge/hash-heavy stereo set,
    document noise (JPEG, scan blur, line thickness, neighbouring text).
-5. Scoring parity: per-sample agreement with the reference protocol (TASK.md Am1-C) so that
+5. Scoring parity: per-sample agreement with the reference protocol so that
    the published table above becomes comparable.
 - **Exit criterion**: selected model beats released A (18.12%) on the 298 subset with
   non-overlapping or clearly shifted CI, and on every source individually.

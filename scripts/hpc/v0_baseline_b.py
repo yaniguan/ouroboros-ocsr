@@ -1,6 +1,6 @@
 """Restore the audited pilot byte-for-byte, then gate B training and evaluation.
 
-Run inside the verified Hoffman2 container, with the archived A/C source bundle.
+Run inside the verified Apptainer container, with the archived A/C source bundle.
 This adds rotation augmentation only; it never edits A/C runs or original data.
 """
 

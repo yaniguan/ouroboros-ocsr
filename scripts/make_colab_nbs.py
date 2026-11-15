@@ -338,7 +338,7 @@ V1_BRANCH = "codex/v1-multiseed-cplus"
 def nb06() -> list:
     cells = setup_cells(
         "v1 grid on Colab",
-        "Runs the same 36-task grid as the Hoffman2 array (`scripts/hpc/v1_grid.py`): arms "
+        "Runs the same 36-task grid as the HPC array (`scripts/hpc/v1_grid.py`): arms "
         "Babs/Brel/C x real-label budget K in {0,128,512,2048} x seeds 0-2. Uses the synthetic "
         "shards already on Drive (`ouroboros/data/full/shards`) and rebuilds the real splits from "
         "the Hugging Face dataset (CC BY-NC; stays on this VM, never committed). Each finished run "

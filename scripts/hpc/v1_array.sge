@@ -7,10 +7,10 @@
 # One v1 grid task per array index: qsub -t 1-33 -hold_jid <prep job id> scripts/hpc/v1_array.sge
 set -euo pipefail
 export LC_ALL=C LANG=C
-O=/u/scratch/y/yaniguan/ouroboros-20260930
-V0=/u/scratch/y/yaniguan/ouroboros-v0-20261001
-V1=/u/scratch/y/yaniguan/ouroboros-v1-20261019
-source /u/local/Modules/default/init/modules.sh
+O=${SCRATCH_ROOT:-/scratch}/ouroboros-20260930
+V0=${SCRATCH_ROOT:-/scratch}/ouroboros-v0-20261001
+V1=${SCRATCH_ROOT:-/scratch}/ouroboros-v1-20261019
+source "${MODULES_INIT:-/etc/profile.d/modules.sh}"
 module load apptainer/1.2.2
 export PATH="$O/container-bin:$PATH"
 export APPTAINER_CACHEDIR="$O/cache/apptainer" APPTAINER_TMPDIR="${TMPDIR:-$O/cache/apptainer}"

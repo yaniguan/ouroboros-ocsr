@@ -123,5 +123,5 @@
  "n_boot": 1000,
  "pooled_across_kinds": false,
  "parity_verified": false,
- "footnote": "Scoring parity with arXiv:2608.09100 is unverified (see TASK.md Am1-C)."
+ "footnote": "Scoring parity with arXiv:2608.09100 is unverified."
 }

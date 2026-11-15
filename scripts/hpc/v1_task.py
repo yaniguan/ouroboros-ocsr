@@ -1,4 +1,4 @@
-"""Run one v1 grid task (train, then evaluate) inside the Hoffman2 container.
+"""Run one v1 grid task (train, then evaluate) inside the Apptainer container.
 
     python scripts/hpc/v1_task.py --task 3 --original $OURO_ROOT --v0 $V0 --root $V1
 

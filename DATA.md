@@ -23,8 +23,7 @@ Real depictions (e.g. the ACS, CLEF-IP and USPTO sets used by arXiv:2608.09100, 
 collections) may carry copyright or redistribution restrictions from publishers or patent
 offices. Keep them on private storage (local disk, the Colab runtime, a private Drive folder),
 do not upload them to public places, and do not include individual real images in figures that
-are committed or published unless the licence allows it. Whether a given set may be used in this
-project at all is recorded in TASK.md ("Needs user", U1).
+are committed or published unless the licence allows it.
 
 ## Synthetic data provenance
 

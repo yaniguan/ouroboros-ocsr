@@ -19,4 +19,4 @@ Metrics:
 - `tanimoto`: mean Morgan r=2 2048-bit Tanimoto, chirality ignored, 0 for invalid
 - `tanimoto_1`: fraction with Tanimoto 1.0 (an enantiomer or stereo error still counts)
 
-_Scoring parity with arXiv:2608.09100 is unverified (see TASK.md Am1-C)._
+_Scoring parity with arXiv:2608.09100 is unverified._

@@ -652,6 +652,6 @@
   }
  ],
  "parity_verified": false,
- "footnote": "Scoring parity with arXiv:2608.09100 is unverified (see TASK.md Am1-C).",
+ "footnote": "Scoring parity with arXiv:2608.09100 is unverified.",
  "step": 10000
 }
