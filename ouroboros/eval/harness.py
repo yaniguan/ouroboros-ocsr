@@ -48,6 +48,8 @@ ALIASES = {
 }
 REQUIRED = ("gold", "pred")
 ALL = "ALL"
+HAS_STEREO = "has_stereo"
+NO_STEREO = "no_stereo"
 MAX_LISTED_IDS = 50
 
 METRICS = {
@@ -202,7 +204,7 @@ def build_report(
     n_boot: int = 1000,
     seed: int = 0,
 ) -> dict:
-    """Overall row(s) (one per kind) followed by one row per (kind, subset)."""
+    """Overall row(s) (one per kind), per-source subsets, and has_stereo / no_stereo rows."""
     members = list(zip(items, scores, strict=True))
     kinds = sorted({it.kind for it in items}, key=lambda k: (k is None, k or ""))
     has_subsets = any(it.subset is not None for it in items)
@@ -216,6 +218,10 @@ def build_report(
                 groups.append(
                     {"subset": subset, "kind": kind, **_group_stats(sub, n_boot, seed)}
                 )
+        has_st = [(it, s) for it, s in in_kind if s is not None and s.stereo_total > 0]
+        no_st = [(it, s) for it, s in in_kind if s is not None and s.stereo_total == 0]
+        groups.append({"subset": HAS_STEREO, "kind": kind, **_group_stats(has_st, n_boot, seed)})
+        groups.append({"subset": NO_STEREO, "kind": kind, **_group_stats(no_st, n_boot, seed)})
     bad = [it.id for it, s in members if s is None]
     return {
         "n_rows": len(items),

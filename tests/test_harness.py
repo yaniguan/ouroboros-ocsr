@@ -48,7 +48,14 @@ def test_cli_csv_numbers(tmp_path, capsys):
     assert rep["gold_invalid"] == {"n": 1, "ids": ["6"]}
     assert rep["columns"]["subset"] == "subset" and rep["columns"]["kind"] is None
     g = _groups(rep)
-    assert list(g) == [("ALL", None), ("DECIMER", None), ("UOB", None), ("USPTO", None)]
+    assert list(g) == [
+        ("ALL", None),
+        ("DECIMER", None),
+        ("UOB", None),
+        ("USPTO", None),
+        ("has_stereo", None),
+        ("no_stereo", None),
+    ]
     a = g[("ALL", None)]
     assert a["n"] == 5 and a["n_rows"] == 6 and a["n_gold_invalid"] == 1
     assert a["exact"] == pytest.approx(0.4)
@@ -157,7 +164,46 @@ def test_without_id_or_subset_columns(tmp_path):
     out = tmp_path / "r.json"
     harness.main([str(src), "--json", str(out), "--quiet"])
     rep = json.loads(out.read_text())
-    assert [(g["subset"], g["n"], g["exact"]) for g in rep["groups"]] == [("ALL", 3, 1.0)]
+    assert [(g["subset"], g["n"], g.get("exact")) for g in rep["groups"]] == [
+        ("ALL", 3, 1.0),
+        ("has_stereo", 0, None),
+        ("no_stereo", 3, 1.0),
+    ]
+
+
+def test_stereo_subset_split(tmp_path):
+    rows = [
+        # Tetrahedral stereo after salt stripping -> has_stereo, exact
+        {"id": "1", "gold": "C[C@H](N)C(=O)[O-].[Na+]", "pred": ALA, "subset": "ACS"},
+        # Wrong enantiomer -> has_stereo, exact=False, exact_flat=True
+        {"id": "2", "gold": ALA, "pred": D_ALA, "subset": "ACS"},
+        # Double-bond E/Z stereo -> has_stereo, exact=False, exact_flat=True
+        {"id": "3", "gold": "C/C=C/C", "pred": "C/C=C\\C", "subset": "USPTO"},
+        # Double-bond E/Z stereo -> has_stereo, exact=True
+        {"id": "4", "gold": "C/C=C/C", "pred": "C/C=C/C", "subset": "USPTO"},
+        # Achiral -> no_stereo, exact=True
+        {"id": "5", "gold": "CCO", "pred": "OCC", "subset": "UOB"},
+        # Achiral -> no_stereo, exact=False
+        {"id": "6", "gold": "c1ccccc1", "pred": "CCO", "subset": "UOB"},
+    ]
+    src = _write_csv(tmp_path / "stereo.csv", rows)
+    out_json, out_md = tmp_path / "stereo.json", tmp_path / "stereo.md"
+    assert harness.main([str(src), "--json", str(out_json), "--md", str(out_md), "--quiet"]) == 0
+    g = _groups(json.loads(out_json.read_text()))
+    hs = g[("has_stereo", None)]
+    ns = g[("no_stereo", None)]
+    assert hs["n"] == 4
+    assert hs["exact"] == pytest.approx(0.5)
+    assert hs["exact_flat"] == pytest.approx(1.0)
+    lo, hi = hs["exact_ci95"]
+    assert 0.0 <= lo <= 0.5 <= hi <= 1.0
+    assert ns["n"] == 2
+    assert ns["exact"] == pytest.approx(0.5)
+    assert ns["exact_flat"] == pytest.approx(0.5)
+    assert len(ns["exact_ci95"]) == 2
+    md = out_md.read_text()
+    assert "| has_stereo | 4 | 50.00% |" in md
+    assert "| no_stereo | 2 | 50.00% |" in md
 
 
 def test_all_gold_invalid_group_renders(tmp_path):
