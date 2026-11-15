@@ -7,7 +7,7 @@ from pathlib import Path
 
 import nbformat as nbf
 
-BRANCH = "feat/finetune-v2-oct30"
+BRANCH = "main"
 cells = []
 
 
@@ -22,9 +22,9 @@ def code(s):
 md(f"""
 # Fine-tune v2: Ouroboros A/C on real PMC, select by real validation
 
-Branch `{BRANCH}`. **Runtime → Change runtime type → A100 GPU, then Runtime → Run all.** No manual steps.
+Branch `{BRANCH}` (v2 recipe + relaunch robustness). **Runtime → Change runtime type → A100 GPU, then Runtime → Run all.** No manual steps.
 
-Colab: https://colab.research.google.com/github/yaniguan/ouroboros-ocsr/blob/feat/finetune-v2-oct30/colab/finetune_v2.ipynb?authuser=1
+Colab: https://colab.research.google.com/github/yaniguan/ouroboros-ocsr/blob/{BRANCH}/colab/finetune_v2.ipynb
 
 Changes vs `real_pmc_oct30`: that run saw only ~1.7 epochs of the 17,220 PMC rows
 (3000 steps × 16 × 0.6). V2 uses 20,000 steps, batch 32, 70% real, LR 3e-5,
@@ -92,6 +92,12 @@ DATA = Path('/content/data')
 PY = '/content/venv-real-pmc/bin/python'
 os.environ.update(OMP_NUM_THREADS='2', MKL_NUM_THREADS='2', OPENBLAS_NUM_THREADS='2',
                   MPLBACKEND='Agg', MPLCONFIGDIR='/tmp/mpl-real-pmc', PYTHONUNBUFFERED='1')
+
+(DRIVE_ROOT / 'logs').mkdir(parents=True, exist_ok=True)
+def stage(name, **info):
+    \"\"\"Append a progress marker to Drive (logs/progress.jsonl) so a dead session shows where it stopped.\"\"\"
+    with (DRIVE_ROOT / 'logs' / 'progress.jsonl').open('a') as f:
+        f.write(json.dumps(dict(stage=name, utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), **info)) + '\\n')
 
 def shell(args, cwd=None, check=True, log=None, tail=80):
     \"\"\"Run a command, streaming its merged stdout+stderr live. The full output goes to ``log``
@@ -164,6 +170,7 @@ shell(['git', 'checkout', '-B', BRANCH, f'origin/{{BRANCH}}'], cwd=REPO)
 revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=REPO, text=True).strip()
 (DRIVE_ROOT / 'source_revision.txt').write_text(revision + '\\n')
 print('Source:', revision)
+stage('setup')
 """)
 
 md("""
@@ -171,6 +178,7 @@ md("""
 """)
 
 code("""
+stage('install')
 t0 = time.perf_counter()
 if not shutil.which('gfortran'):
     shell(['apt-get', '-qq', 'update'])
@@ -206,6 +214,7 @@ reference is not directly comparable (released vs fine-tuned below are still on 
 """)
 
 code("""
+stage('test_set')
 t0 = time.perf_counter()
 def build_test():
     run('scripts/fetch_real_subset.py', '--sets', 'USPTO', 'UOB', 'ACS', '--n', '100',
@@ -236,6 +245,7 @@ the scoring harness). Nothing here is ever committed.
 """)
 
 code("""
+stage('pmc_data')
 t0 = time.perf_counter()
 def build_pmc():
     info = json.load(urllib.request.urlopen(f'https://huggingface.co/api/datasets/{PMC_REPO}'))
@@ -296,6 +306,7 @@ images and every set used for training or checkpoint selection must be zero.
 """)
 
 code("""
+stage('leakage_gate')
 leak = run('scripts/check_leakage.py', '--eval', f'subset100={TEST}:test',
            '--train', f'pmc_train={PMC}:train', f'pmc_val={PMC}:val', f'synth_train={SYNTH}:train',
            '--fail-on-connectivity', '--json', DRIVE_ROOT / 'leakage.json', check=False)
@@ -315,6 +326,7 @@ at the chosen batch falls back to batch 16 if it fails.
 """)
 
 code("""
+stage('prepare_configs')
 RUNS = {}
 for arm in ARMS:
     batch = BATCH
@@ -346,28 +358,6 @@ print({k: str(v['dir']) for k, v in RUNS.items()})
 """)
 
 md("""
-## Training profiling probes (saved to Drive, skipped when already complete)
-
-Each arm uses its first prepared configuration. Timings exclude warmup and profiler overhead;
-Chrome traces, operator tables and GPU samples are saved alongside the JSON measurements.
-""")
-
-code("""
-PROFILING = DRIVE_ROOT / 'profiling'
-PROFILING.mkdir(parents=True, exist_ok=True)
-import importlib.util as _ilu
-_spec = _ilu.spec_from_file_location('profile_train', REPO / 'scripts/profile_train.py')
-_pt = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_pt)
-start_nvidia_smi, stop_nvidia_smi, parse_nvidia_smi_csv = (
-    _pt.start_nvidia_smi, _pt.stop_nvidia_smi, _pt.parse_nvidia_smi_csv)
-for arm in ARMS:
-    r = next(r for r in RUNS.values() if r['arm'] == arm)
-    if not (PROFILING / f'train_{arm}.json').exists():
-        run('scripts/profile_train.py', '--config', r['dir'] / 'finetune.yaml',
-            '--out-dir', PROFILING, '--name', arm)
-""")
-
-md("""
 ## Fine-tune (resumable) — real-val exact selects the checkpoint
 
 Training state lives on Drive (`runs/<name>/train/ckpt/last.pt`, `best-step-*.pt`, `log.jsonl`).
@@ -375,6 +365,14 @@ Re-running this cell after a disconnect resumes exactly; finished runs return im
 """)
 
 code("""
+stage('train_setup')
+PROFILING = DRIVE_ROOT / 'profiling'
+PROFILING.mkdir(parents=True, exist_ok=True)
+import importlib.util as _ilu
+_spec = _ilu.spec_from_file_location('profile_train', REPO / 'scripts/profile_train.py')
+_pt = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_pt)
+start_nvidia_smi, stop_nvidia_smi, parse_nvidia_smi_csv = (
+    _pt.start_nvidia_smi, _pt.stop_nvidia_smi, _pt.parse_nvidia_smi_csv)
 DONE_CHECK = r\"\"\"
 import sys, torch, yaml
 from pathlib import Path
@@ -398,6 +396,7 @@ for name, r in RUNS.items():
     if train_done(r['dir']):
         print(name, 'already finished (train/ckpt/last.pt complete): skipping')
         continue
+    stage(f'train_{name}')
     t0 = time.perf_counter()
     # stdout+stderr of the trainer are streamed here and saved to <run>/train_stderr.log on Drive
     # nvidia-smi samples append across resumed sessions.
@@ -415,10 +414,40 @@ for name, r in RUNS.items():
 """)
 
 md("""
+## Training profiling probes (after training; saved to Drive, skipped when already complete)
+
+Each arm uses its first prepared configuration. Timings exclude warmup and profiler overhead;
+Chrome traces, operator tables and GPU samples are saved alongside the JSON measurements.
+
+Runs after training (Oct 30 relaunch): the previous v2 session ended during this probe, before training started. The probe now has a 20-minute timeout, its output is always saved to `logs/profile_train_<arm>.log`, and a failure does not stop the notebook.
+""")
+
+code("""
+PROFILING = DRIVE_ROOT / 'profiling'
+PROFILING.mkdir(parents=True, exist_ok=True)
+import importlib.util as _ilu
+_spec = _ilu.spec_from_file_location('profile_train', REPO / 'scripts/profile_train.py')
+_pt = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_pt)
+start_nvidia_smi, stop_nvidia_smi, parse_nvidia_smi_csv = (
+    _pt.start_nvidia_smi, _pt.stop_nvidia_smi, _pt.parse_nvidia_smi_csv)
+for arm in ARMS:
+    r = next(r for r in RUNS.values() if r['arm'] == arm)
+    if not (PROFILING / f'train_{arm}.json').exists():
+        stage(f'profile_train_{arm}')
+        res = shell(['timeout', '1200', PY, 'scripts/profile_train.py', '--config', r['dir'] / 'finetune.yaml',
+                     '--out-dir', PROFILING, '--name', arm], cwd=REPO, check=False,
+                    log=DRIVE_ROOT / 'logs' / f'profile_train_{arm}.log')
+        if res.returncode != 0:
+            print(f'WARNING: training profiling probe for {arm} failed or timed out (exit {res.returncode}); '
+                  f'see logs/profile_train_{arm}.log. Continuing.')
+""")
+
+md("""
 ## Select per arm by real validation, evaluate released vs fine-tuned on the 298 test images
 """)
 
 code(r'''
+stage('select_and_evaluate')
 select_src = r"""
 import json, sys, torch
 from pathlib import Path
@@ -554,6 +583,7 @@ includes every encoding call made during ensemble rescoring; decode includes can
 """)
 
 code("""
+stage('inference_profiling')
 variants = {}
 for arm in ARMS:
     variants[f'{arm}-released'] = [REPO / f'checkpoints/ouroboros-{arm}.pt']
@@ -571,6 +601,7 @@ for name, ckpts in variants.items():
 """)
 
 code("""
+stage('profiling_summary')
 import statistics
 profiling_summary = {'arms': {}, 'training_runs': {}, 'inference': {}}
 for name, r in RUNS.items():
