@@ -220,22 +220,144 @@ def test_evaluation_commands_and_report_resume(notebook, tmp_path):
         ("AC-ensemble-beam5", ["A-selected.pt", "C-selected.pt"], 5),
     ]:
         prefix = tmp_path / variant
-        assert env["evaluate"](ckpts, prefix, beam) == report
+        assert env["evaluate"](ckpts, prefix, beam=beam) == report
         predict, score = calls[-2:]
         assert predict[0] == "scripts/predict_real.py"
         assert predict.count("--ckpt") == len(ckpts)
         assert predict[predict.index("--beam") + 1] == str(beam)
+        assert predict[predict.index("--split") + 1] == "test"
         assert predict[predict.index("--out") + 1] == Path(f"{prefix}-preds.csv")
         assert ("--nbest-out" in predict) == (beam > 1)
         assert score[-1] == f"{prefix}-report.md"
         before = len(calls)
-        assert env["evaluate"](ckpts, prefix, beam) == report
+        assert env["evaluate"](ckpts, prefix, beam=beam) == report
         assert len(calls) == before
-    assert "for arm in ARMS:" in source
-    assert "if 'A' in ARMS and 'C' in ARMS:" in source
-    assert "'summary.json'" in source and "'recipe':" in source and "'timings_s':" in source
-    assert "SUMMARY['best_variant'] = max" in source
-    assert "('exact', 'exact_flat', 'valid', 'per_source_exact', 'n')" in source
+
+
+def test_decoding_selected_on_val_and_test_scored_once(notebook, tmp_path):
+    import shutil
+
+    source = next(c for c in _codes(notebook) if "def evaluate(" in c)
+    drive_root = tmp_path / "drive"
+    repo_root = tmp_path / "repo"
+    pmc_root = tmp_path / "pmc"
+    test_root = tmp_path / "test"
+    drive_root.mkdir()
+    (repo_root / "checkpoints").mkdir(parents=True)
+
+    runs = {}
+    for arm, best_val in [("A", 0.51), ("C", 0.38)]:
+        run_dir = drive_root / "runs" / f"{arm}-lr3e-05"
+        (run_dir / "train").mkdir(parents=True)
+        (run_dir / "selected.pt").write_bytes(b"ckpt")
+        (run_dir / "finetune.yaml").write_text("seed: 0\n", encoding="utf-8")
+        (run_dir / "train/log.jsonl").write_text("", encoding="utf-8")
+        (run_dir / "selection.json").write_text(
+            json.dumps({"best_step": 9000, "best_val_exact": best_val, "val_exact_step0": 0.18}),
+            encoding="utf-8",
+        )
+        runs[f"{arm}-lr3e-05"] = {"arm": arm, "lr": 3e-5, "dir": run_dir}
+
+    val_scores = {
+        "A-released": 0.18,
+        "A-selected": 0.50,
+        "A-selected-beam5": 0.52,
+        "A-selected-beam5-ttapad": 0.51,
+        "C-released": 0.16,
+        "C-selected": 0.37,
+        "C-selected-beam5": 0.39,
+        "C-selected-beam5-ttapad": 0.38,
+        "AC-ensemble-beam5": 0.56,
+        "AC-ensemble-beam5-ttapad": 0.54,
+    }
+    predict_calls = []
+
+    def run(*args):
+        if str(args[0]).endswith("select_ckpt.py"):
+            return
+        if args[0] == "scripts/predict_real.py":
+            shards = Path(args[args.index("--shards") + 1])
+            split = args[args.index("--split") + 1]
+            out_csv = Path(args[args.index("--out") + 1])
+            predict_calls.append((shards, split, out_csv.name))
+            return
+        if args[0] == "scripts/eval_predictions.py":
+            report_path = Path(args[args.index("--json") + 1])
+            variant = report_path.name.removesuffix("-report.json")
+            is_val = report_path.parent.name == "val_decoding"
+            exact = val_scores[variant] if is_val else 0.5235
+            n = 963 if is_val else 298
+            rep = {
+                "groups": [
+                    {
+                        "subset": "ALL",
+                        "n": n,
+                        "exact": exact,
+                        "exact_flat": exact + 0.02,
+                        "valid": 0.99,
+                        "tanimoto": 0.85,
+                        "exact_ci95": [exact - 0.05, exact + 0.05],
+                    },
+                    {"subset": "ACS", "n": 100, "exact": exact},
+                ]
+            }
+            report_path.parent.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(rep), encoding="utf-8")
+
+    env = {
+        "Path": Path,
+        "json": json,
+        "time": time,
+        "shutil": shutil,
+        "stage": lambda *a, **kw: None,
+        "run": run,
+        "DRIVE_ROOT": drive_root,
+        "REPO": repo_root,
+        "PMC": pmc_root,
+        "TEST": test_root,
+        "TIMINGS": {},
+        "RUN_NAME": "finetune_v2_oct30",
+        "BRANCH": "main",
+        "revision": "abc123",
+        "test_sha": "957f0042825dab214aad2463de2974d7b4f23a1fcbf5d52ab78be2526cc3fc61",
+        "EXPECTED_TEST_MANIFEST_SHA256": (
+            "957f0042825dab214aad2463de2974d7b4f23a1fcbf5d52ab78be2526cc3fc61"
+        ),
+        "test_stats": {"written": {"test": 298}},
+        "pmc_prepare": {},
+        "pmc_ingest": {"written": {"train": 17220, "val": 963}},
+        "LEAKAGE": [],
+        "ARMS": ["A", "C"],
+        "SWEEP_LR": {"A": [3e-5], "C": [3e-5]},
+        "STEPS": 20000,
+        "BATCH": 32,
+        "REAL_FRACTION": 0.7,
+        "WARMUP": 500,
+        "LABEL_SMOOTHING": 0.05,
+        "N_SYNTH": 50000,
+        "N_VALIDATION": 963,
+        "VAL_EVERY": 1000,
+        "PATIENCE": 6,
+        "RUNS": runs,
+        "RELEASED_TARGET": {"A": (54, 298), "C": (50, 298)},
+        "T_START": time.perf_counter(),
+    }
+    exec(source, env)
+
+    val_calls = [c for c in predict_calls if c[1] == "val"]
+    test_calls = [c for c in predict_calls if c[1] == "test"]
+    assert len(val_calls) == 10
+    assert all(c[0] == pmc_root for c in val_calls)
+    assert len(test_calls) == 1
+    assert test_calls[0] == (test_root, "test", "AC-ensemble-beam5-preds.csv")
+
+    saved = json.loads((drive_root / "summary.json").read_text(encoding="utf-8"))
+    assert saved["best_variant"] == "AC-ensemble-beam5"
+    assert set(saved["val_decoding"]) == set(val_scores)
+    assert saved["val_decoding"]["AC-ensemble-beam5"]["exact"] == 0.56
+    assert saved["test"]["variant"] == "AC-ensemble-beam5"
+    assert saved["test"]["n"] == 298
+    assert saved["test"]["exact"] == 0.5235
 
 
 def test_profiling_contract(notebook):

@@ -46,9 +46,9 @@ What it does:
 6. fine-tunes each arm with `real_fraction=0.7` real rows per batch, no rotation augmentation,
    bf16, validating exact match on all 963 kept PMC val images every 1000 steps (the released weights
    are scored at step 0, so selection can fall back to them); early stopping, best checkpoint kept;
-7. evaluates released and selected checkpoints greedily on the 298 real test images,
-   then selected checkpoints with beam 5 (default validity rerank), and an A+C beam-5
-   ensemble; writes predictions, JSON/Markdown reports, and `summary.json`.
+7. scores released, fine-tuned, beam-5, TTA and A+C ensemble decoding variants on the PMC
+   validation split, picks `best_variant` from validation `exact` only, then evaluates only
+   `best_variant` once on the 298 real test images and writes `summary.json`;
 8. profiles training phases, GPU utilization and greedy/beam inference, saving traces and
    throughput/memory summaries under `profiling/` on Drive.
 
@@ -443,7 +443,7 @@ for arm in ARMS:
 """)
 
 md("""
-## Select per arm by real validation, evaluate released vs fine-tuned on the 298 test images
+## Select checkpoints and decoding variant on real validation, then score test once
 """)
 
 code(r'''
@@ -470,9 +470,10 @@ out = {'best_step': es['best_step'], 'best_val_exact': es['best_score'],
 (run / 'selection.json').write_text(json.dumps(out, indent=1))
 print(json.dumps(out))
 """
-Path('/content/select_ckpt.py').write_text(select_src)
+select_script = DRIVE_ROOT / 'select_ckpt.py'
+select_script.write_text(select_src)
 
-def evaluate(ckpts, prefix, beam=1, tta=None):
+def evaluate(ckpts, prefix, shards=TEST, split='test', beam=1, tta=None):
     report = Path(f'{prefix}-report.json')
     if report.exists():
         print('evaluation already finished:', report)
@@ -482,16 +483,16 @@ def evaluate(ckpts, prefix, beam=1, tta=None):
     args = ['scripts/predict_real.py']
     for ckpt in ckpts:
         args.extend(['--ckpt', ckpt])
-    args.extend(['--beam', str(beam), '--shards', TEST, '--out', preds, '--batch-size', '32'])
+    args.extend(['--beam', str(beam), '--shards', shards, '--split', split,
+                 '--out', preds, '--batch-size', '32'])
     if beam > 1:
         args.extend(['--nbest-out', f'{prefix}-nbest.jsonl'])
     if tta:
         args.extend(['--tta', tta])
     run(*args)
     run('scripts/eval_predictions.py', preds, '--json', report, '--md', f'{prefix}-report.md')
-    TIMINGS[Path(prefix).name + '_eval_s'] = round(time.perf_counter() - t0, 1)
-    rep = json.loads(report.read_text())
-    return rep
+    TIMINGS[Path(prefix).name + f'_{split}_eval_s'] = round(time.perf_counter() - t0, 1)
+    return json.loads(report.read_text())
 
 def overall(rep):
     o = next(g for g in rep['groups'] if g['subset'] == 'ALL')
@@ -510,68 +511,73 @@ SUMMARY = {'run_name': RUN_NAME, 'branch': BRANCH, 'revision': revision,
                       'LABEL_SMOOTHING': LABEL_SMOOTHING, 'N_SYNTH': N_SYNTH,
                       'N_VALIDATION': N_VALIDATION, 'VAL_EVERY': VAL_EVERY,
                       'PATIENCE': PATIENCE, 'BATCH_FALLBACK': 16},
-           'decoding': {}}
+           'val_decoding': {}, 'test': None}
 
-def record_decoding(variant, rep):
-    metrics = overall(rep)
-    SUMMARY['decoding'][variant] = {
-        k: metrics[k] for k in ('exact', 'exact_flat', 'valid', 'per_source_exact', 'n')}
-    SUMMARY['best_variant'] = max(SUMMARY['decoding'],
-                                  key=lambda v: SUMMARY['decoding'][v]['exact'])
-    (DRIVE_ROOT / 'summary.json').write_text(json.dumps(SUMMARY, indent=1, default=str))
 for name, r in RUNS.items():
-    run('/content/select_ckpt.py', r['dir'])
+    run(select_script, r['dir'])
     r['selection'] = json.loads((r['dir'] / 'selection.json').read_text())
+
+DECODING_CANDIDATES = {}
 for arm in ARMS:
     cands = [(n, r) for n, r in RUNS.items() if r['arm'] == arm]
     name, best = max(cands, key=lambda nr: (nr[1]['selection']['best_val_exact'], -nr[1]['lr']))
     shutil.copy2(best['dir'] / 'selected.pt', DRIVE_ROOT / f'{arm}-selected.pt')
     shutil.copy2(best['dir'] / 'finetune.yaml', DRIVE_ROOT / f'{arm}-finetune.yaml')
     shutil.copy2(best['dir'] / 'train/log.jsonl', DRIVE_ROOT / f'{arm}-log.jsonl')
-    released = evaluate([REPO / f'checkpoints/ouroboros-{arm}.pt'], DRIVE_ROOT / f'{arm}-released')
-    tuned = evaluate([DRIVE_ROOT / f'{arm}-selected.pt'], DRIVE_ROOT / f'{arm}-selected')
-    record_decoding(f'{arm}-released', released)
-    record_decoding(f'{arm}-selected', tuned)
-    variant = f'{arm}-selected-beam5'
-    record_decoding(variant, evaluate([DRIVE_ROOT / f'{arm}-selected.pt'],
-                                     DRIVE_ROOT / variant, beam=5))
-    variant = f'{arm}-selected-beam5-ttapad'  # CPU on released A: 20.13% -> 23.49%
-    record_decoding(variant, evaluate([DRIVE_ROOT / f'{arm}-selected.pt'],
-                                     DRIVE_ROOT / variant, beam=5, tta='pad'))
-    rel, tun = overall(released), overall(tuned)
     ref_k, ref_n = RELEASED_TARGET[arm]
     SUMMARY['arms'][arm] = {
         'selected_run': name, 'lr': best['lr'], 'selection': best['selection'],
         'sweep': {n: r['selection']['best_val_exact'] for n, r in cands},
-        'released_test': rel, 'finetuned_test': tun,
-        'released_correct': round(rel['exact'] * rel['n']), 'finetuned_correct': round(tun['exact'] * tun['n']),
         'oct29_released_reference': f'{ref_k}/{ref_n}',
-        'beats_released_A_18.12pct': tun['exact'] > 54 / 298,
-        'beats_own_released_here': tun['exact'] > rel['exact'],
         'train_wall_s': (json.loads((best['dir'] / 'train_wall_s.json').read_text())
                          if (best['dir'] / 'train_wall_s.json').exists() else []),
     }
-    (DRIVE_ROOT / 'summary.json').write_text(json.dumps(SUMMARY, indent=1, default=str))
+    DECODING_CANDIDATES[f'{arm}-released'] = {
+        'ckpts': [REPO / f'checkpoints/ouroboros-{arm}.pt'], 'beam': 1, 'tta': None}
+    DECODING_CANDIDATES[f'{arm}-selected'] = {
+        'ckpts': [DRIVE_ROOT / f'{arm}-selected.pt'], 'beam': 1, 'tta': None}
+    DECODING_CANDIDATES[f'{arm}-selected-beam5'] = {
+        'ckpts': [DRIVE_ROOT / f'{arm}-selected.pt'], 'beam': 5, 'tta': None}
+    DECODING_CANDIDATES[f'{arm}-selected-beam5-ttapad'] = {
+        'ckpts': [DRIVE_ROOT / f'{arm}-selected.pt'], 'beam': 5, 'tta': 'pad'}
+
 if 'A' in ARMS and 'C' in ARMS:
-    variant = 'AC-ensemble-beam5'
-    record_decoding(variant, evaluate([DRIVE_ROOT / 'A-selected.pt', DRIVE_ROOT / 'C-selected.pt'],
-                                     DRIVE_ROOT / variant, beam=5))
-    variant = 'AC-ensemble-beam5-ttapad'
-    record_decoding(variant, evaluate([DRIVE_ROOT / 'A-selected.pt', DRIVE_ROOT / 'C-selected.pt'],
-                                     DRIVE_ROOT / variant, beam=5, tta='pad'))
+    ens = [DRIVE_ROOT / 'A-selected.pt', DRIVE_ROOT / 'C-selected.pt']
+    DECODING_CANDIDATES['AC-ensemble-beam5'] = {'ckpts': ens, 'beam': 5, 'tta': None}
+    DECODING_CANDIDATES['AC-ensemble-beam5-ttapad'] = {'ckpts': ens, 'beam': 5, 'tta': 'pad'}
+
+val_dir = DRIVE_ROOT / 'val_decoding'
+val_dir.mkdir(parents=True, exist_ok=True)
+for variant, spec in DECODING_CANDIDATES.items():
+    rep = evaluate(spec['ckpts'], val_dir / variant, shards=PMC, split='val',
+                   beam=spec['beam'], tta=spec['tta'])
+    metrics = overall(rep)
+    SUMMARY['val_decoding'][variant] = {
+        k: metrics[k] for k in ('exact', 'exact_flat', 'valid', 'per_source_exact', 'n')}
+    (DRIVE_ROOT / 'summary.json').write_text(json.dumps(SUMMARY, indent=1, default=str))
+
+for arm in ARMS:
+    SUMMARY['arms'][arm]['released_val'] = SUMMARY['val_decoding'][f'{arm}-released']
+    SUMMARY['arms'][arm]['finetuned_val'] = SUMMARY['val_decoding'][f'{arm}-selected']
+
+best_variant = max(SUMMARY['val_decoding'], key=lambda v: SUMMARY['val_decoding'][v]['exact'])
+SUMMARY['best_variant'] = best_variant
+chosen = DECODING_CANDIDATES[best_variant]
+test_rep = evaluate(chosen['ckpts'], DRIVE_ROOT / best_variant, shards=TEST, split='test',
+                    beam=chosen['beam'], tta=chosen['tta'])
+SUMMARY['test'] = {'variant': best_variant, **overall(test_rep)}
 SUMMARY['timings_s']['total_notebook_s_this_session'] = round(time.perf_counter() - T_START, 1)
 (DRIVE_ROOT / 'summary.json').write_text(json.dumps(SUMMARY, indent=1, default=str))
-for arm, s in SUMMARY['arms'].items():
-    print(f"{arm}: released {s['released_correct']}/{s['released_test']['n']} "
-          f"({100*s['released_test']['exact']:.2f}%) -> fine-tuned {s['finetuned_correct']}/"
-          f"{s['finetuned_test']['n']} ({100*s['finetuned_test']['exact']:.2f}%); "
-          f"best real-val exact {s['selection']['best_val_exact']:.4f} at step {s['selection']['best_step']} "
-          f"(step-0 {s['selection']['val_exact_step0']})")
-print(f"{'Variant':<24} {'Exact':>8} {'Flat':>8} {'Valid':>8} {'N':>5}")
-for variant, metrics in SUMMARY['decoding'].items():
-    print(f"{variant:<24} {metrics['exact']:8.2%} {metrics['exact_flat']:8.2%} "
+
+print('Validation decoding comparison:')
+print(f"{'Variant':<26} {'Val Exact':>9} {'Flat':>8} {'Valid':>8} {'N':>5}")
+for variant, metrics in SUMMARY['val_decoding'].items():
+    print(f"{variant:<26} {metrics['exact']:9.2%} {metrics['exact_flat']:8.2%} "
           f"{metrics['valid']:8.2%} {metrics['n']:5d}")
-print('Best variant:', SUMMARY['best_variant'])
+print('Chosen on validation:', SUMMARY['best_variant'])
+print(f"Held-out test ({SUMMARY['test']['n']} images): "
+      f"exact={SUMMARY['test']['exact']:.2%} flat={SUMMARY['test']['exact_flat']:.2%} "
+      f"valid={SUMMARY['test']['valid']:.2%}")
 print('Saved to', DRIVE_ROOT)
 ''')
 
