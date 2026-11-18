@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360" role="img"
+     aria-label="Ouroboros pipeline from 2D molecule image to stereo SMILES, 3D MACE energetics, and spectroscopic verification">
+  <defs>
+    <marker id="oa-dark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#b5d88e"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="360" rx="14" fill="#0a0f15" stroke="#263442" stroke-width="1.2"/>
+
+  <rect x="28" y="32" width="256" height="214" rx="12" fill="#101822" stroke="#263442" stroke-width="1.2"/>
+  <text x="48" y="64" fill="#79c2bd" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="1.5">01 · 2D DEPICTION</text>
+  <text x="48" y="92" fill="#edf1f7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="18" font-weight="600">Any rotation θ</text>
+  <path d="M 179.6 141.0 L 177.3 166.9 L 153.7 177.9 L 132.4 163.0 L 134.7 137.1 L 158.3 126.1 Z" fill="none" stroke="#edf1f7" stroke-width="2.1" stroke-linejoin="round"/>
+    <line x1="173.0" y1="144.1" x2="171.3" y2="162.7" stroke="#edf1f7" stroke-width="1.68" stroke-linecap="round"/>
+    <line x1="154.4" y1="170.6" x2="139.0" y2="159.9" stroke="#edf1f7" stroke-width="1.68" stroke-linecap="round"/>
+    <line x1="140.7" y1="141.3" x2="157.6" y2="133.4" stroke="#edf1f7" stroke-width="1.68" stroke-linecap="round"/>
+    <line x1="179.6" y1="141.0" x2="197.2" y2="128.5" stroke="#edf1f7" stroke-width="2.1" stroke-linecap="round"/>
+    <line x1="197.2" y1="128.5" x2="219.1" y2="134.6" stroke="#edf1f7" stroke-width="2.1" stroke-linecap="round"/>
+    <line x1="132.4" y1="163.0" x2="116.5" y2="176.7" stroke="#edf1f7" stroke-width="2.1" stroke-linecap="round"/>
+    <polygon points="197.2,128.5 193.7,111.0 190.1,103.3" fill="#b5d88e"/>
+    <circle cx="219.1" cy="134.6" r="4.2" fill="#d97757"/>
+  <text x="48" y="224" fill="#99aab9" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12.5">Inscribed 384 px · R-groups &amp; wedges</text>
+
+  <rect x="314" y="32" width="268" height="214" rx="12" fill="#101822" stroke="#b5d88e" stroke-width="1.3"/>
+  <text x="334" y="64" fill="#b5d88e" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="1.5">02 · STEERABLE VISION</text>
+  <text x="334" y="92" fill="#edf1f7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="18" font-weight="600">C8 CNN + Token Mixer</text>
+  <text x="334" y="132" fill="#99aab9" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13">Arm A · Plain CNN (43.2M)</text>
+  <text x="334" y="158" fill="#99aab9" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13">Arm B · 360° Aug CNN (43.2M)</text>
+  <text x="334" y="184" fill="#b5d88e" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13.5" font-weight="600">Arm C · C8 Steerable (32.4M)</text>
+  <text x="334" y="224" fill="#99aab9" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12.5">8.1e-7 feature error at 90° / 180°</text>
+
+  <rect x="612" y="32" width="268" height="214" rx="12" fill="#101822" stroke="#263442" stroke-width="1.2"/>
+  <text x="632" y="64" fill="#b9a1de" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="1.5">03 · STEREO DECODER</text>
+  <text x="632" y="92" fill="#edf1f7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="18" font-weight="600">Beam + TTA + Ensemble</text>
+  <text x="632" y="132" fill="#99aab9" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13">6-layer Transformer · Beam 5</text>
+  <text x="632" y="158" fill="#99aab9" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13">RDKit standardization &amp; rerank</text>
+  <text x="632" y="190" fill="#edf1f7" font-family="ui-monospace,Consolas,monospace" font-size="12.5" font-weight="600">N[C@@H](C)C(=O)O</text>
+  <text x="632" y="224" fill="#99aab9" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12.5">54.0% exact on 298 real figures</text>
+
+  <rect x="910" y="32" width="262" height="214" rx="12" fill="#101822" stroke="#263442" stroke-width="1.2"/>
+  <text x="930" y="64" fill="#91b6df" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="1.5">04 · 3D &amp; SPECTRA</text>
+  <text x="930" y="92" fill="#edf1f7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="18" font-weight="600">10-Gate Physics Audit</text>
+  <text x="930" y="132" fill="#99aab9" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13">ETKDGv3 + MACE-OFF23 forces</text>
+  <text x="930" y="158" fill="#99aab9" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13">SE(3) invariance &amp; F = -∇E</text>
+  <text x="930" y="184" fill="#91b6df" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="600">HRMS + ¹³C/¹H NMR rescue</text>
+  <text x="930" y="224" fill="#99aab9" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12.5">Catches +45 kcal/mol stereo clashes</text>
+
+  <line x1="284" y1="139" x2="309" y2="139" stroke="#b5d88e" stroke-width="2" marker-end="url(#oa-dark)"/>
+  <line x1="582" y1="139" x2="607" y2="139" stroke="#b5d88e" stroke-width="2" marker-end="url(#oa-dark)"/>
+  <line x1="880" y1="139" x2="905" y2="139" stroke="#b5d88e" stroke-width="2" marker-end="url(#oa-dark)"/>
+
+  <rect x="28" y="268" width="554" height="64" rx="10" fill="#101822" stroke="#263442"/>
+  <text x="48" y="295" fill="#b5d88e" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="700">PAPER P1 · CHEMVERITAS-600 (TAG P1-V1.0)</text>
+  <text x="48" y="316" fill="#99aab9" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12.5">Bayesian MACE + ¹³C/¹H NMR lifts stereo recovery 19.7% → 77.0% (73.3% on lit. NMR)</text>
+
+  <rect x="612" y="268" width="560" height="64" rx="10" fill="#101822" stroke="#263442"/>
+  <text x="632" y="295" fill="#91b6df" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="700">PAPER P2 · 3D BIOISOSTERE ACTIVE DISTILLATION</text>
+  <text x="632" y="316" fill="#99aab9" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12.5">112 strained cages (BCP, BCH, cubane, SF₅) · PES softening α &amp; K-head replay</text>
+</svg>

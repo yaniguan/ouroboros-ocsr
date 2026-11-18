@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080" role="img"
+     aria-label="Ouroboros symmetry-complete architecture from 2D depictions to 3D MACE forces">
+  <defs>
+    <radialGradient id="glow-lime" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#b5d88e" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#0a0f15" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow-blue" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#91b6df" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#0a0f15" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="brand-g" x1="65" y1="74" x2="128" y2="74" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#79c2bd"/>
+      <stop offset="0.5" stop-color="#b5d88e"/>
+      <stop offset="1" stop-color="#b9a1de"/>
+    </linearGradient>
+    <marker id="arr-lime" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#b5d88e"/>
+    </marker>
+    <marker id="arr-teal" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#79c2bd"/>
+    </marker>
+  </defs>
+
+  <rect width="1920" height="1080" fill="#0a0f15"/>
+  <circle cx="685" cy="485" r="320" fill="url(#glow-lime)"/>
+  <circle cx="1560" cy="485" r="320" fill="url(#glow-blue)"/>
+
+  <!-- Header bar -->
+  <path d="M 124.000 74.000 L 123.949 74.702 L 123.797 75.396 L 123.546 76.073 L 123.201 76.726 L 122.767 77.347 L 122.253 77.930 L 121.666 78.471 L 121.015 78.964 L 120.308 79.408 L 119.556 79.801 L 118.766 80.140 L 117.948 80.428 L 117.110 80.663 L 116.258 80.847 L 115.399 80.984 L 114.539 81.074 L 113.683 81.120 L 112.836 81.125 L 112.000 81.092 L 111.178 81.025 L 110.373 80.924 L 109.586 80.795 L 108.818 80.639 L 108.070 80.458 L 107.342 80.256 L 106.635 80.034 L 105.947 79.794 L 105.280 79.539 L 104.631 79.270 L 104.000 78.988 L 103.387 78.696 L 102.790 78.394 L 102.208 78.083 L 101.640 77.765 L 101.086 77.441 L 100.543 77.111 L 100.011 76.776 L 99.489 76.437 L 98.975 76.095 L 98.468 75.750 L 97.967 75.403 L 97.471 75.054 L 96.979 74.703 L 96.489 74.352 L 96.000 74.000 L 95.511 73.648 L 95.021 73.297 L 94.529 72.946 L 94.033 72.597 L 93.532 72.250 L 93.025 71.905 L 92.511 71.563 L 91.989 71.224 L 91.457 70.889 L 90.914 70.559 L 90.360 70.235 L 89.792 69.917 L 89.210 69.606 L 88.613 69.304 L 88.000 69.012 L 87.369 68.730 L 86.720 68.461 L 86.053 68.206 L 85.365 67.966 L 84.658 67.744 L 83.930 67.542 L 83.182 67.361 L 82.414 67.205 L 81.627 67.076 L 80.822 66.975 L 80.000 66.908 L 79.164 66.875 L 78.317 66.880 L 77.461 66.926 L 76.601 67.016 L 75.742 67.153 L 74.890 67.337 L 74.052 67.572 L 73.234 67.860 L 72.444 68.199 L 71.692 68.592 L 70.985 69.036 L 70.334 69.529 L 69.747 70.070 L 69.233 70.653 L 68.799 71.274 L 68.454 71.927 L 68.203 72.604 L 68.051 73.298 L 68.000 74.000 L 68.051 74.702 L 68.203 75.396 L 68.454 76.073 L 68.799 76.726 L 69.233 77.347 L 69.747 77.930 L 70.334 78.471 L 70.985 78.964 L 71.692 79.408 L 72.444 79.801 L 73.234 80.140 L 74.052 80.428 L 74.890 80.663 L 75.742 80.847 L 76.601 80.984 L 77.461 81.074 L 78.317 81.120 L 79.164 81.125 L 80.000 81.092 L 80.822 81.025 L 81.627 80.924 L 82.414 80.795 L 83.182 80.639 L 83.930 80.458 L 84.658 80.256 L 85.365 80.034 L 86.053 79.794 L 86.720 79.539 L 87.369 79.270 L 88.000 78.988 L 88.613 78.696 L 89.210 78.394 L 89.792 78.083 L 90.360 77.765 L 90.914 77.441 L 91.457 77.111 L 91.989 76.776 L 92.511 76.437 L 93.025 76.095 L 93.532 75.750 L 94.033 75.403 L 94.529 75.054 L 95.021 74.703 L 95.511 74.352 L 96.000 74.000 L 96.489 73.648 L 96.979 73.297 L 97.471 72.946 L 97.967 72.597 L 98.468 72.250 L 98.975 71.905 L 99.489 71.563 L 100.011 71.224 L 100.543 70.889 L 101.086 70.559 L 101.640 70.235 L 102.208 69.917 L 102.790 69.606 L 103.387 69.304 L 104.000 69.012 L 104.631 68.730 L 105.280 68.461 L 105.947 68.206 L 106.635 67.966 L 107.342 67.744 L 108.070 67.542 L 108.818 67.361 L 109.586 67.205 L 110.373 67.076 L 111.178 66.975 L 112.000 66.908 L 112.836 66.875 L 113.683 66.880 L 114.539 66.926 L 115.399 67.016 L 116.258 67.153 L 117.110 67.337 L 117.948 67.572 L 118.766 67.860 L 119.556 68.199 L 120.308 68.592 L 121.015 69.036 L 121.666 69.529 L 122.253 70.070 L 122.767 70.653 L 123.201 71.274 L 123.546 71.927 L 123.797 72.604 L 123.949 73.298 L 124.000 74.000 Z" fill="none" stroke="url(#brand-g)" stroke-width="2.4"/>
+  <text x="142" y="82" fill="#b5d88e" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" letter-spacing="-0.5">Ouroboros</text>
+  <text x="1836" y="80" fill="#8d9eb0" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="15" font-weight="600" letter-spacing="2" text-anchor="end">ARCHITECTURE · SE(2) TO O(3)</text>
+
+  <text x="960" y="152" fill="#edf1f7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="44" font-weight="600" letter-spacing="-1.2" text-anchor="middle">Two symmetries keep structure and energy consistent</text>
+  <text x="960" y="196" fill="#9fb0c2" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="22" text-anchor="middle">Planar C8 steerable vision reads rotated drawings · 3D MACE-OFF23 checks stereochemistry and physical forces</text>
+
+  <!-- Stage 1: Rotated 2D Input -->
+  <rect x="96" y="268" width="428" height="500" rx="16" fill="#0e161f" stroke="#243240" stroke-width="1.5"/>
+  <text x="132" y="314" fill="#79c2bd" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" font-weight="700" letter-spacing="1.8">01 · PLANAR INPUT</text>
+  <text x="132" y="352" fill="#edf1f7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="26" font-weight="600">Arbitrary 2D orientation</text>
+  <circle cx="310" cy="485" r="118" fill="#0a1017" stroke="#283848" stroke-width="1.3" stroke-dasharray="5 5"/>
+  <path d="M 398 404 A 118 118 0 0 1 424 512" fill="none" stroke="#79c2bd" stroke-width="2.2" marker-end="url(#arr-teal)"/>
+  <text x="435" y="452" fill="#79c2bd" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="15" font-weight="600">θ = 32°</text>
+  <g>
+    <path d="M 347.1 465.3 L 345.6 507.3 L 308.5 527.0 L 272.9 504.7 L 274.4 462.7 L 311.5 443.0 Z" fill="none" stroke="#edf1f7" stroke-width="2.6" stroke-linejoin="round"/>
+    <line x1="336.7" y1="470.8" x2="335.6" y2="501.0" stroke="#edf1f7" stroke-width="2.08" stroke-linecap="round"/>
+    <line x1="308.9" y1="515.2" x2="283.3" y2="499.2" stroke="#edf1f7" stroke-width="2.08" stroke-linecap="round"/>
+    <line x1="284.4" y1="469.0" x2="311.1" y2="454.8" stroke="#edf1f7" stroke-width="2.08" stroke-linecap="round"/>
+    <line x1="347.1" y1="465.3" x2="374.5" y2="443.6" stroke="#edf1f7" stroke-width="2.6" stroke-linecap="round"/>
+    <line x1="374.5" y1="443.6" x2="410.2" y2="451.7" stroke="#edf1f7" stroke-width="2.6" stroke-linecap="round"/>
+    <line x1="272.9" y1="504.7" x2="248.3" y2="528.3" stroke="#edf1f7" stroke-width="2.6" stroke-linecap="round"/>
+    <polygon points="374.5,443.6 366.1,413.3 362.1,405.9" fill="#b5d88e"/>
+    <circle cx="410.2" cy="451.7" r="4.2" fill="#d97757"/>
+  </g>
+  <text x="310" y="654" fill="#aab6c4" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" text-anchor="middle">Inscribed 384 × 384 canvas · zero corner clipping</text>
+  <text x="310" y="684" fill="#7f91a3" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" text-anchor="middle">Wedge/dash stereo &amp; R-group aliases preserved</text>
+
+  <!-- Stage 2: C8 Steerable Encoder -->
+  <rect x="564" y="268" width="412" height="500" rx="16" fill="#0e161f" stroke="#364a34" stroke-width="1.5"/>
+  <text x="600" y="314" fill="#b5d88e" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" font-weight="700" letter-spacing="1.8">02 · C8 STEERABLE ENCODER</text>
+  <text x="600" y="352" fill="#edf1f7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="26" font-weight="600">Orientation fiber bundle</text>
+  <circle cx="685" cy="508" r="86" fill="none" stroke="#35493a" stroke-width="1.6"/>
+  <g font-family="Inter,Segoe UI,Arial,sans-serif">
+    <line x1="685" y1="508" x2="685.0" y2="422.0" stroke="#223140" stroke-width="1.3"/><circle cx="685.0" cy="422.0" r="6.8" fill="#79c2bd" stroke="#0a0f15" stroke-width="2"/><text x="685.0" y="398.0" fill="#8ea0b2" font-size="13" text-anchor="middle">0°</text>
+    <line x1="685" y1="508" x2="745.8" y2="447.2" stroke="#223140" stroke-width="1.3"/><circle cx="745.8" cy="447.2" r="9.0" fill="#b5d88e" stroke="#0a0f15" stroke-width="2"/><text x="765.6" y="431.4" fill="#8ea0b2" font-size="13" text-anchor="middle">45°</text>
+    <line x1="685" y1="508" x2="771.0" y2="508.0" stroke="#223140" stroke-width="1.3"/><circle cx="771.0" cy="508.0" r="6.8" fill="#314252" stroke="#0a0f15" stroke-width="2"/><text x="799.0" y="512.0" fill="#8ea0b2" font-size="13" text-anchor="middle">90°</text>
+    <line x1="685" y1="508" x2="745.8" y2="568.8" stroke="#223140" stroke-width="1.3"/><circle cx="745.8" cy="568.8" r="6.8" fill="#314252" stroke="#0a0f15" stroke-width="2"/><text x="765.6" y="592.6" fill="#8ea0b2" font-size="13" text-anchor="middle">135°</text>
+    <line x1="685" y1="508" x2="685.0" y2="594.0" stroke="#223140" stroke-width="1.3"/><circle cx="685.0" cy="594.0" r="6.8" fill="#314252" stroke="#0a0f15" stroke-width="2"/><text x="685.0" y="626.0" fill="#8ea0b2" font-size="13" text-anchor="middle">180°</text>
+    <line x1="685" y1="508" x2="624.2" y2="568.8" stroke="#223140" stroke-width="1.3"/><circle cx="624.2" cy="568.8" r="6.8" fill="#314252" stroke="#0a0f15" stroke-width="2"/><text x="604.4" y="592.6" fill="#8ea0b2" font-size="13" text-anchor="middle">225°</text>
+    <line x1="685" y1="508" x2="599.0" y2="508.0" stroke="#223140" stroke-width="1.3"/><circle cx="599.0" cy="508.0" r="6.8" fill="#314252" stroke="#0a0f15" stroke-width="2"/><text x="571.0" y="512.0" fill="#8ea0b2" font-size="13" text-anchor="middle">270°</text>
+    <line x1="685" y1="508" x2="624.2" y2="447.2" stroke="#223140" stroke-width="1.3"/><circle cx="624.2" cy="447.2" r="6.8" fill="#79c2bd" stroke="#0a0f15" stroke-width="2"/><text x="604.4" y="431.4" fill="#8ea0b2" font-size="13" text-anchor="middle">315°</text>
+  </g>
+  <circle cx="685" cy="508" r="25" fill="#152219" stroke="#b5d88e" stroke-width="1.8"/>
+  <text x="685" y="514" fill="#b5d88e" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="17" font-weight="700" text-anchor="middle">C8</text>
+  <text x="850" y="458" fill="#edf1f7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="600">32.4M</text>
+  <text x="850" y="480" fill="#8ea0b2" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13">25% smaller</text>
+  <text x="850" y="522" fill="#b5d88e" font-family="ui-monospace,Consolas,monospace" font-size="15" font-weight="600">8.1e-7</text>
+  <text x="850" y="543" fill="#8ea0b2" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13">90° feature err</text>
+  <text x="770" y="654" fill="#aab6c4" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" text-anchor="middle">Invariant token-set pooling removes orientation</text>
+  <text x="770" y="684" fill="#7f91a3" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" text-anchor="middle">65.8% mean across 24 angles without rotation aug</text>
+
+  <!-- Stage 3: Decoder + Reranking -->
+  <rect x="1016" y="268" width="368" height="500" rx="16" fill="#0e161f" stroke="#243240" stroke-width="1.5"/>
+  <text x="1050" y="314" fill="#b9a1de" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" font-weight="700" letter-spacing="1.8">03 · STEREO DECODING</text>
+  <text x="1050" y="352" fill="#edf1f7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="26" font-weight="600">Beam + TTA + ensemble</text>
+
+  <rect x="1050" y="390" width="300" height="62" rx="10" fill="#131e29" stroke="#2d3e4f"/>
+  <text x="1200" y="418" fill="#edf1f7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="600" text-anchor="middle">6-Layer Transformer Decoder</text>
+  <text x="1200" y="439" fill="#8ea0b2" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" text-anchor="middle">Append-only stereo SMILES vocabulary</text>
+
+  <rect x="1050" y="472" width="300" height="62" rx="10" fill="#131e29" stroke="#2d3e4f"/>
+  <text x="1200" y="500" fill="#b9a1de" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="600" text-anchor="middle">Arm A + Arm C Log-Prob Fusion</text>
+  <text x="1200" y="521" fill="#8ea0b2" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" text-anchor="middle">Beam 5 · Pad TTA · RDKit validity rerank</text>
+
+  <rect x="1050" y="556" width="300" height="66" rx="10" fill="#132018" stroke="#46603b"/>
+  <text x="1200" y="583" fill="#b5d88e" font-family="ui-monospace,Consolas,monospace" font-size="14" font-weight="600" text-anchor="middle">CC(C)Cc1ccc([C@@H](C)C(=O)O)cc1</text>
+  <text x="1200" y="606" fill="#9fb396" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" text-anchor="middle">Standardized chiral SMILES + margin</text>
+
+  <text x="1200" y="668" fill="#aab6c4" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" text-anchor="middle">54.0% on 298 real figures (84% UOB)</text>
+  <text x="1200" y="696" fill="#7f91a3" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" text-anchor="middle">Decoding chosen on validation, test scored once</text>
+
+  <!-- Stage 4: 3D Conformer & Physics Gates -->
+  <rect x="1424" y="268" width="400" height="500" rx="16" fill="#0e161f" stroke="#2e4358" stroke-width="1.5"/>
+  <text x="1458" y="314" fill="#91b6df" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" font-weight="700" letter-spacing="1.8">04 · 3D O(3) VERIFICATION</text>
+  <text x="1458" y="352" fill="#edf1f7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="26" font-weight="600">Conformer &amp; force audit</text>
+
+  <ellipse cx="1624" cy="466" rx="132" ry="72" fill="none" stroke="#25384b" stroke-width="1.4" stroke-dasharray="4 4"/>
+  <ellipse cx="1624" cy="466" rx="72" ry="112" fill="none" stroke="#25384b" stroke-width="1.2" stroke-dasharray="4 4"/>
+  <!-- 3D shaded conformer -->
+  <line x1="1560" y1="482" x2="1612" y2="452" stroke="#8fa6bd" stroke-width="5" stroke-linecap="round"/>
+  <line x1="1612" y1="452" x2="1668" y2="476" stroke="#8fa6bd" stroke-width="5" stroke-linecap="round"/>
+  <line x1="1612" y1="452" x2="1618" y2="398" stroke="#b5d88e" stroke-width="5" stroke-linecap="round"/>
+  <line x1="1668" y1="476" x2="1712" y2="442" stroke="#8fa6bd" stroke-width="4.5" stroke-linecap="round"/>
+  <!-- Force vectors -->
+  <line x1="1618" y1="398" x2="1648" y2="374" stroke="#b5d88e" stroke-width="2.4" marker-end="url(#arr-lime)"/>
+  <line x1="1668" y1="476" x2="1696" y2="508" stroke="#79c2bd" stroke-width="2.4" marker-end="url(#arr-teal)"/>
+  <circle cx="1560" cy="482" r="13" fill="#6b7f94" stroke="#edf1f7" stroke-width="1.5"/>
+  <circle cx="1612" cy="452" r="15" fill="#91b6df" stroke="#edf1f7" stroke-width="1.8"/>
+  <circle cx="1618" cy="398" r="12" fill="#b5d88e" stroke="#edf1f7" stroke-width="1.5"/>
+  <circle cx="1668" cy="476" r="14" fill="#6b7f94" stroke="#edf1f7" stroke-width="1.5"/>
+  <circle cx="1712" cy="442" r="13" fill="#d97757" stroke="#edf1f7" stroke-width="1.5"/>
+
+  <rect x="1458" y="592" width="158" height="36" rx="7" fill="#13211b" stroke="#365946"/>
+  <text x="1537" y="615" fill="#b5d88e" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="600" text-anchor="middle">10 Physics Gates ✓</text>
+  <rect x="1630" y="592" width="160" height="36" rx="7" fill="#131e2a" stroke="#364e68"/>
+  <text x="1710" y="615" fill="#91b6df" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="600" text-anchor="middle">F = -∇E Verified ✓</text>
+
+  <text x="1624" y="668" fill="#aab6c4" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" text-anchor="middle">ETKDGv3 + MACE-OFF23 / MMFF94s</text>
+  <text x="1624" y="696" fill="#7f91a3" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" text-anchor="middle">Catches clashes, flipped CIP stereo &amp; strain</text>
+
+  <!-- Connecting arrows between stages -->
+  <line x1="524" y1="518" x2="558" y2="518" stroke="#b5d88e" stroke-width="2.6" marker-end="url(#arr-lime)"/>
+  <line x1="976" y1="518" x2="1010" y2="518" stroke="#b5d88e" stroke-width="2.6" marker-end="url(#arr-lime)"/>
+  <line x1="1384" y1="518" x2="1418" y2="518" stroke="#b5d88e" stroke-width="2.6" marker-end="url(#arr-lime)"/>
+
+  <!-- Bottom closed-loop feedback bar -->
+  <rect x="96" y="816" width="1728" height="148" rx="14" fill="#0d151e" stroke="#263544" stroke-width="1.4"/>
+  <text x="138" y="862" fill="#b5d88e" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" font-weight="700" letter-spacing="1.8">CLOSED-LOOP SCIENTIFIC EXTENSIONS</text>
+  <text x="138" y="902" fill="#edf1f7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="22" font-weight="600">P1 · ChemVeritas-600 Bayesian Rescue</text>
+  <text x="138" y="934" fill="#9fb0c2" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16">Combines HRMS, MACE Boltzmann strain (+45 kcal/mol penalty), and ¹³C/¹H NMR orbits · 19.7% → 77.0% stereo exact</text>
+
+  <line x1="978" y1="842" x2="978" y2="940" stroke="#253443" stroke-width="1.4"/>
+  <text x="1018" y="902" fill="#edf1f7" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="22" font-weight="600">P2 · 3D Bioisostere Active Distillation</text>
+  <text x="1018" y="934" fill="#9fb0c2" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16">Audits PES softening across 112 strained cages (BCP, BCH, cubane, SF₅) via committee σ_F &amp; replay distillation</text>
+
+  <text x="960" y="1024" fill="#6f8092" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" text-anchor="middle">Ouroboros architecture overview · All reported benchmark metrics come from committed JSON/CSV evaluation receipts.</text>
+</svg>

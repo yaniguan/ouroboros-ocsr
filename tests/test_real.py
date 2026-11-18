@@ -107,6 +107,7 @@ def test_no_data_guard_rules():
     ok = [
         ("ouroboros/data/real.py", 10_000),
         ("benchmarks/data/contact_sheet.png", 2_000_000),
+        ("site/assets/ouroboros-poster.png", 200_000),
         ("README.md", 100),
     ]
     assert mod.violations(ok) == []
