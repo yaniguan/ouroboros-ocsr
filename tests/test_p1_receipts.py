@@ -44,8 +44,15 @@ def _gold600_rows():
         return {r["ablation"]: r for r in csv.DictReader(f)}
 
 
+def _gold600_table(tex):
+    """Return the text of the Gold-600 table (the Tier-2 table reuses the A0-A6 row labels)."""
+    start = tex.index(r"\label{tab:gold600}")
+    return tex[start:tex.index(r"\end{table", start)]
+
+
 def _table_cells(tex, label):
     """Return the numeric cells of the Gold-600 table row that starts with \\texttt{label}:."""
+    tex = _gold600_table(tex)
     m = re.search(r"\\texttt\{" + label + r"\}:(?:[^&\\]|\\[^\\])*&(.*?)\\\\", tex)
     assert m, f"row {label} not found in main.tex"
     cells = re.split(r"(?<!\\)&", m.group(1))
@@ -76,11 +83,13 @@ def test_tier2_c13_stats_match_receipt():
     rec = json.loads((BENCH / "tier2_exp_nmr_validation.json").read_text(encoding="utf-8"))
     stats = rec["c13_forward_stats"]
     tex = _tex()
-    assert f"{stats['mae_ppm']:.2f}" in tex
-    assert f"{stats['rmse_ppm']:.2f}" in tex
+    assert re.search(r"MAE\}? ?\$?= " + re.escape(f"{stats['mae_ppm']:.2f}"), tex)
+    assert re.search(r"RMSE\}? ?\$?= " + re.escape(f"{stats['rmse_ppm']:.2f}"), tex)
     assert rec["n_compounds"] == 30 and "N=30" in tex
+    assert rec["n_isomer_pairs"] == 15 and "15 DOI-cited isomer pairs" in tex
 
 
 def test_strain_pair_counts_match_receipt():
     rec = json.loads((BENCH / "mace_strain_audit.json").read_text(encoding="utf-8"))
     assert rec["n_pairs"] == 50 and "N=50" in _tex()
+    assert rec["n_embed_or_cip_failures_on_corrupt"] == 30
