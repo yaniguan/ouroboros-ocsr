@@ -79,8 +79,9 @@ evaluation:
 - **`subset100` (`dev-test`, 298 valid images: ACS 100, UOB 100, USPTO 98):** `seed=0` sample with
   pinned manifest SHA-256 `957f0042825dab214aad2463de2974d7b4f23a1fcbf5d52ab78be2526cc3fc61`
   (`EXPECTED_DEV_TEST_MANIFEST_SHA256` in `ouroboros/data/real.py`). Because many rounds of model
-  and decoding choices were compared on this set, keep it as a `dev-test` set for quick checks and
-  historical comparison, not as a clean held-out set.
+  and decoding choices were compared on this set, keep it as a `dev-test` set (`54.0%` exact match
+  in [`benchmarks/finetune-v2-oct30/AC-ensemble-beam5-ttapad-report.md`](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-ttapad-report.md))
+  for quick checks and historical comparison, not as a clean held-out set.
 - **`frozen-test-v2` (held-out release test, 300 valid images: ACS 100, UOB 100, USPTO 100):**
   `seed=2026` sample in
   [`benchmarks/frozen-test-v2/manifest.csv`](benchmarks/frozen-test-v2/manifest.csv), pinned as
@@ -88,7 +89,11 @@ evaluation:
   (`e4a24c68b3d893498b0df727bdb5b77eed0b98e66f6898f21d17aecf01ee5e1a`). It has zero row, full
   InChIKey, or 14-character connectivity-block overlap with `subset100`, `yaniguan/ocsr-dataset`
   (`train` and `val`), and `zinc250k` (see
-  [`benchmarks/frozen-test-v2/leakage.json`](benchmarks/frozen-test-v2/leakage.json)).
+  [`benchmarks/frozen-test-v2/leakage.json`](benchmarks/frozen-test-v2/leakage.json)). For
+  fine-tune v2, decoding (`AC-ensemble-beam5-ttapad`) was locked strictly on `PMC val` (`44.6%` across
+  963 validation images, [`benchmarks/frozen-test-v2/val_selection.json`](benchmarks/frozen-test-v2/val_selection.json))
+  and scored once on `frozen-test-v2` (`46.7%` exact match, CI `40.7–51.7%`; `85.0%` UOB, `30.0%`
+  ACS, `25.0%` USPTO; [`benchmarks/frozen-test-v2/AC-ensemble-beam5-ttapad-report.md`](benchmarks/frozen-test-v2/AC-ensemble-beam5-ttapad-report.md)).
 
 **Score-once rule:** keep `frozen-test-v2` untouched during development. Score it **at most once per
 release**, only after all training, checkpoint, and decoding choices are fixed on validation.

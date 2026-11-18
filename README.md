@@ -31,7 +31,7 @@
 
 ## What it does
 
-Ouroboros turns an image of a molecule into a SMILES string with stereochemistry. On synthetic rotated drawings, its C8 steerable CNN (arm C) matches rotation augmentation without rotating training images ([65.8% vs 65.7%](docs/v0-results.md) across 24 angles). On the 298-image upright real dev-test set from papers and patents, a fine-tuned A + C ensemble reaches [**54.0%**](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-ttapad-report.md) exact match, where the plain CNN arm A is the stronger single model ([51.0%](benchmarks/finetune-v2-oct30/A-selected-report.md) vs [37.6%](benchmarks/finetune-v2-oct30/C-selected-report.md) for C).
+Ouroboros turns an image of a molecule into a SMILES string with stereochemistry. On synthetic rotated drawings, its C8 steerable CNN (arm C) matches rotation augmentation without rotating training images ([65.8% vs 65.7%](docs/v0-results.md) across 24 angles). On real figures from papers and patents, the fine-tuned A + C ensemble scores [**46.7%**](benchmarks/frozen-test-v2/AC-ensemble-beam5-ttapad-report.md) (`85.0%` on UOB) on the untouched 300-image `frozen-test-v2` holdout with validation-locked decoding, and [**54.0%**](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-ttapad-report.md) on the 298-image `subset100` dev-test set (where plain CNN arm A is the stronger single model: [51.0%](benchmarks/finetune-v2-oct30/A-selected-report.md) vs [37.6%](benchmarks/finetune-v2-oct30/C-selected-report.md) for C).
 
 ## Quickstart
 
@@ -82,16 +82,22 @@ Want a UI?
   <img src="assets/results-chart-light.svg" alt="Measured Ouroboros accuracy across 24 rotation angles and 298 real document figures" width="100%">
 </picture>
 
-Real images (`dev-test` set, `subset100`): 298 figures (ACS 100, UOB 100, USPTO 98), a seeded sample of public OCSR benchmarks. Exact match with stereochemistry.
+**Held-out release test (`frozen-test-v2`, scored once):** 300 figures (ACS 100, UOB 100, USPTO 100; 57 `has_stereo`, 243 `no_stereo`), zero molecule overlap with `subset100` or training/validation data. Decoding (`AC-ensemble-beam5-ttapad`) was locked strictly on `PMC val` (`44.6%` across 963 validation images, [`benchmarks/frozen-test-v2/val_selection.json`](benchmarks/frozen-test-v2/val_selection.json)) before scoring `frozen-test-v2` once.
+
+| Model (locked on `PMC val`) | All (`n=300`) | ACS | UOB | USPTO | `has_stereo` (`n=57`) | `no_stereo` (`n=243`) | Source |
+|---|---|---|---|---|---|---|---|
+| **A + C ensemble, beam 5 + `pad` TTA** | **46.7%** (CI 40.7–51.7) | **30%** | **85%** | **25%** | **1.8%** | **57.2%** | [`benchmarks/frozen-test-v2/AC-ensemble-beam5-ttapad-report.md`](benchmarks/frozen-test-v2/AC-ensemble-beam5-ttapad-report.md) |
+
+**Dev-test set (`subset100`):** 298 figures (ACS 100, UOB 100, USPTO 98; 49 `has_stereo`, 249 `no_stereo`). Exact match with stereochemistry.
 
 | Model | All | ACS | UOB | USPTO | Source |
 |---|---|---|---|---|---|
-| **A + C ensemble, beam 5 + TTA** | **54.0%** (CI 48.3–59.7) | **40%** | **84%** | **37.8%** | [`benchmarks/finetune-v2-oct30/AC-ensemble-beam5-ttapad-report.md`](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-ttapad-report.md) |
+| **A + C ensemble, beam 5 + TTA (`dev-test`)** | **54.0%** (CI 48.3–59.7) | **40%** | **84%** | **37.8%** | [`benchmarks/finetune-v2-oct30/AC-ensemble-beam5-ttapad-report.md`](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-ttapad-report.md) |
 | A + C ensemble, beam 5, no TTA | 52.4% (CI 46.6–58.1) | 37% | 85% | 34.7% | [`benchmarks/finetune-v2-oct30/AC-ensemble-beam5-report.md`](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-report.md) |
 | A alone, greedy | 51.0% | 38% | 84% | 30.6% | [`benchmarks/finetune-v2-oct30/A-selected-report.md`](benchmarks/finetune-v2-oct30/A-selected-report.md) |
 | C alone, greedy | 37.6% | 20% | 74% | 18.4% | [`benchmarks/finetune-v2-oct30/C-selected-report.md`](benchmarks/finetune-v2-oct30/C-selected-report.md) |
 
-Made by [`colab/finetune_v2.ipynb`](colab/finetune_v2.ipynb) (real-data fine-tune v2 of arms A and C) with `scripts/predict_real.py` and `scripts/eval_predictions.py`. Because this 298-image set was watched across multiple rounds of model and decoding work, it is kept as a **dev-test** set, and the top row above should be treated as optimistic (the notebook now selects the decoding variant on validation and scores test once). A second untouched 300-image real test set (`frozen-test-v2`: ACS 100, UOB 100, USPTO 100, zero molecule overlap with `subset100` or training/validation data) is pinned in [`benchmarks/frozen-test-v2/`](benchmarks/frozen-test-v2/) and [`DATA.md`](DATA.md); the rule is to score it **once per release**, only after all choices are fixed on validation.
+Made by [`colab/finetune_v2.ipynb`](colab/finetune_v2.ipynb) (real-data fine-tune v2 of arms A and C) with `scripts/predict_real.py` and `scripts/eval_predictions.py`. Because the 298-image `subset100` set was watched across multiple rounds of model and decoding work, it is kept as a **dev-test** set (`54.0%`), whereas `frozen-test-v2` (`46.7%`) is scored **once per release** after all choices are fixed on validation ([`DATA.md`](DATA.md)).
 
 The Quickstart above downloads the synthetic `v0.1.0-alpha` checkpoint, not the unreleased fine-tuned v2 weights behind the 54.0% model. Synthetic rotation results for the `v0.1.0-alpha` checkpoints: [`docs/v0-results.md`](docs/v0-results.md) and [`benchmarks/v0.1.0-alpha/`](benchmarks/v0.1.0-alpha/).
 
@@ -132,8 +138,8 @@ tests/        pytest suite
 
 ## Limitations / status
 
-- **Research preview.** The GitHub release (v0.1.0-alpha) ships the synthetic-only A/B/C checkpoints. The fine-tuned v2 checkpoints behind the 54.0% result are not released yet.
-- **Weak spots on real figures:** stereochemistry (on the 49 `has_stereo` figures in `subset100`, fine-tune v2 scores [18.4%](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-ttapad-report.md) with `pad` TTA and [20.4%](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-report.md) without TTA, [16.3%](benchmarks/finetune-v2-oct30/A-selected-report.md) for arm A greedy, and [8.2%](benchmarks/finetune-v2-oct30/C-selected-report.md) for arm C greedy, vs 58.6%–61.0% on `no_stereo` and [2.0%](benchmarks/real-subset100-rgroups/A_report.json) for released arm A), long patent molecules, and R-groups / abbreviations (ACS).
+- **Research preview.** The GitHub release (v0.1.0-alpha) ships the synthetic-only A/B/C checkpoints. The fine-tuned v2 checkpoints behind the `46.7%` `frozen-test-v2` and `54.0%` `dev-test` results are not released yet.
+- **Weak spots on real figures:** stereochemistry (fine-tune v2 scores [1.8%](benchmarks/frozen-test-v2/AC-ensemble-beam5-ttapad-report.md) on the 57 `has_stereo` figures in `frozen-test-v2` vs `57.2%` on `no_stereo`, and on the 49 `has_stereo` figures in `subset100` scores [18.4%](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-ttapad-report.md) with `pad` TTA, [20.4%](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-report.md) without TTA, [16.3%](benchmarks/finetune-v2-oct30/A-selected-report.md) for arm A greedy, and [8.2%](benchmarks/finetune-v2-oct30/C-selected-report.md) for arm C greedy, vs [2.0%](benchmarks/real-subset100-rgroups/A_report.json) for released arm A), long patent molecules, and R-groups / abbreviations (ACS).
 - On upright real figures arm A beats arm C (51.0% vs 37.6% greedy); the rotation prior pays off on rotated drawings.
 - C8 is a discrete rotation prior; rasterization means predictions need not match at every angle.
 - **Hand-drawn structures:** on a 200-image molecule-disjoint sample of the public DECIMER Hand-drawn set ([`benchmarks/handdrawn-decimer/`](benchmarks/handdrawn-decimer/), `10.5281/zenodo.6456306`), released `v0.1.0-alpha` arms A/B/C score `0.0%` exact match and fine-tune v2 scores `3.0%` (arm A greedy), `2.0%` (arm C greedy), and `4.5%` (CI `2.0–7.5%`, A + C beam 5); neither release trained on hand-drawn data yet. Optional 3D/MACE tools are outside the release scope ([DATA.md](DATA.md)).
