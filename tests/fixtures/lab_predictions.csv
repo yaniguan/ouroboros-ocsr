@@ -1,0 +1,9 @@
+id,gold,pred,subset,accepted,rejection_reason,margin,disagreement
+aspirin,CC(=O)Oc1ccccc1C(=O)O,CC(=O)Oc1ccccc1C(=O)O,demo,True,,0.8,0.0
+acetate_salt,CC(=O)O,CC(=O)[O-].[Na+],demo,True,,0.6,0.0
+alanine_flat,C[C@H](N)C(=O)O,CC(N)C(=O)O,demo,True,,0.5,0.0
+l_alanine,C[C@H](N)C(=O)O,C[C@H](N)C(=O)O,demo,True,,0.7,0.0
+r_group,[R1]c1ccccc1,[R1]c1ccccc1,demo,True,,0.4,0.0
+broken,CCO,C1CC(,demo,False,invalid_prediction,,
+empty,CCO,,demo,False,invalid_prediction,,
+low_margin,CCN,CCO,demo,False,low_margin,0.05,0.0
