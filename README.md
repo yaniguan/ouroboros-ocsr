@@ -15,11 +15,14 @@
 **Read a molecule drawing, get the SMILES back, at any rotation — verified in 3D.**
 
 [![Project Website](https://img.shields.io/badge/website-yaniguan.github.io%2Fouroboros--ocsr-b5d88e?labelColor=101820)](https://yaniguan.github.io/ouroboros-ocsr/)
-[![Paper P1](https://img.shields.io/badge/Paper_P1-ChemVeritas--600-79c2bd?labelColor=101820)](https://github.com/yaniguan/ouroboros-ocsr/tree/p1-phys-spec-ocsr-bench)
+[![Browser 3D Lab](https://img.shields.io/badge/Browser_3D_Lab-live_demo-79c2bd?labelColor=101820)](https://yaniguan.github.io/ouroboros-ocsr/lab/)
+[![Paper P1](https://img.shields.io/badge/Paper_P1-ChemVeritas--600-b9a1de?labelColor=101820)](https://github.com/yaniguan/ouroboros-ocsr/tree/p1-phys-spec-ocsr-bench)
 [![Paper P2](https://img.shields.io/badge/Paper_P2-Bioisostere_MLIP-91b6df?labelColor=101820)](https://github.com/yaniguan/ouroboros-ocsr/tree/p2-mlip-blindspot-distill)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python 3.11–3.12](https://img.shields.io/badge/python-3.11%E2%80%933.12-blue.svg)](pyproject.toml)
 [![tests](https://github.com/yaniguan/ouroboros-ocsr/actions/workflows/tests.yml/badge.svg)](https://github.com/yaniguan/ouroboros-ocsr/actions/workflows/tests.yml)
+
+**[Project Website](https://yaniguan.github.io/ouroboros-ocsr/) · [Browser 3D Lab (No Install)](https://yaniguan.github.io/ouroboros-ocsr/lab/) · [Paper P1 (`ChemVeritas-600`)](https://github.com/yaniguan/ouroboros-ocsr/tree/p1-phys-spec-ocsr-bench) · [Paper P2 (`Bioisostere MLIP`)](https://github.com/yaniguan/ouroboros-ocsr/tree/p2-mlip-blindspot-distill)**
 
 </div>
 
@@ -56,7 +59,8 @@ for angle in (0, 90, 180):
 ```
 
 Want a UI?
-- `python -m ouroboros.ui --port 8787` opens the local web app: read molecule images, test 2D rotations, and build 3D molecules with 10 chemistry and physics checks ([guide](docs/physics-workbench.md)).
+- **No install (GitHub Pages):** open [https://yaniguan.github.io/ouroboros-ocsr/lab/](https://yaniguan.github.io/ouroboros-ocsr/lab/) directly in any browser to inspect 3D conformers, 10 physics checks, C8 steerable feature maps, and custom SMILES.
+- **Full local Python server:** `python -m ouroboros.ui --port 8787` opens the local web app with live PyTorch OCSR decoding and MACE-OFF23 relaxation ([guide](docs/physics-workbench.md)).
 - `python -m ouroboros.demo --checkpoint checkpoints/ouroboros-C.pt` opens the small 2D rotation demo ([guide](docs/rotation-demo.md)).
 
 ## Key features

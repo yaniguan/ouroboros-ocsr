@@ -46,6 +46,15 @@ def test_benchmark_data_matches_receipts():
     assert len(committed["p1_chemveritas"]["ablations"]) == 7
 
 
+def test_browser_lab_assets_complete():
+    assert (SITE / "lab" / "index.html").is_file()
+    assert (SITE / "lab" / "lab.js").is_file()
+    presets = json.loads((SITE / "assets" / "lab-presets.json").read_text(encoding="utf-8"))
+    assert len(presets["compliance"]) >= 14
+    assert set(presets["equivariance2d"]) == {"steerable_c8", "equiv_attn_c4", "baseline_cnn"}
+    assert set(presets["propagation"]) == {"menthol", "camphor"}
+
+
 def test_site_and_ui_plain_english_no_cjk():
     cjk = re.compile(r"[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]")
     targets = [

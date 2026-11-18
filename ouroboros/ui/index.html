@@ -1934,7 +1934,7 @@ async function runPropagation() {
         <td><span class="pill-status ${cls}">${esc(r.category)}</span></td>
         <td>${r.same_formula ? "Yes" : "No"}</td>
         <td class="mono">${r.energy_ev !== null && r.energy_ev !== undefined ? r.energy_ev.toFixed(4) : "—"}</td>
-        <td class="mono">${r.delta_e_kcal !== null && r.delta_e_kcal !== undefined ? `${r.delta_e_kcal >= 0 ? "+" : ""}${r.delta_e_kcal.toFixed(3)} kcal/mol` : "Different formula"}</td>
+        <td class="mono">${r.delta_e_kcal !== null && r.delta_e_kcal !== undefined ? `${r.delta_e_kcal >= 0 ? "+" : ""}${r.delta_e_kcal.toFixed(3)} kcal/mol` : (r.same_formula ? "Strained (3D rejected)" : "Different formula")}</td>
         <td><button class="btn sm prop-3d-btn" data-smi="${esc(r.smiles)}">3D →</button></td>
       </tr>
     `;
