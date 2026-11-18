@@ -220,3 +220,49 @@ def test_fetch_real_subset_exclusion_and_from_manifest(tmp_path):
                 str(tmp_path / "bad_out"),
             ]
         )
+
+
+def test_frozen_test_v2_single_shot_report_and_val_lock():
+    folder = ROOT / "benchmarks/frozen-test-v2"
+
+    # Decoding choice must be locked strictly from PMC val (963 images).
+    val_sel = json.loads((folder / "val_selection.json").read_text(encoding="utf-8"))
+    assert val_sel["split"] == "pmc_val"
+    assert val_sel["n"] == 963
+    variants = val_sel["variants"]
+    assert len(variants) == 10
+    expected_best = max(variants, key=lambda k: variants[k]["exact"])
+    assert expected_best == "AC-ensemble-beam5-ttapad"
+    assert val_sel["best_variant"] == expected_best
+
+    # Score-once rule: only one report/prediction set may exist in benchmarks/frozen-test-v2/.
+    md_reports = sorted(folder.glob("*-report.md"))
+    json_reports = sorted(folder.glob("*-report.json"))
+    pred_csvs = sorted(folder.glob("*-preds.csv"))
+    assert [p.name for p in md_reports] == [f"{expected_best}-report.md"]
+    assert [p.name for p in json_reports] == [f"{expected_best}-report.json"]
+    assert [p.name for p in pred_csvs] == [f"{expected_best}-preds.csv"]
+
+    pred_bytes = pred_csvs[0].read_bytes()
+    assert b"\r\n" not in pred_bytes
+    with open(pred_csvs[0], encoding="utf-8", newline="") as f:
+        pred_rows = list(csv.DictReader(f))
+    assert len(pred_rows) == 300
+
+    rep = json.loads(json_reports[0].read_text(encoding="utf-8"))
+    assert rep["input"] == f"{expected_best}-preds.csv"
+    assert rep["n_scored"] == 300
+    groups = {g["subset"]: g for g in rep["groups"]}
+    assert groups["ALL"]["n"] == 300
+    assert groups["ACS"]["n"] == 100
+    assert groups["UOB"]["n"] == 100
+    assert groups["USPTO"]["n"] == 100
+    assert groups["has_stereo"]["n"] == 57
+    assert groups["no_stereo"]["n"] == 243
+    assert len(groups["ALL"]["exact_ci95"]) == 2
+    assert len(groups["has_stereo"]["exact_ci95"]) == 2
+    assert len(groups["no_stereo"]["exact_ci95"]) == 2
+
+    md = md_reports[0].read_text(encoding="utf-8")
+    for label in ("**ALL**", "ACS", "UOB", "USPTO", "has_stereo", "no_stereo"):
+        assert f"| {label} |" in md

@@ -1,0 +1,175 @@
+{
+ "input": "AC-ensemble-beam5-ttapad-preds.csv",
+ "columns": {
+  "id": "id",
+  "gold": "gold",
+  "pred": "pred",
+  "subset": "subset",
+  "kind": null
+ },
+ "where": [],
+ "n_rows": 300,
+ "n_scored": 300,
+ "gold_invalid": {
+  "n": 0,
+  "ids": []
+ },
+ "groups": [
+  {
+   "subset": "ALL",
+   "kind": null,
+   "n": 300,
+   "exact": 0.4666666666666667,
+   "exact_flat": 0.49333333333333335,
+   "inchikey": 0.49666666666666665,
+   "tanimoto": 0.7608806859340944,
+   "tanimoto_1": 0.5,
+   "valid": 0.9966666666666667,
+   "invalid_rate": 0.0033333333333332993,
+   "n_stereo_elements": 141,
+   "stereo_elem_acc_strict": 0.028368794326241134,
+   "stereo_elem_acc_given_flat": 0.36363636363636365,
+   "n_with_stereo": 57,
+   "exact_on_stereo_subset": 0.017543859649122806,
+   "exact_ci95": [
+    0.4066666666666667,
+    0.5167499999999999
+   ],
+   "n_rows": 300,
+   "n_pred_blank": 0,
+   "n_gold_invalid": 0
+  },
+  {
+   "subset": "ACS",
+   "kind": null,
+   "n": 100,
+   "exact": 0.3,
+   "exact_flat": 0.35,
+   "inchikey": 0.3,
+   "tanimoto": 0.6388380421622163,
+   "tanimoto_1": 0.36,
+   "valid": 1.0,
+   "invalid_rate": 0.0,
+   "n_stereo_elements": 53,
+   "stereo_elem_acc_strict": 0.018867924528301886,
+   "stereo_elem_acc_given_flat": 0.16666666666666666,
+   "n_with_stereo": 23,
+   "exact_on_stereo_subset": 0.0,
+   "exact_ci95": [
+    0.21,
+    0.39
+   ],
+   "n_rows": 100,
+   "n_pred_blank": 0,
+   "n_gold_invalid": 0
+  },
+  {
+   "subset": "UOB",
+   "kind": null,
+   "n": 100,
+   "exact": 0.85,
+   "exact_flat": 0.87,
+   "inchikey": 0.92,
+   "tanimoto": 0.9437028724053448,
+   "tanimoto_1": 0.87,
+   "valid": 1.0,
+   "invalid_rate": 0.0,
+   "n_stereo_elements": 1,
+   "stereo_elem_acc_strict": 0.0,
+   "stereo_elem_acc_given_flat": 0.0,
+   "n_with_stereo": 1,
+   "exact_on_stereo_subset": 0.0,
+   "exact_ci95": [
+    0.78,
+    0.91
+   ],
+   "n_rows": 100,
+   "n_pred_blank": 0,
+   "n_gold_invalid": 0
+  },
+  {
+   "subset": "USPTO",
+   "kind": null,
+   "n": 100,
+   "exact": 0.25,
+   "exact_flat": 0.26,
+   "inchikey": 0.27,
+   "tanimoto": 0.7001011432347223,
+   "tanimoto_1": 0.27,
+   "valid": 0.99,
+   "invalid_rate": 0.010000000000000009,
+   "n_stereo_elements": 87,
+   "stereo_elem_acc_strict": 0.034482758620689655,
+   "stereo_elem_acc_given_flat": 0.75,
+   "n_with_stereo": 33,
+   "exact_on_stereo_subset": 0.030303030303030304,
+   "exact_ci95": [
+    0.16,
+    0.33
+   ],
+   "n_rows": 100,
+   "n_pred_blank": 0,
+   "n_gold_invalid": 0
+  },
+  {
+   "subset": "has_stereo",
+   "kind": null,
+   "n": 57,
+   "exact": 0.017543859649122806,
+   "exact_flat": 0.14035087719298245,
+   "inchikey": 0.017543859649122806,
+   "tanimoto": 0.5515782326580034,
+   "tanimoto_1": 0.15789473684210525,
+   "valid": 0.9824561403508771,
+   "invalid_rate": 0.01754385964912286,
+   "n_stereo_elements": 141,
+   "stereo_elem_acc_strict": 0.028368794326241134,
+   "stereo_elem_acc_given_flat": 0.36363636363636365,
+   "n_with_stereo": 57,
+   "exact_on_stereo_subset": 0.017543859649122806,
+   "exact_ci95": [
+    0.0,
+    0.05263157894736842
+   ],
+   "n_rows": 57,
+   "n_pred_blank": 0,
+   "n_gold_invalid": 0
+  },
+  {
+   "subset": "no_stereo",
+   "kind": null,
+   "n": 243,
+   "exact": 0.5720164609053497,
+   "exact_flat": 0.5761316872427984,
+   "inchikey": 0.6090534979423868,
+   "tanimoto": 0.8099763231223133,
+   "tanimoto_1": 0.5802469135802469,
+   "valid": 1.0,
+   "invalid_rate": 0.0,
+   "n_stereo_elements": 0,
+   "stereo_elem_acc_strict": NaN,
+   "stereo_elem_acc_given_flat": NaN,
+   "n_with_stereo": 0,
+   "exact_on_stereo_subset": NaN,
+   "exact_ci95": [
+    0.5102880658436214,
+    0.6337448559670782
+   ],
+   "n_rows": 243,
+   "n_pred_blank": 0,
+   "n_gold_invalid": 0
+  }
+ ],
+ "metrics": {
+  "exact": "canonical SMILES equal after standardization, full stereochemistry",
+  "exact_flat": "canonical SMILES equal with all stereo removed (stereo-agnostic)",
+  "inchikey": "standard InChIKeys equal (stereo layers kept; tautomers may match)",
+  "valid": "prediction parses and standardizes in RDKit (blank = invalid)",
+  "tanimoto": "mean Morgan r=2 2048-bit Tanimoto, chirality ignored, 0 for invalid",
+  "tanimoto_1": "fraction with Tanimoto 1.0 (an enantiomer or stereo error still counts)"
+ },
+ "n_boot": 1000,
+ "pooled_across_kinds": false,
+ "parity_verified": false,
+ "footnote": "Scoring parity with arXiv:2608.09100 is unverified."
+}
