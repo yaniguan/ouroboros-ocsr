@@ -1,0 +1,37 @@
+{
+  "name": "ocsr-edge-v0",
+  "note": "Plan only. Nothing here has been run. Gate limits are the README example values; choose real limits on validation with scripts/eval_selective.py.",
+  "teacher": {
+    "checkpoints": ["checkpoints/finetune-v2-A.pt", "checkpoints/finetune-v2-C.pt"],
+    "beam": 5,
+    "tta": ["pad"]
+  },
+  "pseudo_labels": {
+    "shards": "real/unlabeled",
+    "split": "train",
+    "min_margin": 0.2,
+    "max_disagreement": 0.0
+  },
+  "leakage_eval_sets": [
+    "subset100=real/subset100:test",
+    "frozen_v2=benchmarks/frozen-test-v2/manifest.csv"
+  ],
+  "student": {
+    "arm": "A",
+    "decoding": "greedy",
+    "config": "configs/finetune-real-pmc.yaml",
+    "init": "checkpoints/finetune-v2-A.pt",
+    "real_roots": ["/content/data/real/pmc"]
+  },
+  "selection": {
+    "shards": "real/pmc",
+    "split": "val"
+  },
+  "quantize": {
+    "method": "int8-dynamic"
+  },
+  "target": {
+    "device": "jetson-orin-nano-super",
+    "fallback": "cpu"
+  }
+}
