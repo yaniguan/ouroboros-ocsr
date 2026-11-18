@@ -13,7 +13,7 @@
 import json
 from pathlib import Path
 
-BRANCH = "claude/vigilant-johnson-j4882f"
+BRANCH = "main"
 
 
 def md(src):
@@ -332,7 +332,7 @@ def nb04() -> list:
     return cells
 
 
-V1_BRANCH = "codex/v1-multiseed-cplus"
+V1_BRANCH = "main"
 
 
 def nb06() -> list:
