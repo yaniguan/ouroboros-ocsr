@@ -7,7 +7,7 @@ from pathlib import Path
 
 import nbformat as nbf
 
-BRANCH = "feat/real-finetune-oct30"
+BRANCH = "main"
 cells = []
 
 

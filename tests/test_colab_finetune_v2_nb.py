@@ -65,6 +65,114 @@ def test_no_authuser_in_repo():
             assert "authuser=" not in path.read_text(encoding="utf-8"), path
 
 
+def _notebook_branches(nb: dict) -> list[str]:
+    branches: list[str] = []
+    for cell in nb["cells"]:
+        if cell["cell_type"] != "code":
+            continue
+        raw = "".join(cell["source"])
+        if raw.lstrip().startswith("%%"):
+            continue
+        clean = "\n".join(
+            (line[: len(line) - len(line.lstrip())] + "pass")
+            if line.lstrip().startswith("!")
+            else line
+            for line in raw.splitlines()
+        )
+        tree = ast.parse(clean)
+        for node in tree.body:
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Name) and target.id == "BRANCH":
+                        assert isinstance(node.value, ast.Constant) and isinstance(
+                            node.value.value, str
+                        )
+                        branches.append(node.value.value)
+    return branches
+
+
+def _living_remote_branches() -> set[str]:
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(ROOT), "ls-remote", "--heads", "origin"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+    except OSError:
+        proc = None
+    if proc is not None and proc.returncode == 0 and proc.stdout.strip():
+        heads = set()
+        for line in proc.stdout.splitlines():
+            parts = line.split()
+            if len(parts) == 2 and parts[1].startswith("refs/heads/"):
+                heads.add(parts[1].removeprefix("refs/heads/"))
+        if heads:
+            return heads
+
+    # Offline fallback when git ls-remote cannot reach GitHub.
+    local_refs = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(ROOT),
+            "for-each-ref",
+            "--format=%(refname:short)",
+            "refs/remotes/origin",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    heads = {"main"}
+    if local_refs.returncode == 0:
+        for line in local_refs.stdout.splitlines():
+            ref = line.strip()
+            if ref.startswith("origin/") and ref != "origin/HEAD":
+                heads.add(ref.removeprefix("origin/"))
+    return heads
+
+
+def test_all_committed_colab_branches_exist_on_remote():
+    living = _living_remote_branches()
+    assert "main" in living
+    assert "feat/real-finetune-oct30" not in living
+    assert "feat/rgroups-aug-oct29" not in living
+
+    colab_nbs = sorted((ROOT / "colab").glob("*.ipynb"))
+    assert len(colab_nbs) >= 3
+    for path in colab_nbs:
+        nb = json.loads(path.read_text(encoding="utf-8"))
+        nbformat.validate(nbformat.from_dict(nb))
+        for src in _codes(nb):
+            ast.parse(src)
+        branches = _notebook_branches(nb)
+        assert branches, f"{path.name} must define BRANCH"
+        for branch in branches:
+            assert branch in living, f"{path.name} clones missing branch {branch!r}"
+        joined = "\n".join(_codes(nb))
+        assert "['git', 'checkout', '-B', BRANCH, f'origin/{BRANCH}']" in joined, path.name
+
+    for path in sorted((ROOT / "notebooks").glob("*.ipynb")):
+        nb = json.loads(path.read_text(encoding="utf-8"))
+        for branch in _notebook_branches(nb):
+            assert branch in living, f"{path.name} clones missing branch {branch!r}"
+
+
+def test_committed_phase_notebooks_match_generator(tmp_path):
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "notebooks").mkdir()
+    gen = tmp_path / "scripts/make_colab_nbs.py"
+    src = (ROOT / "scripts/make_colab_nbs.py").read_text(encoding="utf-8")
+    gen.write_text(src, encoding="utf-8")
+    runpy.run_path(str(gen), run_name="__main__")
+    for built_path in sorted((tmp_path / "notebooks").glob("*.ipynb")):
+        built = json.loads(built_path.read_text(encoding="utf-8"))
+        committed = json.loads((ROOT / "notebooks" / built_path.name).read_text(encoding="utf-8"))
+        assert _cell_pairs(built) == _cell_pairs(committed), built_path.name
+
+
 def test_cells_compile(notebook):
     for src in _codes(notebook):
         ast.parse(src)
