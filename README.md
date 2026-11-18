@@ -133,7 +133,7 @@ tests/        pytest suite
 ## Limitations / status
 
 - **Research preview.** The GitHub release (v0.1.0-alpha) ships the synthetic-only A/B/C checkpoints. The fine-tuned v2 checkpoints behind the 54.0% result are not released yet.
-- **Weak spots on real figures:** stereochemistry (the fine-tuned v2 `has_stereo` subset score is not yet reproduced in a committed report; released arm A scored [2.0% on the 49 stereo figures](benchmarks/real-subset100-rgroups/A_report.json)), long patent molecules, and R-groups / abbreviations (ACS).
+- **Weak spots on real figures:** stereochemistry (on the 49 `has_stereo` figures in `subset100`, fine-tune v2 scores [18.4%](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-ttapad-report.md) with `pad` TTA and [20.4%](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-report.md) without TTA, [16.3%](benchmarks/finetune-v2-oct30/A-selected-report.md) for arm A greedy, and [8.2%](benchmarks/finetune-v2-oct30/C-selected-report.md) for arm C greedy, vs 58.6%–61.0% on `no_stereo` and [2.0%](benchmarks/real-subset100-rgroups/A_report.json) for released arm A), long patent molecules, and R-groups / abbreviations (ACS).
 - On upright real figures arm A beats arm C (51.0% vs 37.6% greedy); the rotation prior pays off on rotated drawings.
 - C8 is a discrete rotation prior; rasterization means predictions need not match at every angle.
 - Hand-drawn structures are not measured yet. Optional 3D/MACE tools are outside the release scope ([DATA.md](DATA.md)).
