@@ -23,7 +23,7 @@
 - [x] `MACE-OFF23` (10-element neutral singlet) vs `AIMNet2` eligibility gates + `112`-scaffold paired 7-family bioisostere panel (`BCP`, `BCH`, `2-oxa-BCH`, `BCHep`, `cubane`, `azaspiro/oxetane`, `-SF5`)
 - [x] Bridgehead exit-vector torsion scanner, transannular `C1...C3` compression tracker & PES Softening Slope `alpha`
 - [x] Offset-free committee force disagreement `sigma_F` + 5 active selectors (`qbc_lcmd_diverse` et al.)
-- [x] Provenance-guarded QM oracle (`psi4` / `pyscf` / `tblite` / `ase` + analytical reference) & conservative `K`-head shallow-ensemble distillation (`8/8` tests passing on CPU)
+- [x] Provenance-guarded QM oracle (`psi4` / `pyscf` / `tblite` / `ase` + analytical reference) & conservative `K`-head shallow-ensemble distillation (tests: `tests/test_active_*.py`, CPU)
 - [ ] Run full `112`-scaffold blind-spot scan with pretrained `MACE-OFF23` (`small`/`medium`/`large`) and `AIMNet2` weights
 - [ ] Compute real DFT single-point energies & gradients (`wB97M-D3(BJ)/def2-TZVPPD` via `PySCF` / `Psi4`, `N = 200-500` active frames + held-out test torsion scans)
 - [ ] Run short NVT MD trajectory stability validation before vs after active distillation
