@@ -37,3 +37,15 @@ def test_committed_receipt_summary():
     assert s["n_embed_failures"] == receipt["n_embed_or_cip_failures_on_corrupt"] == 30
     assert s["n_measured_pairs"] == 20
     assert s["delta_e_mace_kcal"]["max"] < 45.0
+
+
+@pytest.mark.skipif(not RECEIPT.exists(), reason="strain receipt not present")
+def test_committed_summary_is_current():
+    summary = RECEIPT.with_name("mace_strain_audit_summary.json")
+    expected = summarize_strain_audit(json.loads(RECEIPT.read_text(encoding="utf-8")))
+    assert json.loads(summary.read_text(encoding="utf-8")) == expected
+
+
+def test_penalty_in_measured_pair_is_an_error():
+    with pytest.raises(ValueError):
+        summarize_strain_audit({"pairs": [_pair(45.0)]})

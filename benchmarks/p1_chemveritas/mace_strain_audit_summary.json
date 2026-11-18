@@ -10,7 +10,8 @@
     "mean": 1.695,
     "min": -1.14,
     "max": 4.928,
-    "n_corrupt_higher": 16
+    "n_corrupt_higher": 16,
+    "preference_rate": 0.8
   },
   "delta_e_mmff_kcal": {
     "median": 2.599,
@@ -19,6 +20,39 @@
     "mean": 3.318,
     "min": 0.864,
     "max": 6.787,
-    "n_corrupt_higher": 20
+    "n_corrupt_higher": 20,
+    "preference_rate": 1.0
+  },
+  "by_stratum": {
+    "S1_bridged_caged": {
+      "n": 10,
+      "n_embed_failures": 10,
+      "n_measured": 0,
+      "median_delta_e_mace_kcal": null
+    },
+    "S2_dense_stereo": {
+      "n": 10,
+      "n_embed_failures": 0,
+      "n_measured": 10,
+      "median_delta_e_mace_kcal": 2.248
+    },
+    "S3_strained_bredt": {
+      "n": 10,
+      "n_embed_failures": 10,
+      "n_measured": 0,
+      "median_delta_e_mace_kcal": null
+    },
+    "S4_superatom_si": {
+      "n": 10,
+      "n_embed_failures": 0,
+      "n_measured": 10,
+      "median_delta_e_mace_kcal": 1.573
+    },
+    "S5_medchem_bioisosteres": {
+      "n": 10,
+      "n_embed_failures": 10,
+      "n_measured": 0,
+      "median_delta_e_mace_kcal": null
+    }
   }
 }

@@ -37,7 +37,14 @@ tectonic -X compile papers/p1/main.tex
 
 ## Strain audit summary
 
-`python scripts/summarize_strain_audit.py` writes `benchmarks/p1_chemveritas/mace_strain_audit_summary.json` from the committed receipt. 30 of 50 corrupt structures fail RDKit embedding and carry a fixed 45 kcal/mol penalty, so the 45.00 kcal/mol median in the manuscript is the penalty constant. On the 20 pairs where both structures embed, the MACE-OFF23 difference (BFGS, 8 steps) has median 1.97 kcal/mol (min -1.14, max 4.93; corrupt higher in 16 of 20). The manuscript strain text and Table 2 should use this summary.
+`python scripts/summarize_strain_audit.py` writes `benchmarks/p1_chemveritas/mace_strain_audit_summary.json` from the committed receipt.
+
+- 30 of 50 corrupt structures fail RDKit embedding and carry a fixed 45 kcal/mol penalty, so the 45.00 kcal/mol median in the manuscript is the penalty constant.
+- The 92.0% preference rate and the ROC-AUC values (0.853 MACE, 0.919 MMFF) in the manuscript also include these 30 penalty pairs.
+- On the 20 pairs where both structures embed (MMFF94s pre-optimization, then at most 8 MACE BFGS steps), the MACE-OFF23 difference has median 1.97 kcal/mol (min -1.14, max 4.93). The corrupt structure is higher in 16 of 20 pairs (80%).
+- Per stratum: S1, S3 and S5 have no measured pair (all 10 fail embedding). S2 and S4 have 10 measured pairs each, with median 2.25 and 1.57 kcal/mol.
+
+The manuscript strain text and Table 2 should use this summary.
 
 ## Publication Readiness Tracker
 

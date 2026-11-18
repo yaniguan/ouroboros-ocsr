@@ -398,7 +398,7 @@ def evaluate_3d_strain(
     return result
 
 
-def summarize_strain_audit(receipt: dict) -> dict:
+def summarize_strain_audit(receipt: dict, penalty_kcal: float = 45.0) -> dict:
     """Summarize a strain-audit receipt with embedding failures counted apart.
 
     Pairs whose corrupt (or truth) structure failed to embed carry a fixed penalty,
@@ -417,6 +417,8 @@ def summarize_strain_audit(receipt: dict) -> dict:
         if vals.size == 0:
             out[key] = None
             continue
+        if np.any(vals == penalty_kcal):
+            raise ValueError(f"{key}: a measured pair carries the embed-failure penalty")
         out[key] = {
             "median": round(float(np.median(vals)), 3),
             "iqr_25": round(float(np.percentile(vals, 25)), 3),
@@ -425,5 +427,19 @@ def summarize_strain_audit(receipt: dict) -> dict:
             "min": round(float(vals.min()), 3),
             "max": round(float(vals.max()), 3),
             "n_corrupt_higher": int((vals > 0).sum()),
+            "preference_rate": round(float((vals > 0).mean()), 3),
         }
+    by_stratum = {}
+    for p in pairs:
+        st = by_stratum.setdefault(p.get("stratum", "unknown"), {"n": 0, "n_embed_failures": 0, "mace": []})
+        st["n"] += 1
+        if p["truth_embed_ok"] and p["corrupt_embed_ok"]:
+            st["mace"].append(p["delta_e_mace_kcal"])
+        else:
+            st["n_embed_failures"] += 1
+    for st in by_stratum.values():
+        vals = st.pop("mace")
+        st["n_measured"] = len(vals)
+        st["median_delta_e_mace_kcal"] = round(float(np.median(vals)), 3) if vals else None
+    out["by_stratum"] = dict(sorted(by_stratum.items()))
     return out
