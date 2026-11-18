@@ -14,6 +14,11 @@
 
 **Read a molecule drawing, get the SMILES back, at any rotation — verified in 3D.**
 
+<p>
+  <strong>Project Website:</strong> <a href="https://yaniguan.github.io/ouroboros-ocsr/">https://yaniguan.github.io/ouroboros-ocsr/</a><br>
+  <strong>Browser 3D Lab (No Install):</strong> <a href="https://yaniguan.github.io/ouroboros-ocsr/lab/">https://yaniguan.github.io/ouroboros-ocsr/lab/</a>
+</p>
+
 [![Project Website](https://img.shields.io/badge/website-yaniguan.github.io%2Fouroboros--ocsr-b5d88e?labelColor=101820)](https://yaniguan.github.io/ouroboros-ocsr/)
 [![Browser 3D Lab](https://img.shields.io/badge/Browser_3D_Lab-live_demo-79c2bd?labelColor=101820)](https://yaniguan.github.io/ouroboros-ocsr/lab/)
 [![Paper P1](https://img.shields.io/badge/Paper_P1-ChemVeritas--600-b9a1de?labelColor=101820)](https://github.com/yaniguan/ouroboros-ocsr/tree/p1-phys-spec-ocsr-bench)
@@ -21,8 +26,6 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python 3.11–3.12](https://img.shields.io/badge/python-3.11%E2%80%933.12-blue.svg)](pyproject.toml)
 [![tests](https://github.com/yaniguan/ouroboros-ocsr/actions/workflows/tests.yml/badge.svg)](https://github.com/yaniguan/ouroboros-ocsr/actions/workflows/tests.yml)
-
-**[Project Website](https://yaniguan.github.io/ouroboros-ocsr/) · [Browser 3D Lab (No Install)](https://yaniguan.github.io/ouroboros-ocsr/lab/) · [Paper P1 (`ChemVeritas-600`)](https://github.com/yaniguan/ouroboros-ocsr/tree/p1-phys-spec-ocsr-bench) · [Paper P2 (`Bioisostere MLIP`)](https://github.com/yaniguan/ouroboros-ocsr/tree/p2-mlip-blindspot-distill)**
 
 </div>
 
