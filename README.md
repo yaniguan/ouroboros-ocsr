@@ -7,13 +7,16 @@
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/ouroboros-ocsr_mark_dark.svg">
-  <img src="assets/ouroboros-ocsr_mark_light.svg" alt="Ouroboros logo" width="96">
+  <img src="assets/ouroboros-ocsr_mark_light.svg" alt="Ouroboros logo" width="84">
 </picture>
 
 # Ouroboros
 
-**Read a molecule drawing, get the SMILES back, at any rotation.**
+**Read a molecule drawing, get the SMILES back, at any rotation — verified in 3D.**
 
+[![Project Website](https://img.shields.io/badge/website-yaniguan.github.io%2Fouroboros--ocsr-b5d88e?labelColor=101820)](https://yaniguan.github.io/ouroboros-ocsr/)
+[![Paper P1](https://img.shields.io/badge/Paper_P1-ChemVeritas--600-79c2bd?labelColor=101820)](https://github.com/yaniguan/ouroboros-ocsr/tree/p1-phys-spec-ocsr-bench)
+[![Paper P2](https://img.shields.io/badge/Paper_P2-Bioisostere_MLIP-91b6df?labelColor=101820)](https://github.com/yaniguan/ouroboros-ocsr/tree/p2-mlip-blindspot-distill)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python 3.11–3.12](https://img.shields.io/badge/python-3.11%E2%80%933.12-blue.svg)](pyproject.toml)
 [![tests](https://github.com/yaniguan/ouroboros-ocsr/actions/workflows/tests.yml/badge.svg)](https://github.com/yaniguan/ouroboros-ocsr/actions/workflows/tests.yml)
@@ -67,6 +70,11 @@ Want a UI?
 
 ## Results
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/results-chart-dark.svg">
+  <img src="assets/results-chart-light.svg" alt="Measured Ouroboros accuracy across 24 rotation angles and 298 real document figures" width="100%">
+</picture>
+
 Real images (`dev-test` set, `subset100`): 298 figures (ACS 100, UOB 100, USPTO 98), a seeded sample of public OCSR benchmarks. Exact match with stereochemistry.
 
 | Model | All | ACS | UOB | USPTO | Source |
@@ -84,21 +92,22 @@ Published systems report higher numbers on the full benchmark sets with their ow
 
 ## How it works
 
-```mermaid
-flowchart LR
-    A["Molecule image"] --> B["Encoder<br/>A/B: CNN · C: C8 steerable CNN"]
-    B --> C["Token mixer"]
-    C --> D["6-layer Transformer decoder"]
-    D --> E["Beam search + ensemble<br/>+ TTA + validity rerank"]
-    E --> F["SMILES with stereo"]
-    F -. "optional" .-> G["3D conformer → MACE energy"]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/overview-dark.svg">
+  <img src="assets/overview-light.svg" alt="Ouroboros pipeline from rotated 2D depiction through C8 steerable encoder and Transformer decoder to 3D MACE forces and spectra" width="100%">
+</picture>
 
 | Arm | Image encoder | Random rotation in training |
 |---|---|---|
 | A | ResNet-style CNN + absolute positions + Transformer mixer | No |
 | B | Same as A | Yes, uniform 0–360° |
 | C | C8 steerable CNN + invariant token-set mixer | No |
+
+## Research extensions (frozen paper branches)
+
+- **Paper P1 — [`p1-phys-spec-ocsr-bench`](https://github.com/yaniguan/ouroboros-ocsr/tree/p1-phys-spec-ocsr-bench) (tag `p1-v1.0`):** *Thermodynamically and Spectroscopically Informed OCSR and the `ChemVeritas-600` Multimodal Science Benchmark.* Pairs visual beams with 3D MACE-OFF23 Boltzmann strain (`+45.0 kcal/mol` median penalty on silent stereo flips, `ROC-AUC = 0.853`), exact-mass HRMS, and unassigned ¹³C/¹H NMR matching (`19.7% → 77.0%` T2 stereoisomer accuracy; `73.3%` recovery on 30 published literature ¹³C NMR spectra).
+- **Paper P2 — [`p2-mlip-blindspot-distill`](https://github.com/yaniguan/ouroboros-ocsr/tree/p2-mlip-blindspot-distill):** *Foundation Force-Field Blind-Spot Discovery and Replay-Protected Active Distillation on Modern 3D Bioisosteres.* Audits PES barrier softening across 112 paired sp³ cages (`BCP`, `BCH`, `2-oxa-BCH`, `BCHep`, `cubane`, `azaspiro/oxetane`, `-SF₅`) with conservative `K`-head shallow ensembles and anchor replay.
+- **Interactive overview:** [https://yaniguan.github.io/ouroboros-ocsr/](https://yaniguan.github.io/ouroboros-ocsr/) (`site/`).
 
 ## Repo layout
 
@@ -109,6 +118,7 @@ configs/      training configs (pilot-{A,B,C}-200k.yaml, ...)
 colab/        GPU notebooks (fine-tune v2, real-data fine-tunes)
 notebooks/    setup, data, training, geometry, rotation demo
 benchmarks/   measured results, one folder per experiment
+site/         project website (https://yaniguan.github.io/ouroboros-ocsr/)
 docs/         results, release notes, research plan, roadmap
 tests/        pytest suite
 ```

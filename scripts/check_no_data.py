@@ -6,7 +6,8 @@ Rules (see DATA.md):
   * nothing under data/, data_cache/, real_data/, real/, hf/, hf_real/, shards/, runs/, checkpoints/
   * no archives / shard indices / pools / tables: .tar .tar.gz .tgz .zip .idx.json .tsv.gz .npz
     .parquet .arrow .ckpt .pt
-  * raster images only under benchmarks/ (our own plots), and never with "real" in the path
+  * raster images only under benchmarks/ or site/ (our own plots and project page), and never with
+    "real" in the path
   * no file larger than 5 MB
 """
 
@@ -59,8 +60,8 @@ def violations(files: list[tuple[str, int]]) -> list[str]:
         elif low.endswith(BLOCKED_SUFFIXES):
             out.append(f"{path}: dataset/archive/checkpoint file type")
         elif low.endswith(IMAGE_SUFFIXES):
-            if p.parts[0] != "benchmarks":
-                out.append(f"{path}: image outside benchmarks/")
+            if p.parts[0] not in {"benchmarks", "site"}:
+                out.append(f"{path}: image outside benchmarks/ or site/")
             elif "real" in low:
                 out.append(f"{path}: image path mentions real data")
         if size > MAX_BYTES:

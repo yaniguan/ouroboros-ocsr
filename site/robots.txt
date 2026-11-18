@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://yaniguan.github.io/ouroboros-ocsr/sitemap.xml
