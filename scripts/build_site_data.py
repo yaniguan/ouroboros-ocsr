@@ -28,7 +28,7 @@ def _load_rotation_arm(arm: str) -> dict[str, list]:
 def _parse_md_report(path: Path) -> dict[str, dict[str, float | list[float]]]:
     out: dict[str, dict[str, float | list[float]]] = {}
     pat = re.compile(
-        r"^\|\s*\*?\*?([A-Za-z]+)\*?\*?\s*\|\s*(\d+)\s*\|\s*([\d.]+)%\s*\|\s*"
+        r"^\|\s*\*?\*?([A-Za-z_]+)\*?\*?\s*\|\s*(\d+)\s*\|\s*([\d.]+)%\s*\|\s*"
         r"\[([\d.]+)%,\s*([\d.]+)%\]\s*\|\s*([\d.]+)%\s*\|\s*([\d.]+)%\s*\|\s*"
         r"([\d.]+)%\s*\|\s*([\d.]+)\s*\|"
     )

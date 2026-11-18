@@ -2,6 +2,7 @@
 
 import csv
 import json
+from pathlib import Path
 
 import pytest
 
@@ -212,3 +213,24 @@ def test_all_gold_invalid_group_renders(tmp_path):
     md = tmp_path / "r.md"
     harness.main([str(src), "--md", str(md), "--quiet"])
     assert "| S | 0 | – |" in md.read_text()
+
+
+def test_committed_v2_devtest_reports_include_stereo_rows():
+    root = Path(__file__).resolve().parents[1] / "benchmarks" / "finetune-v2-oct30"
+    names = [
+        "AC-ensemble-beam5-ttapad",
+        "AC-ensemble-beam5",
+        "A-selected",
+        "C-selected",
+    ]
+    for name in names:
+        md = (root / f"{name}-report.md").read_text(encoding="utf-8")
+        assert "| has_stereo | 49 |" in md
+        assert "| no_stereo | 249 |" in md
+        rep = json.loads((root / f"{name}-report.json").read_text(encoding="utf-8"))
+        assert rep["input"] == f"{name}-preds.csv"
+        groups = {g["subset"]: g for g in rep["groups"]}
+        assert groups["has_stereo"]["n"] == 49
+        assert groups["no_stereo"]["n"] == 249
+        assert len(groups["has_stereo"]["exact_ci95"]) == 2
+        assert len(groups["no_stereo"]["exact_ci95"]) == 2
