@@ -169,6 +169,25 @@ def test_analytical_oracle_is_tagged_synthetic():
 def test_qm_oracle_tag_keeps_method_and_basis():
     from ouroboros.active.oracle import QMOracleSpec
 
-    spec = QMOracleSpec(backend="pyscf")
-    assert not spec.is_synthetic
-    assert spec.provenance_tag == "pyscf:wb97m-d3bj/def2-tzvppd/gas/q0/m1"
+    assert QMOracleSpec(backend="psi4").provenance_tag == "psi4:wb97m-d3bj/def2-tzvppd/gas/q0/m1"
+    pyscf = QMOracleSpec(backend="pyscf")
+    assert not pyscf.is_synthetic
+    assert pyscf.provenance_tag == "pyscf:wb97m-v/def2-tzvppd/gas/q0/m1"
+    assert QMOracleSpec(backend="tblite").provenance_tag == "tblite:gfn2-xtb/q0/m1"
+    assert QMOracleSpec(backend="ase").provenance_tag == "ase:unspecified/q0/m1"
+
+
+def test_script_warns_about_synthetic_components(monkeypatch, tmp_path, capsys):
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "scripts" / "run_active_distill.py"
+    mod_spec = importlib.util.spec_from_file_location("run_active_distill", path)
+    mod = importlib.util.module_from_spec(mod_spec)
+    mod_spec.loader.exec_module(mod)
+    monkeypatch.setattr(mod, "build_bioisostere_panel", lambda preset: [])
+    monkeypatch.setattr(mod, "run_active_distillation_benchmark", lambda records, **kw: {"ok": True})
+    assert mod.main(["--out", str(tmp_path)]) == 0
+    captured = capsys.readouterr()
+    assert "oracle, committee, baseline" in captured.err
+    assert json.loads(captured.out) == {"ok": True}
