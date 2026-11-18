@@ -35,6 +35,10 @@
 tectonic -X compile papers/p1/main.tex
 ```
 
+## Strain audit summary
+
+`python scripts/summarize_strain_audit.py` writes `benchmarks/p1_chemveritas/mace_strain_audit_summary.json` from the committed receipt. 30 of 50 corrupt structures fail RDKit embedding and carry a fixed 45 kcal/mol penalty, so the 45.00 kcal/mol median in the manuscript is the penalty constant. On the 20 pairs where both structures embed, the MACE-OFF23 difference (BFGS, 8 steps) has median 1.97 kcal/mol (min -1.14, max 4.93; corrupt higher in 16 of 20). The manuscript strain text and Table 2 should use this summary.
+
 ## Publication Readiness Tracker
 
 - [x] Literature synthesis (`42` papers) & formal hypotheses (`H1.1`–`H1.3`)

@@ -396,3 +396,34 @@ def evaluate_3d_strain(
         _STRAIN_CACHE.clear()
     _STRAIN_CACHE[cache_key] = result
     return result
+
+
+def summarize_strain_audit(receipt: dict) -> dict:
+    """Summarize a strain-audit receipt with embedding failures counted apart.
+
+    Pairs whose corrupt (or truth) structure failed to embed carry a fixed penalty,
+    not a computed energy, so strain statistics use only pairs where both structures embedded.
+    """
+    pairs = receipt["pairs"]
+    measured = [p for p in pairs if p["truth_embed_ok"] and p["corrupt_embed_ok"]]
+    out = {
+        "calculator": receipt.get("calculator"),
+        "n_pairs": len(pairs),
+        "n_embed_failures": len(pairs) - len(measured),
+        "n_measured_pairs": len(measured),
+    }
+    for key in ("delta_e_mace_kcal", "delta_e_mmff_kcal"):
+        vals = np.array([p[key] for p in measured], dtype=float)
+        if vals.size == 0:
+            out[key] = None
+            continue
+        out[key] = {
+            "median": round(float(np.median(vals)), 3),
+            "iqr_25": round(float(np.percentile(vals, 25)), 3),
+            "iqr_75": round(float(np.percentile(vals, 75)), 3),
+            "mean": round(float(vals.mean()), 3),
+            "min": round(float(vals.min()), 3),
+            "max": round(float(vals.max()), 3),
+            "n_corrupt_higher": int((vals > 0).sum()),
+        }
+    return out

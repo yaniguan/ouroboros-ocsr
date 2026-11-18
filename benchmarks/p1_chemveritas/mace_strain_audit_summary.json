@@ -1,0 +1,24 @@
+{
+  "calculator": "MACE-OFF23-medium (BFGS relax_steps=8)",
+  "n_pairs": 50,
+  "n_embed_failures": 30,
+  "n_measured_pairs": 20,
+  "delta_e_mace_kcal": {
+    "median": 1.973,
+    "iqr_25": 0.5,
+    "iqr_75": 2.425,
+    "mean": 1.695,
+    "min": -1.14,
+    "max": 4.928,
+    "n_corrupt_higher": 16
+  },
+  "delta_e_mmff_kcal": {
+    "median": 2.599,
+    "iqr_25": 1.36,
+    "iqr_75": 5.328,
+    "mean": 3.318,
+    "min": 0.864,
+    "max": 6.787,
+    "n_corrupt_higher": 20
+  }
+}
