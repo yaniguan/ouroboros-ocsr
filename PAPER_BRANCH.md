@@ -28,14 +28,30 @@
 
 ## Reproducibility Commands
 
-```powershell
-.\.venv\Scripts\python.exe scripts/run_p1_experiments.py --stage all
-.\.venv\Scripts\python.exe scripts/plot_p1_figures.py
-.\.venv\Scripts\python.exe scripts/build_p1_tex.py
+```bash
+python scripts/run_p1_experiments.py --stage all
+python scripts/plot_p1_figures.py
+python scripts/build_p1_tex.py
 tectonic -X compile papers/p1/main.tex
 ```
 
+## What the numbers mean
+
+Read these limits before quoting any P1 number.
+
+| Receipt | Images | Spectra | Note |
+|---|---|---|---|
+| `gold600_ablation_receipt.json` (ChemVeritas-600, A0–A6) | None. Stage 4 builds the benchmark with `render_images=False`. | Simulated with `predict_nmr` plus small jitter (`ouroboros/bench/builder.py`). | The T2 "visual" score is a fixed rank prior `-0.02 * i` over a shuffled pool of 6 candidates (`ouroboros/bench/vlm_harness.py`), so A0 (19.7%) is close to chance (1/6). The posterior scores candidates with the same `predict_nmr`, so the A4–A6 gain (to 77.0%) is an in-model upper bound. T5 abstention is 100% by construction once the parity guard is on (A1+). |
+| `neural_ocsr_closed_loop.json` (100 scaffolds, 5 views) | Real rendered images, real pretrained Ouroboros-A/B/C/AC weights. | Simulated with `predict_nmr`, same as above. | Tests the real vision models; the spectra part is still in-model. |
+| `tier2_exp_nmr_validation.json` (30 compounds) | None. | Published experimental values. | The only test on measured spectra. The candidate prior puts a decoy first, so A0–A2 are 0/30 by design. |
+| `mace_strain_audit.json` (50 pairs) | None. | None. | 30 of 50 corrupt structures fail RDKit embedding and get a fixed 45 kcal/mol penalty, not a MACE energy. Relaxation is BFGS with 8 steps. See issue #92 for the split summary. |
+
+The manuscript text needs to be updated to state these limits before submission.
+
 ## Publication Readiness Tracker
+
+Status: draft. The items below are done as code and receipts; see "What the numbers mean" for their limits.
+
 
 - [x] Literature synthesis (`42` papers) & formal hypotheses (`H1.1`–`H1.3`)
 - [x] Symmetry-complete $C_8 \subset SO(2)$ visual + parity-invariant $O(3)$ mirror embedding + local-Jacobian NMR symmetry orbits
