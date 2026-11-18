@@ -1,0 +1,42 @@
+[
+ {
+  "eval": "handdrawn_decimer",
+  "train": "subset100",
+  "n_eval": 200,
+  "n_train": 295,
+  "overlap_inchikey": 0,
+  "overlap_connectivity": 0
+ },
+ {
+  "eval": "handdrawn_decimer",
+  "train": "frozen_test_v2",
+  "n_eval": 200,
+  "n_train": 300,
+  "overlap_inchikey": 0,
+  "overlap_connectivity": 0
+ },
+ {
+  "eval": "handdrawn_decimer",
+  "train": "pmc_train",
+  "n_eval": 200,
+  "n_train": 13133,
+  "overlap_inchikey": 0,
+  "overlap_connectivity": 0
+ },
+ {
+  "eval": "handdrawn_decimer",
+  "train": "pmc_val",
+  "n_eval": 200,
+  "n_train": 847,
+  "overlap_inchikey": 0,
+  "overlap_connectivity": 0
+ },
+ {
+  "eval": "handdrawn_decimer",
+  "train": "synth_train",
+  "n_eval": 200,
+  "n_train": 50000,
+  "overlap_inchikey": 0,
+  "overlap_connectivity": 0
+ }
+]

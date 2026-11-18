@@ -61,6 +61,27 @@ EXPECTED_FROZEN_TEST_V2_MANIFEST_SHA256 = (
     "e4a24c68b3d893498b0df727bdb5b77eed0b98e66f6898f21d17aecf01ee5e1a"
 )
 
+DECIMER_HDM_ZENODO_RECORD = "6456306"
+DECIMER_HDM_DOI = "10.5281/zenodo.6456306"
+DECIMER_HDM_SOURCE = "DECIMER_HDM"
+DECIMER_HDM_TSV_URL = (
+    "https://zenodo.org/api/records/6456306/files/DECIMER_HDM_Dataset_SMILES.tsv/content"
+)
+DECIMER_HDM_TSV_MD5 = "5500ec0fdc77ba4742eaa132d2abbab9"
+DECIMER_HDM_TSV_SHA256 = (
+    "5e7ba42375b509226c411dd0dfaa196625ebc621a77cacb36947272281b331b0"
+)
+DECIMER_HDM_IMAGES_URL = (
+    "https://zenodo.org/api/records/6456306/files/DECIMER_HDM_Dataset_Images.tar.gz/content"
+)
+DECIMER_HDM_IMAGES_MD5 = "25def3b562aacdae0b414a5b5c7038f2"
+HANDDRAWN_DECIMER_MANIFEST = "benchmarks/handdrawn-decimer/manifest.csv"
+HANDDRAWN_DECIMER_SEED = 2026
+HANDDRAWN_DECIMER_N = 200
+EXPECTED_HANDDRAWN_DECIMER_MANIFEST_SHA256 = (
+    "076681774e739e10c289d8e50d31ce7980bd9a20bf4acab45a710d623f53d6de"
+)
+
 
 def read_real_manifest(path: str | Path) -> list[dict]:
     path = Path(path)
