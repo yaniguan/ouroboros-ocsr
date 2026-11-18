@@ -136,7 +136,7 @@ tests/        pytest suite
 - **Weak spots on real figures:** stereochemistry (on the 49 `has_stereo` figures in `subset100`, fine-tune v2 scores [18.4%](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-ttapad-report.md) with `pad` TTA and [20.4%](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-report.md) without TTA, [16.3%](benchmarks/finetune-v2-oct30/A-selected-report.md) for arm A greedy, and [8.2%](benchmarks/finetune-v2-oct30/C-selected-report.md) for arm C greedy, vs 58.6%–61.0% on `no_stereo` and [2.0%](benchmarks/real-subset100-rgroups/A_report.json) for released arm A), long patent molecules, and R-groups / abbreviations (ACS).
 - On upright real figures arm A beats arm C (51.0% vs 37.6% greedy); the rotation prior pays off on rotated drawings.
 - C8 is a discrete rotation prior; rasterization means predictions need not match at every angle.
-- Hand-drawn structures are not measured yet. Optional 3D/MACE tools are outside the release scope ([DATA.md](DATA.md)).
+- **Hand-drawn structures:** on a 200-image molecule-disjoint sample of the public DECIMER Hand-drawn set ([`benchmarks/handdrawn-decimer/`](benchmarks/handdrawn-decimer/), `10.5281/zenodo.6456306`), released `v0.1.0-alpha` arms A/B/C score `0.0%` exact match and fine-tune v2 scores `3.0%` (arm A greedy), `2.0%` (arm C greedy), and `4.5%` (CI `2.0–7.5%`, A + C beam 5); neither release trained on hand-drawn data yet. Optional 3D/MACE tools are outside the release scope ([DATA.md](DATA.md)).
 
 Weights and provenance: [MODEL_CARD.md](MODEL_CARD.md). Training protocol: [docs/v0-release.md](docs/v0-release.md). History: [CHANGELOG.md](CHANGELOG.md).
 

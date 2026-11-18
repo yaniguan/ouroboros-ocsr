@@ -3,9 +3,12 @@
 ## Nothing data-like is committed to git
 
 Datasets, rendered shards, real document images, training manifests, pools, checkpoints and run
-outputs never enter the repository. The one committed manifest is the image-free evaluation list
-[`benchmarks/frozen-test-v2/manifest.csv`](benchmarks/frozen-test-v2/manifest.csv), which stores
-only public `Keylab/OCSR-Benchmarks` row IDs and SMILES (no images). This rule is enforced twice:
+outputs never enter the repository. The only committed manifests are the image-free evaluation lists
+[`benchmarks/frozen-test-v2/manifest.csv`](benchmarks/frozen-test-v2/manifest.csv) (public
+`Keylab/OCSR-Benchmarks` row IDs and SMILES) and
+[`benchmarks/handdrawn-decimer/manifest.csv`](benchmarks/handdrawn-decimer/manifest.csv) (public
+DECIMER Hand-drawn `10.5281/zenodo.6456306` row IDs and SMILES), with no images. This rule is
+enforced twice:
 
 1. `.gitignore` excludes `/data/`, `/data_cache/`, `/real_data/`, `/real/`, `shards/`, `runs/`,
    `checkpoints/`, `*.tar`, `*.idx.json`, `*.tsv.gz`, `*.ckpt`, `*.pt`.

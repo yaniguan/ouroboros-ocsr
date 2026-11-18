@@ -42,7 +42,7 @@ MolScribe 12.70% (DECIMER.ai paper, Table 6).
 | UOB | 88.5 (MolNexTR) | 64.0 | −24.5 | **Primary SOTA target**: small, clean, no stereo/abbreviations; gap is recognition accuracy and data volume |
 | USPTO | 93.8 (MolNexTR) | 13.3 | −80.5 | needs long-molecule data (>60 tokens: 0/35 correct) and stereo |
 | ACS | 81.9 (MolNexTR) | 7.0 | −74.9 | needs R-group/abbreviation labels (0/20 on `*` molecules) |
-| Hand-drawn | 75.4 (GTR-VL) | not measured | — | **Secondary target**: rotation/style robustness is where the C_N steerable encoder should help; needs RanDepict-style hand-drawn synthetic data |
+| Hand-drawn | 75.4 (GTR-VL) | 0.0 (released A/B/C), 4.5 (v2 A+C beam 5, `n=200`, CI 2.0–7.5; `benchmarks/handdrawn-decimer/`) | −70.9 (different split; parity unverified) | **Secondary target**: rotation/style robustness is where the C_N steerable encoder should help; needs hand-drawn synthetic training data (`handdrawn_augment`) |
 
 Caveat: our numbers come from a seeded 100-per-source sample of Keylab/OCSR-Benchmarks and the
 standardization in `ouroboros/eval/standardize.py` (parity unverified); a SOTA claim needs the full
