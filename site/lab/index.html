@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0a0f15">
+  <title>Ouroboros Studio — Browser 3D Physics &amp; Symmetry Lab</title>
+  <meta name="description" content="Zero-install browser workbench for Ouroboros: inspect 3D conformers, ten physical and SE(3) symmetry checks, C8 2D steerable feature maps, and stereoisomer strain.">
+  <link rel="icon" href="../assets/ouroboros-static.svg" type="image/svg+xml">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0a0f15;
+      --surface: #101820;
+      --subtle: #141f2a;
+      --canvas: #0b121a;
+      --line: #25323f;
+      --line-strong: #37485a;
+      --header-bg: rgba(10, 15, 21, 0.92);
+      --ink: #edf1f7;
+      --ink-2: #b9c5d2;
+      --muted: #8e9fb1;
+      --accent: #b5d88e;
+      --accent-ink: #131c14;
+      --blue: #91b6df;
+      --teal: #79c2bd;
+      --pass: #b5d88e;
+      --pass-bg: rgba(181, 216, 142, 0.12);
+      --pass-line: rgba(181, 216, 142, 0.32);
+      --warn: #e5b567;
+      --warn-bg: rgba(229, 181, 103, 0.13);
+      --warn-line: rgba(229, 181, 103, 0.34);
+      --fail: #d97757;
+      --fail-bg: rgba(217, 119, 87, 0.13);
+      --fail-line: rgba(217, 119, 87, 0.36);
+      --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+      --radius: 12px;
+    }
+
+    html[data-theme="light"] {
+      color-scheme: light;
+      --bg: #f7f9fb;
+      --surface: #ffffff;
+      --subtle: #edf1f5;
+      --canvas: #f2f5f8;
+      --line: #dde4ec;
+      --line-strong: #c6d1de;
+      --header-bg: rgba(247, 249, 251, 0.92);
+      --ink: #121b24;
+      --ink-2: #415060;
+      --muted: #68788a;
+      --accent: #3d6f1f;
+      --accent-ink: #ffffff;
+      --blue: #255d9c;
+      --teal: #1b706b;
+      --pass: #15803d;
+      --pass-bg: #f0fdf4;
+      --pass-line: #bbf7d0;
+      --warn: #b45309;
+      --warn-bg: #fffbeb;
+      --warn-line: #fde68a;
+      --fail: #b91c1c;
+      --fail-bg: #fef2f2;
+      --fail-line: #fecaca;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14.5px/1.58 var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: var(--header-bg);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--line);
+    }
+    .topbar {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 18px;
+      font-weight: 720;
+      letter-spacing: -0.03em;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .brand span small {
+      font-weight: 500;
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+    nav.tabs {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding: 4px;
+      background: var(--subtle);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      appearance: none;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font: 560 13px/1.2 var(--sans);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--ink); }
+    .tab-btn.active {
+      background: var(--surface);
+      color: var(--accent);
+      border-color: var(--line-strong);
+    }
+    .meta-bar {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .meta-link {
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--line);
+      background: transparent;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font: 500 12px/1.2 var(--sans);
+      cursor: pointer;
+    }
+    .meta-link:hover { color: var(--accent); border-color: var(--accent); }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 28px 76px;
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    .page-head { margin-bottom: 20px; }
+    .page-head h1 { margin: 0 0 4px; font-size: 24px; font-weight: 620; letter-spacing: -0.025em; }
+    .page-head p { margin: 0; font-size: 14px; color: var(--muted); }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+    }
+    .composer { padding: 16px 20px; margin-bottom: 22px; }
+    .composer-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .grow { flex: 1 1 260px; min-width: 0; }
+
+    input[type="text"], select {
+      width: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font: 13.5px/1.4 var(--sans);
+    }
+    input.mono, .mono { font-family: var(--mono); font-size: 12.5px; }
+    select.compact { width: auto; max-width: 270px; }
+    input:focus, select:focus { outline: none; border-color: var(--accent); }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+      color: var(--ink);
+      padding: 9px 15px;
+      border-radius: 7px;
+      font: 560 13.5px/1.2 var(--sans);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--subtle); border-color: var(--accent); }
+    .btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 650;
+      padding: 9.5px 18px;
+    }
+    .btn.primary:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-ink);
+      filter: brightness(1.08);
+    }
+    .btn.sm { padding: 5px 11px; font-size: 12px; }
+    .btn.active-toggle {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-ink);
+    }
+
+    .studio-grid {
+      display: grid;
+      grid-template-columns: 1.12fr 1fr;
+      gap: 22px;
+      align-items: start;
+    }
+    @media (max-width: 920px) { .studio-grid { grid-template-columns: 1fr; } }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .card-title { font-size: 15px; font-weight: 600; }
+    .toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+    .viewport-wrap {
+      position: relative;
+      background: var(--canvas);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    canvas#labCanvas3D {
+      display: block;
+      width: 100%;
+      height: 320px;
+      cursor: grab;
+    }
+    canvas#labCanvas3D:active { cursor: grabbing; }
+    .viewport-caption {
+      position: absolute;
+      left: 14px;
+      bottom: 10px;
+      font-size: 11.5px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      padding-top: 16px;
+      margin-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+    @media (max-width: 560px) { .stat-strip { grid-template-columns: repeat(2, 1fr); } }
+    .stat-item .k { font-size: 11.5px; color: var(--muted); margin-bottom: 3px; }
+    .stat-item .v { font: 550 13.5px/1.3 var(--mono); font-variant-numeric: tabular-nums; }
+
+    .mol-footer {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+    .thumb-2d {
+      width: 64px;
+      height: 64px;
+      border-radius: 9px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .thumb-2d img { width: 58px; height: 58px; object-fit: contain; }
+    .mol-meta { min-width: 0; flex: 1; font-size: 12.5px; color: var(--muted); }
+    .mol-meta .smi { font-family: var(--mono); color: var(--ink); word-break: break-all; margin-bottom: 2px; }
+
+    .pill-status {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 560;
+    }
+    .pill-status.pass { background: var(--pass-bg); color: var(--pass); border: 1px solid var(--pass-line); }
+    .pill-status.warn { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-line); }
+    .pill-status.fail { background: var(--fail-bg); color: var(--fail); border: 1px solid var(--fail-line); }
+    .pill-status.neutral { background: var(--subtle); color: var(--ink-2); border: 1px solid var(--line); }
+
+    .checklist { border-top: 1px solid var(--line); }
+    .check-row { border-bottom: 1px solid var(--line); }
+    .check-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 2px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .check-summary:hover .check-title { color: var(--accent); }
+    .check-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .status-icon {
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      display: inline-grid;
+      place-items: center;
+      font-size: 10.5px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .status-icon.pass { background: var(--pass-bg); color: var(--pass); border: 1px solid var(--pass-line); }
+    .status-icon.warn { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-line); }
+    .status-icon.fail { background: var(--fail-bg); color: var(--fail); border: 1px solid var(--fail-line); }
+    .check-title { font-size: 13.5px; font-weight: 500; }
+    .check-metric { font: 12px/1.2 var(--mono); color: var(--muted); white-space: nowrap; }
+    .check-detail { display: none; padding: 0 4px 12px 27px; font-size: 12.5px; color: var(--muted); }
+    .check-row.open .check-detail { display: block; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    th { font-size: 11.5px; font-weight: 500; color: var(--muted); }
+    tr.pick-row { cursor: pointer; }
+    tr.pick-row:hover td, tr.active-row td { background: var(--subtle); }
+
+    .img-trio {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+    @media (max-width: 720px) { .img-trio { grid-template-columns: 1fr; } }
+    .img-frame {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 12px;
+      text-align: center;
+    }
+    .img-frame .box { height: 170px; display: grid; place-items: center; }
+    .img-frame img { max-width: 100%; max-height: 162px; object-fit: contain; }
+    .img-frame .cap { margin-top: 8px; font-size: 12px; color: #526070; }
+
+    .angle-pills {
+      display: inline-flex;
+      gap: 4px;
+      background: var(--subtle);
+      border: 1px solid var(--line);
+      padding: 3px;
+      border-radius: 8px;
+    }
+    .angle-pills button {
+      border: none;
+      background: transparent;
+      padding: 6px 11px;
+      border-radius: 6px;
+      font: 550 12.5px/1 var(--sans);
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .angle-pills button.active, .angle-pills button:hover {
+      background: var(--surface);
+      color: var(--accent);
+    }
+    .shake-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      font-size: 12.5px;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+    .shake-row input[type="range"] { accent-color: var(--accent); width: 150px; }
+  </style>
+  <script defer src="lab.js"></script>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <a class="brand" href="../" aria-label="Back to Ouroboros project overview">
+        <img src="../assets/ouroboros-animated.svg" width="52" height="25" alt="">
+        <span>Ouroboros <small>Browser Lab</small></span>
+      </a>
+
+      <nav class="tabs" aria-label="Lab workspaces">
+        <button class="tab-btn active" data-tab="pane-3d">3D Physics</button>
+        <button class="tab-btn" data-tab="pane-2d">2D Symmetry</button>
+        <button class="tab-btn" data-tab="pane-prop">Compare 3D</button>
+      </nav>
+
+      <div class="meta-bar">
+        <a class="meta-link" href="../">← Overview</a>
+        <a class="meta-link" href="https://github.com/yaniguan/ouroboros-ocsr" target="_blank" rel="noopener">GitHub ↗</a>
+        <button type="button" class="meta-link" id="btnTheme">Light / Dark</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- PANE 1: 3D PHYSICS -->
+    <section class="tab-pane active" id="pane-3d">
+      <div class="page-head">
+        <h1>3D Molecule &amp; Physics Audit</h1>
+        <p>Explore precomputed RDKit + MMFF94s/MACE snapshots or enter any custom SMILES for live client-side 3D embedding and symmetry checks.</p>
+      </div>
+
+      <div class="card composer">
+        <div class="composer-row">
+          <select id="presetSelect" class="compact" aria-label="Choose molecule preset"></select>
+          <div class="grow">
+            <input type="text" id="customSmiles" class="mono" value="N[C@@H](C)C(=O)O" spellcheck="false" aria-label="SMILES input">
+          </div>
+          <button class="btn primary" id="btnAudit">Check 3D</button>
+        </div>
+        <div class="shake-row">
+          <label for="shakeSlider">Perturb 3D atoms (<span id="shakeVal">0.00 Å</span>)</label>
+          <input type="range" id="shakeSlider" min="0" max="0.45" step="0.03" value="0">
+          <span id="modeBadge" class="pill-status neutral">Measured snapshot</span>
+        </div>
+      </div>
+
+      <div class="studio-grid">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title" id="molTitle">L-Alanine</span>
+            <div class="toolbar">
+              <button class="btn sm active-toggle" id="btnForces">Forces</button>
+              <button class="btn sm" id="btnLabels">Labels</button>
+              <button class="btn sm" id="btnMirror">Mirror 3D</button>
+              <button class="btn sm" id="btnReset">Reset</button>
+              <button class="btn sm" id="btnExportXyz">.xyz</button>
+            </div>
+          </div>
+
+          <div class="viewport-wrap">
+            <canvas id="labCanvas3D"></canvas>
+            <div class="viewport-caption" id="canvasMeta">Drag to rotate · Scroll to zoom</div>
+          </div>
+
+          <div class="stat-strip">
+            <div class="stat-item"><div class="k">3D Rotate/Shift ΔE</div><div class="v" id="statSe3">—</div></div>
+            <div class="stat-item"><div class="k">Force Rotate ΔF</div><div class="v" id="statSo3">—</div></div>
+            <div class="stat-item"><div class="k">Net Force Push</div><div class="v" id="statNetF">—</div></div>
+            <div class="stat-item"><div class="k">−∇E Slope Check</div><div class="v" id="statGrad">—</div></div>
+          </div>
+
+          <div class="mol-footer">
+            <div class="thumb-2d" id="depictBox"></div>
+            <div class="mol-meta">
+              <div class="smi" id="cleanSmiles">—</div>
+              <div id="mirrorNote">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Ten Physics &amp; Chemistry Gates</span>
+            <span class="pill-status pass" id="summaryPill">10 / 10 passed</span>
+          </div>
+          <div class="checklist" id="gatesList"></div>
+
+          <div id="confWrap" style="margin-top: 16px;">
+            <div style="font-size: 12.5px; color: var(--muted); margin-bottom: 8px;" id="confTitle">Conformers</div>
+            <div class="table-wrap">
+              <table id="confTable">
+                <thead>
+                  <tr><th>#</th><th>Energy (eV)</th><th>ΔE (kcal/mol)</th><th>Boltzmann</th><th>Max |F|</th><th>Stereo</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANE 2: 2D SYMMETRY -->
+    <section class="tab-pane" id="pane-2d">
+      <div class="page-head">
+        <h1>2D Planar Rotation &amp; Mirror Symmetry</h1>
+        <p>Compare measured PyTorch feature maps and token stability across C8 steerable, C4 equivariant-attention, and plain CNN encoders.</p>
+      </div>
+
+      <div class="card composer">
+        <div class="composer-row" style="justify-content: space-between;">
+          <select id="eqArchSelect" class="compact" aria-label="Encoder architecture">
+            <option value="steerable_c8">Arm C · C8 Steerable CNN</option>
+            <option value="equiv_attn_c4">C4 Equivariant Attention</option>
+            <option value="baseline_cnn">Arm A · Plain CNN Baseline</option>
+          </select>
+          <div class="angle-pills" id="eqAnglePills">
+            <button type="button" data-ang="0">0°</button>
+            <button type="button" data-ang="30">30°</button>
+            <button type="button" data-ang="45">45°</button>
+            <button type="button" class="active" data-ang="90">90°</button>
+            <button type="button" data-ang="180">180°</button>
+            <button type="button" data-ang="270">270°</button>
+          </div>
+          <span class="pill-status pass" id="eqVerdict">90° Exact Symmetry</span>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="img-trio">
+          <div class="img-frame"><div class="box" id="eqOrig"></div><div class="cap">Original (0°)</div></div>
+          <div class="img-frame"><div class="box" id="eqRot"></div><div class="cap">Rotated (<span id="eqAngLbl">90°</span>)</div></div>
+          <div class="img-frame"><div class="box" id="eqMir"></div><div class="cap">Horizontal Mirror</div></div>
+        </div>
+
+        <div class="stat-strip">
+          <div class="stat-item"><div class="k">Feature Rotation Error</div><div class="v" id="eqFeatErr">—</div></div>
+          <div class="stat-item"><div class="k">90° Grid Exact?</div><div class="v" id="eqGridOk">—</div></div>
+          <div class="stat-item"><div class="k">Mirror Token Diff</div><div class="v" id="eqMirDiff">—</div></div>
+          <div class="stat-item"><div class="k">First-Step Logit Diff</div><div class="v" id="eqLogitErr">—</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Steerable Feature Maps &amp; Angle Sweep (0°–315°)</span>
+        </div>
+        <div class="img-trio" style="margin-bottom: 18px;">
+          <div class="img-frame"><div class="box" id="eqMapExp"></div><div class="cap">Expected Rotated Map</div></div>
+          <div class="img-frame"><div class="box" id="eqMapAct"></div><div class="cap">Actual Encoder Map</div></div>
+          <div class="img-frame"><div class="box" id="eqMapDiff"></div><div class="cap">|Difference| Map</div></div>
+        </div>
+        <div id="eqSweepWrap"></div>
+      </div>
+    </section>
+
+    <!-- PANE 3: COMPARE 3D STEREOISOMERS -->
+    <section class="tab-pane" id="pane-prop">
+      <div class="page-head">
+        <h1>3D Energy Comparison: Enantiomers vs Diastereomers</h1>
+        <p>Mirror-image enantiomers share identical 3D energies under O(3) parity, whereas flipped diastereomers expose measurable ring/steric strain.</p>
+      </div>
+
+      <div class="card composer">
+        <div class="composer-row">
+          <label for="propSelect" style="font-size: 13px; color: var(--muted);">Reference scaffold:</label>
+          <select id="propSelect" class="compact">
+            <option value="menthol">(-)-Menthol (3 stereocenters)</option>
+            <option value="camphor">(+)-Camphor (bridged bicyclic ketone)</option>
+          </select>
+          <span id="propPotNote" style="font-size: 12.5px; color: var(--muted); margin-left: auto;"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table id="propTable">
+            <thead>
+              <tr><th>#</th><th>2D Structure</th><th>SMILES</th><th>Relation</th><th>Same Formula</th><th>Energy (eV)</th><th>ΔE vs Truth</th><th>3D</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
