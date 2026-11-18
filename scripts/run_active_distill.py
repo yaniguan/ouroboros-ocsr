@@ -50,6 +50,9 @@ def main(argv: list[str] | None = None) -> int:
         method=args.qm_method,
         basis=args.qm_basis,
     )
+    if spec.is_synthetic:
+        print("WARNING: analytical_cage is a synthetic test potential, not QM. "
+              "Do not report these numbers as results.", flush=True)
     report = run_active_distillation_benchmark(
         records,
         budgets=args.budgets,

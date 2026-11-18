@@ -33,7 +33,14 @@ class QMOracleSpec:
     multiplicity: int = 1
 
     @property
+    def is_synthetic(self) -> bool:
+        """True for the hand-written analytical potential, which is not a QM method."""
+        return self.backend == "analytical_cage"
+
+    @property
     def provenance_tag(self) -> str:
+        if self.is_synthetic:
+            return "analytical_cage:synthetic"
         return (
             f"{self.backend}:{self.method.lower()}/{self.basis.lower()}/"
             f"{self.solvent.lower()}/q{self.charge}/m{self.multiplicity}"

@@ -654,6 +654,7 @@ def run_active_distillation_benchmark(
 
     return {
         "provenance_tag": oracle_spec.provenance_tag,
+        "oracle_is_synthetic": oracle_spec.is_synthetic,
         "split_scaffold_counts": {k: len(v) for k, v in splits.items()},
         "h2_1_blindspot_scan": {
             "bioisostere_sigma_f_max": bootstrap_ci(bio_sf, seed=seed),

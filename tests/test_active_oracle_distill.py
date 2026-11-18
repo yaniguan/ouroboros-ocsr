@@ -155,3 +155,20 @@ def test_mmff_cache_and_distilled_ase_calculator_nve_conservation():
     assert abs(e_tot_1 - e_tot_0) < 1e-3
     assert calc.n_evals >= 6
     assert calc.last_sigma_f_max >= 0.0
+
+
+def test_analytical_oracle_is_tagged_synthetic():
+    from ouroboros.active.oracle import QMOracleSpec
+
+    spec = QMOracleSpec(backend="analytical_cage")
+    assert spec.is_synthetic
+    assert spec.provenance_tag == "analytical_cage:synthetic"
+    assert "wb97m" not in spec.provenance_tag
+
+
+def test_qm_oracle_tag_keeps_method_and_basis():
+    from ouroboros.active.oracle import QMOracleSpec
+
+    spec = QMOracleSpec(backend="pyscf")
+    assert not spec.is_synthetic
+    assert spec.provenance_tag == "pyscf:wb97m-d3bj/def2-tzvppd/gas/q0/m1"
