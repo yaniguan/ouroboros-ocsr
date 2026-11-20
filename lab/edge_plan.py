@@ -118,9 +118,10 @@ def plan(cfg: dict) -> list[dict]:
                  f"--shards {sel['shards']} --split {sel['split']} --out {run}/val_student.csv "
                  f"&& python scripts/eval_predictions.py {run}/val_student.csv "
                  f"--json {run}/val_student.json"),
-        dict(name=f"quantize ({q.get('method', 'none')})", status="todo",
-             cmd=f"python -m lab.quantize {student_ckpt} --method {q.get('method', 'none')}",
-             todo="no quantization code in the repo yet; must match fp32 on validation"),
+        dict(name=f"quantize ({q.get('method', 'none')})", status="exists",
+             cmd=f"python -m lab.quantize {student_ckpt} --method {q.get('method', 'none')} "
+                 f"--shards {sel['shards']} --split {sel['split']} "
+                 f"--report {run}/val_quantized.json"),
         dict(name=f"latency on {tgt['device']}", status="exists",
              cmd=f"python scripts/profile_infer.py --ckpt {student_ckpt} --shards {sel['shards']} "
                  f"--split {sel['split']} --beam 1 --name student --out-dir {run}/profile"),

@@ -1,0 +1,38 @@
+{
+  "name": "A_selected_cpu",
+  "device": "cpu",
+  "checkpoints": [
+    "A-selected.pt"
+  ],
+  "variants": {
+    "beam1": {
+      "samples": 64,
+      "batches": 4,
+      "per_batch": {
+        "encoder": {
+          "mean_ms": 925.0158250069944,
+          "median_ms": 919.9377500044648,
+          "p90_ms": 944.1679000010481
+        },
+        "decode": {
+          "mean_ms": 1463.512524991529,
+          "median_ms": 1412.9199999733828,
+          "p90_ms": 1812.606519999099
+        },
+        "total": {
+          "mean_ms": 2388.5283499985235,
+          "median_ms": 2324.627549984143,
+          "p90_ms": 2751.8363000039244
+        }
+      },
+      "ms_per_image": {
+        "encoder": 57.81348906293715,
+        "decode": 91.46953281197057,
+        "total": 149.28302187490772
+      },
+      "images_per_s": 6.6986854060199414,
+      "peak_memory": null
+    }
+  },
+  "decode_includes": "candidate generation, ensemble rescoring and ranking; excludes encoder"
+}
