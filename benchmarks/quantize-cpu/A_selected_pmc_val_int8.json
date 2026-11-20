@@ -1,0 +1,29 @@
+{
+  "checkpoint": "A-selected.pt",
+  "split": "val",
+  "n": 963,
+  "device": "cpu",
+  "method": "int8-dynamic",
+  "fp32": {
+    "exact": 0.40083073727933544,
+    "exact_flat": 0.43094496365524404,
+    "valid": 0.8452751817237798,
+    "tanimoto": 0.6443108958525758,
+    "seconds": 156.549,
+    "ms_per_image": 162.56,
+    "img_per_s": 6.15
+  },
+  "quantized": {
+    "exact": 0.3987538940809969,
+    "exact_flat": 0.4288681204569055,
+    "valid": 0.8431983385254413,
+    "tanimoto": 0.6425192134102481,
+    "seconds": 148.422,
+    "ms_per_image": 154.12,
+    "img_per_s": 6.49
+  },
+  "exact_drop": 0.002077,
+  "raw_smiles_agreement": 0.879543,
+  "canonical_smiles_agreement": 0.934579,
+  "speedup": 1.055
+}
