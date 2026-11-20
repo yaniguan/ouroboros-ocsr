@@ -33,11 +33,24 @@ class QMOracleSpec:
     multiplicity: int = 1
 
     @property
+    def is_synthetic(self) -> bool:
+        """True for the hand-written analytical potential, which is not a QM method."""
+        return self.backend == "analytical_cage"
+
+    @property
     def provenance_tag(self) -> str:
-        return (
-            f"{self.backend}:{self.method.lower()}/{self.basis.lower()}/"
-            f"{self.solvent.lower()}/q{self.charge}/m{self.multiplicity}"
-        )
+        # name what each backend actually runs
+        if self.is_synthetic:
+            return "analytical_cage:synthetic"
+        qm = f"q{self.charge}/m{self.multiplicity}"
+        if self.backend == "tblite":
+            return f"tblite:gfn2-xtb/{qm}"  # _run_tblite_single_point always runs GFN2-xTB
+        if self.backend == "ase":
+            return f"ase:unspecified/{qm}"  # the calculator is chosen by the caller
+        method = self.method.lower()
+        if self.backend == "pyscf" and "wb97m" in method:
+            method = "wb97m-v"  # _run_pyscf_single_point runs wB97M-V
+        return f"{self.backend}:{method}/{self.basis.lower()}/{self.solvent.lower()}/{qm}"
 
 
 @dataclass(frozen=True)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from ouroboros.active.committee import SELECTORS
@@ -50,6 +51,10 @@ def main(argv: list[str] | None = None) -> int:
         method=args.qm_method,
         basis=args.qm_basis,
     )
+    synthetic = (["oracle"] if spec.is_synthetic else []) + ["committee", "baseline"]
+    print(f"WARNING: synthetic components in this run: {', '.join(synthetic)}. "
+          "The committee and baseline are analytical surrogates. "
+          "Do not report these numbers as MLIP or QM results.", file=sys.stderr, flush=True)
     report = run_active_distillation_benchmark(
         records,
         budgets=args.budgets,
