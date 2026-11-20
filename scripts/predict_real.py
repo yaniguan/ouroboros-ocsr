@@ -8,6 +8,10 @@
 Output columns: ``id,gold,pred,subset`` (``subset`` = manifest ``source``). Angle 0, CPU unless
 CUDA is available. Checkpoints contain RNG state: only load trusted files.
 
+  --unlabeled        shards may have no ``smiles`` metadata (images only); ``gold`` is written
+                     as an empty string. Score such a file only with
+                     ``eval_predictions.py --skip-unlabeled`` (it refuses empty gold otherwise).
+
 Decoding (defaults = one checkpoint, greedy, no TTA: the original behaviour):
   --beam K           beam search, K hypotheses per image and source
   --rerank valid     take the best RDKit-valid candidate (default when K > 1); ``none`` = best score
@@ -119,12 +123,12 @@ def predict_batch(
     return out
 
 
-def _nbest_record(meta: dict, i: int, pred: str, ranked: list[Candidate]) -> dict:
+def _nbest_record(meta: dict, i: int, gold: str, pred: str, ranked: list[Candidate]) -> dict:
     from ouroboros.eval.smiles import is_valid
 
     return {
         "id": meta.get("id", i),
-        "gold": meta["smiles"],
+        "gold": gold,
         "subset": meta.get("source", ""),
         "pred": pred,
         "candidates": [
@@ -143,6 +147,8 @@ def main(argv=None) -> None:
     ap.add_argument("--out", required=True)
     ap.add_argument("--batch-size", type=int, default=16)
     ap.add_argument("--max-samples", type=int, default=None)
+    ap.add_argument("--unlabeled", action="store_true",
+                    help="shards without smiles metadata; write gold as empty")
     ap.add_argument("--beam", type=int, default=1, help="beam size (1 = greedy)")
     ap.add_argument("--rerank", choices=["valid", "none"], default=None,
                     help="candidate selection (default: valid if --beam > 1, else none)")
@@ -167,7 +173,8 @@ def main(argv=None) -> None:
     if any(c["data"]["image_size"] != size for _, c in loaded):
         raise SystemExit("ensemble checkpoints must share data.image_size")
     greedy = a.beam == 1 and len(models) == 1 and not tta and a.nbest_out is None and not gated
-    ds = ShardDataset(a.shards, a.split, image_size=size, max_samples=a.max_samples)
+    ds = ShardDataset(a.shards, a.split, image_size=size, max_samples=a.max_samples,
+                      labeled=not a.unlabeled)
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     nbest_f = None
     if a.nbest_out:
@@ -191,12 +198,13 @@ def main(argv=None) -> None:
                                                 diagnostics=source_predictions)
                 for i, (p, ranked) in zip(idx, results, strict=True):
                     m = ds.meta(i)
+                    gold = "" if a.unlabeled else m["smiles"]
                     gate = confidence(p, ranked or [], source_predictions[i-start] if source_predictions else [],
                                       min_margin=a.min_margin, max_disagreement=a.max_disagreement)
-                    w.writerow({"id": m.get("id", i), "gold": m["smiles"], "pred": p,
+                    w.writerow({"id": m.get("id", i), "gold": gold, "pred": p,
                                 "subset": m.get("source", "")} | (gate if gated else {}))
                     if nbest_f is not None:
-                        nbest_f.write(json.dumps(_nbest_record(m, i, p, ranked) |
+                        nbest_f.write(json.dumps(_nbest_record(m, i, gold, p, ranked) |
                             {"subset": m.get("source", ""), "source_predictions": source_predictions[i-start],
                              "confidence": gate}) + "\n")
                 print(f"{min(len(ds), start + a.batch_size)}/{len(ds)}  {time.time() - t0:.0f}s",

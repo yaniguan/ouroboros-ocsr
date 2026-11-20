@@ -18,6 +18,9 @@ rotation angle with ``--where angle=0`` (values compare as strings, else as numb
 Rules
 * Every metric uses ``metrics.score_pair`` (both sides standardized the same way).
 * A missing or blank prediction is an invalid prediction and counts against every metric.
+* A blank gold (e.g. from ``predict_real.py --unlabeled``) is an error by default. With
+  ``--skip-unlabeled`` such rows are counted and their ids listed under ``unlabeled``; they are
+  never scored.
 * A gold that does not standardize is excluded from every metric; such rows are counted and
   their ids listed under ``gold_invalid`` (never silently dropped).
 * A repeated (subset, kind, id) is an error, so an item can never be counted twice.
@@ -165,6 +168,21 @@ def to_items(records: Sequence[dict], cols: dict, where=()) -> list[Item]:
     return items
 
 
+def split_unlabeled(items: Sequence[Item], skip: bool = False) -> tuple[list[Item], list[str]]:
+    """Return ``(labeled items, ids of rows with a blank gold)``; blank gold is an error unless
+    ``skip``."""
+    labeled = [it for it in items if (it.gold or "").strip()]
+    unlabeled = [it.id for it in items if not (it.gold or "").strip()]
+    if unlabeled and not skip:
+        raise ValueError(
+            f"{len(unlabeled)} row(s) have an empty gold (e.g. id {unlabeled[0]!r}); "
+            "these cannot be scored. Pass --skip-unlabeled to count and skip them"
+        )
+    if not labeled:
+        raise ValueError("no labeled rows to score: every gold is empty")
+    return labeled, unlabeled
+
+
 def _score(pair: tuple[str | None, str | None]) -> PairScore | None:
     pred, gold = pair
     try:
@@ -278,6 +296,13 @@ def report_markdown(report: dict, title: str = "OCSR predictions") -> str:
     if gi["n"]:
         more = " …" if gi["n"] > len(gi["ids"]) else ""
         ids = f" (ids: {', '.join(gi['ids'])}{more})"
+    un = report.get("unlabeled")
+    if un and un["n"]:
+        more = " …" if un["n"] > len(un["ids"]) else ""
+        lines.append(
+            f"Skipped {un['n']} unlabeled row(s) with an empty gold, not scored "
+            f"(ids: {', '.join(un['ids'])}{more})."
+        )
     lines.append(
         f"Rows: {report['n_rows']}; scored: {report['n_scored']}; excluded because the gold "
         f"SMILES does not standardize: {gi['n']}{ids}."
@@ -307,6 +332,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument("--n-boot", type=int, default=1000)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--workers", type=int, default=1)
+    ap.add_argument("--skip-unlabeled", action="store_true",
+                    help="count rows with an empty gold as unlabeled and skip them "
+                         "(default: refuse them)")
     ap.add_argument("--quiet", action="store_true", help="do not print the Markdown table")
     a = ap.parse_args(argv)
     if a.n_boot < 1:
@@ -316,13 +344,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     overrides = {role: getattr(a, f"{role}_col") for role in ALIASES}
     cols = resolve_columns(records, overrides)
     where = parse_where(a.where)
-    items = to_items(records, cols, where)
+    items, unlabeled = split_unlabeled(to_items(records, cols, where), skip=a.skip_unlabeled)
     scores = score_items(items, workers=a.workers)
     report = build_report(items, scores, n_boot=a.n_boot, seed=a.seed)
     report = {
         "input": str(a.predictions),
         "columns": cols,
         "where": [f"{c}={v}" for c, v in where],
+        "unlabeled": {"n": len(unlabeled), "ids": unlabeled[:MAX_LISTED_IDS]},
         **report,
     }
     md = report_markdown(report, a.title or f"OCSR predictions: {Path(a.predictions).name}")
