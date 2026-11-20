@@ -32,7 +32,8 @@ def test_existing_steps_point_at_real_repo_code(cfg):
         for script in re.findall(r"python (scripts/\S+\.py)", s["cmd"]):
             assert (REPO / script).is_file(), script
         for mod in re.findall(r"python -m (\S+)", s["cmd"]):
-            assert (REPO / mod.replace(".", "/")).exists(), mod
+            rel = REPO / mod.replace(".", "/")
+            assert rel.exists() or rel.with_suffix(".py").is_file(), mod
     assert (REPO / cfg["student"]["config"]).is_file()
 
 

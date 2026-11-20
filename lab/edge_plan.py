@@ -96,15 +96,15 @@ def plan(cfg: dict) -> list[dict]:
                  f"--shards {sel['shards']} --split {sel['split']} --out {run}/val_teacher.csv "
                  f"--nbest-out {run}/val_teacher.jsonl && python scripts/eval_selective.py "
                  f"{run}/val_teacher.jsonl --margins 0 0.2 0.5"),
-        dict(name="teacher pseudo-labels on unlabeled figures", status="todo",
+        dict(name="teacher pseudo-labels on unlabeled figures", status="exists",
              cmd=f"python scripts/predict_real.py {ckpts} --beam {t.get('beam', 1)}{tta}{gate} "
-                 f"--shards {pl['shards']} --split {pl['split']} --out {run}/teacher.csv",
-             todo="predict_real.py needs a mode for shards without gold SMILES"),
-        dict(name="keep usable rows -> pseudo-label manifest -> shards", status="todo",
+                 f"--unlabeled --shards {pl['shards']} --split {pl['split']} "
+                 f"--out {run}/teacher.csv"),
+        dict(name="keep usable rows -> pseudo-label manifest -> shards", status="exists",
              cmd=f"python -m lab.molecule_context {run}/teacher.csv --out {run}/teacher.jsonl "
+                 f"--manifest-out {pseudo}/manifest.csv "
                  f"&& python scripts/ingest_real.py --manifest {pseudo}/manifest.csv "
-                 f"--out {pseudo}/shards",
-             todo="write status=ok rows as an ingest manifest (image,smiles,source,split,id)"),
+                 f"--out {pseudo}/shards"),
         dict(name="leakage gate vs all eval sets", status="exists",
              cmd="python scripts/check_leakage.py --eval "
                  + " ".join(cfg["leakage_eval_sets"])
