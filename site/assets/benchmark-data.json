@@ -737,6 +737,142 @@
       }
     ]
   },
+  "frozen_vs_dev": {
+    "groups": [
+      {
+        "id": "ALL",
+        "label": "All figures",
+        "frozen": {
+          "exact": 46.67,
+          "ci": [
+            40.67,
+            51.67
+          ]
+        },
+        "dev": {
+          "exact": 54.03,
+          "ci": [
+            48.32,
+            59.73
+          ]
+        },
+        "handdrawn": {
+          "exact": 4.5,
+          "ci": [
+            2.0,
+            7.5
+          ]
+        }
+      },
+      {
+        "id": "UOB",
+        "label": "UOB",
+        "frozen": {
+          "exact": 85.0,
+          "ci": [
+            78.0,
+            91.0
+          ]
+        },
+        "dev": {
+          "exact": 84.0,
+          "ci": [
+            76.0,
+            91.0
+          ]
+        },
+        "handdrawn": null
+      },
+      {
+        "id": "ACS",
+        "label": "ACS journals",
+        "frozen": {
+          "exact": 30.0,
+          "ci": [
+            21.0,
+            39.0
+          ]
+        },
+        "dev": {
+          "exact": 40.0,
+          "ci": [
+            31.0,
+            51.0
+          ]
+        },
+        "handdrawn": null
+      },
+      {
+        "id": "USPTO",
+        "label": "USPTO patents",
+        "frozen": {
+          "exact": 25.0,
+          "ci": [
+            16.0,
+            33.0
+          ]
+        },
+        "dev": {
+          "exact": 37.76,
+          "ci": [
+            27.55,
+            45.92
+          ]
+        },
+        "handdrawn": null
+      },
+      {
+        "id": "no_stereo",
+        "label": "No-stereo subset",
+        "frozen": {
+          "exact": 57.2,
+          "ci": [
+            51.03,
+            63.37
+          ]
+        },
+        "dev": {
+          "exact": 61.04,
+          "ci": [
+            54.62,
+            67.47
+          ]
+        },
+        "handdrawn": {
+          "exact": 4.55,
+          "ci": [
+            1.3,
+            7.79
+          ]
+        }
+      },
+      {
+        "id": "has_stereo",
+        "label": "Stereo subset",
+        "frozen": {
+          "exact": 1.75,
+          "ci": [
+            0.0,
+            5.26
+          ]
+        },
+        "dev": {
+          "exact": 18.37,
+          "ci": [
+            8.16,
+            30.61
+          ]
+        },
+        "handdrawn": {
+          "exact": 4.35,
+          "ci": [
+            0.0,
+            10.87
+          ]
+        }
+      }
+    ]
+  },
   "p1_chemveritas": {
     "ablations": [
       {
@@ -871,11 +1007,13 @@
     ],
     "strain_audit": {
       "n_pairs": 50,
-      "median_strain_kcal": 45.0,
-      "mean_strain_kcal": 27.68,
-      "pairwise_pref": 92.0,
-      "roc_auc_mace": 0.853,
-      "roc_auc_mmff": 0.919
+      "n_embed_failures": 30,
+      "n_measured_pairs": 20,
+      "measured_median_mace_kcal": 1.97,
+      "measured_median_mmff_kcal": 2.6,
+      "measured_pref_mace": 80.0,
+      "measured_pref_mmff": 100.0,
+      "pooled_pref": 92.0
     },
     "literature_nmr": {
       "n_compounds": 30,

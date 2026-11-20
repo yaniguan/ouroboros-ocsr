@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 390" width="1280" height="390" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+  <defs>
+    <marker id="flow-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M1,1.5 L8.5,5 L1,8.5 Z" fill="#0d9488"/>
+    </marker>
+    <marker id="reject-arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M1,1.5 L8.5,5 L1,8.5 Z" fill="#d97706"/>
+    </marker>
+  </defs>
+
+  <rect width="1280" height="390" rx="18" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <text x="36" y="40" font-size="12" font-weight="700" letter-spacing="1.6" fill="#0d9488">IMAGE-TO-FORCEFIELD &amp; SELECTIVE GATE PIPELINE</text>
+  <text x="36" y="66" font-size="20" font-weight="700" fill="#0f172a">How Ouroboros turns raw drawings into verified 3D training frames without silent errors</text>
+
+  <!-- Step 1 -->
+  <g transform="translate(32, 96)">
+    <rect width="184" height="176" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <circle cx="28" cy="28" r="13" fill="#ccfbf1"/>
+    <text x="28" y="33" font-size="12" font-weight="700" fill="#0f766e" text-anchor="middle">1</text>
+    <text x="50" y="33" font-size="13.5" font-weight="700" fill="#0f172a">Crop &amp; Fit</text>
+    <text x="18" y="64" font-size="12" fill="#475569">Trim white margins,</text>
+    <text x="18" y="82" font-size="12" fill="#475569">fit diagonal inside</text>
+    <text x="18" y="100" font-size="12" fill="#475569">384 px inscribed circle.</text>
+    <rect x="16" y="122" width="152" height="36" rx="8" fill="#f1f5f9"/>
+    <text x="92" y="144" font-size="11" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#0f172a" text-anchor="middle">--ink-crop (pad 8px)</text>
+  </g>
+
+  <!-- Step 2 -->
+  <g transform="translate(240, 96)">
+    <rect width="194" height="176" rx="14" fill="#ffffff" stroke="#0d9488" stroke-width="1.8"/>
+    <circle cx="28" cy="28" r="13" fill="#ccfbf1"/>
+    <text x="28" y="33" font-size="12" font-weight="700" fill="#0f766e" text-anchor="middle">2</text>
+    <text x="50" y="33" font-size="13.5" font-weight="700" fill="#0f172a">Confidence Gate</text>
+    <text x="18" y="64" font-size="12" fill="#475569">Check top-2 molecule</text>
+    <text x="18" y="82" font-size="12" fill="#475569">score margin &amp; view</text>
+    <text x="18" y="100" font-size="12" fill="#475569">disagreement.</text>
+    <rect x="16" y="122" width="162" height="36" rx="8" fill="#f0fdfa"/>
+    <text x="97" y="144" font-size="11" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#0f766e" text-anchor="middle">--respect-confidence</text>
+  </g>
+
+  <!-- Step 3 -->
+  <g transform="translate(458, 96)">
+    <rect width="194" height="176" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <circle cx="28" cy="28" r="13" fill="#dbeafe"/>
+    <text x="28" y="33" font-size="12" font-weight="700" fill="#1d4ed8" text-anchor="middle">3</text>
+    <text x="50" y="33" font-size="13.5" font-weight="700" fill="#0f172a">Expand Aliases</text>
+    <text x="18" y="64" font-size="12" fill="#475569">Expand monovalent</text>
+    <text x="18" y="82" font-size="12" fill="#475569">Me, Et, OMe, OEt, Ph,</text>
+    <text x="18" y="100" font-size="12" fill="#475569">Boc, CO2Me, CO2Et.</text>
+    <rect x="16" y="122" width="162" height="36" rx="8" fill="#eff6ff"/>
+    <text x="97" y="144" font-size="11" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1d4ed8" text-anchor="middle">--expand-aliases</text>
+  </g>
+
+  <!-- Step 4 -->
+  <g transform="translate(676, 96)">
+    <rect width="194" height="176" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <circle cx="28" cy="28" r="13" fill="#dbeafe"/>
+    <text x="28" y="33" font-size="12" font-weight="700" fill="#1d4ed8" text-anchor="middle">4</text>
+    <text x="50" y="33" font-size="13.5" font-weight="700" fill="#0f172a">Domain &amp; Stereo</text>
+    <text x="18" y="64" font-size="12" fill="#475569">Reject net charge,</text>
+    <text x="18" y="82" font-size="12" fill="#475569">radicals, out-of-domain</text>
+    <text x="18" y="100" font-size="12" fill="#475569">elements &amp; unassigned R/S.</text>
+    <rect x="16" y="122" width="162" height="36" rx="8" fill="#eff6ff"/>
+    <text x="97" y="144" font-size="10.5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#1d4ed8" text-anchor="middle">--geometry-eligibility</text>
+  </g>
+
+  <!-- Step 5 -->
+  <g transform="translate(894, 96)">
+    <rect width="176" height="176" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <circle cx="28" cy="28" r="13" fill="#d1fae5"/>
+    <text x="28" y="33" font-size="12" font-weight="700" fill="#047857" text-anchor="middle">5</text>
+    <text x="50" y="33" font-size="13.5" font-weight="700" fill="#0f172a">Embed &amp; Rattle</text>
+    <text x="18" y="64" font-size="12" fill="#475569">ETKDGv3 conformers</text>
+    <text x="18" y="82" font-size="12" fill="#475569">+ 0.1 Å perturbations</text>
+    <text x="18" y="100" font-size="12" fill="#475569">(clash &gt; 0.6 Å, CIP kept).</text>
+    <rect x="16" y="122" width="144" height="36" rx="8" fill="#ecfdf5"/>
+    <text x="88" y="144" font-size="10.5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#047857" text-anchor="middle">--displaced-samples</text>
+  </g>
+
+  <!-- Step 6 -->
+  <g transform="translate(1094, 96)">
+    <rect width="154" height="176" rx="14" fill="#ffffff" stroke="#059669" stroke-width="1.8"/>
+    <circle cx="28" cy="28" r="13" fill="#d1fae5"/>
+    <text x="28" y="33" font-size="12" font-weight="700" fill="#047857" text-anchor="middle">6</text>
+    <text x="50" y="33" font-size="13.5" font-weight="700" fill="#0f172a">MACE Splits</text>
+    <text x="16" y="64" font-size="12" fill="#475569">Label E &amp; F, split</text>
+    <text x="16" y="82" font-size="12" fill="#475569">0.8 / 0.1 / 0.1 by</text>
+    <text x="16" y="100" font-size="12" fill="#475569">connectivity block.</text>
+    <rect x="14" y="122" width="126" height="36" rx="8" fill="#ecfdf5"/>
+    <text x="77" y="144" font-size="10.5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" fill="#047857" text-anchor="middle">split_forcefield</text>
+  </g>
+
+  <!-- Horizontal arrows -->
+  <line x1="216" y1="184" x2="234" y2="184" stroke="#0d9488" stroke-width="2" marker-end="url(#flow-arr)"/>
+  <line x1="434" y1="184" x2="452" y2="184" stroke="#0d9488" stroke-width="2" marker-end="url(#flow-arr)"/>
+  <line x1="652" y1="184" x2="670" y2="184" stroke="#0d9488" stroke-width="2" marker-end="url(#flow-arr)"/>
+  <line x1="870" y1="184" x2="888" y2="184" stroke="#0d9488" stroke-width="2" marker-end="url(#flow-arr)"/>
+  <line x1="1070" y1="184" x2="1088" y2="184" stroke="#0d9488" stroke-width="2" marker-end="url(#flow-arr)"/>
+
+  <!-- Rejection audit bar -->
+  <rect x="240" y="308" width="830" height="54" rx="12" fill="#fffbeb" stroke="#fcd34d" stroke-width="1.4"/>
+  <line x1="337" y1="272" x2="337" y2="302" stroke="#d97706" stroke-width="1.8" marker-end="url(#reject-arr)"/>
+  <line x1="555" y1="272" x2="555" y2="302" stroke="#d97706" stroke-width="1.8" marker-end="url(#reject-arr)"/>
+  <line x1="773" y1="272" x2="773" y2="302" stroke="#d97706" stroke-width="1.8" marker-end="url(#reject-arr)"/>
+  <line x1="982" y1="272" x2="982" y2="302" stroke="#d97706" stroke-width="1.8" marker-end="url(#reject-arr)"/>
+  <text x="655" y="332" font-size="12.5" font-weight="700" fill="#92400e" text-anchor="middle">Audit-First Abstention: generic R-groups (*), low-margin reads, unassigned stereo, or steric clashes</text>
+  <text x="655" y="350" font-size="11.5" fill="#b45309" text-anchor="middle">are logged with explicit rejection reasons in manifest.jsonl — never silently guessed or dropped</text>
+</svg>

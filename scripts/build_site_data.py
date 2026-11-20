@@ -54,11 +54,18 @@ def build_data() -> dict:
     arm_c = _load_rotation_arm("C")
 
     ft_dir = ROOT / "benchmarks/finetune-v2-oct30"
+    dev_ens = _parse_md_report(ft_dir / "AC-ensemble-beam5-ttapad-report.md")
+    frozen_ens = _parse_md_report(
+        ROOT / "benchmarks/frozen-test-v2/AC-ensemble-beam5-ttapad-report.md"
+    )
+    hd_ens = _parse_md_report(
+        ROOT / "benchmarks/handdrawn-decimer/AC-ensemble-beam5-ttapad-report.md"
+    )
     real_models = [
         (
             "AC ensemble (beam 5 + TTA)",
             "#b5d88e",
-            _parse_md_report(ft_dir / "AC-ensemble-beam5-ttapad-report.md"),
+            dev_ens,
         ),
         (
             "AC ensemble (beam 5)",
@@ -224,16 +231,85 @@ def build_data() -> dict:
                 for name, color, data in real_models
             ],
         },
+        "frozen_vs_dev": {
+            "groups": [
+                {
+                    "id": "ALL",
+                    "label": "All figures",
+                    "frozen": {"exact": frozen_ens["ALL"]["exact"], "ci": frozen_ens["ALL"]["ci"]},
+                    "dev": {"exact": dev_ens["ALL"]["exact"], "ci": dev_ens["ALL"]["ci"]},
+                    "handdrawn": {"exact": hd_ens["ALL"]["exact"], "ci": hd_ens["ALL"]["ci"]},
+                },
+                {
+                    "id": "UOB",
+                    "label": "UOB",
+                    "frozen": {"exact": frozen_ens["UOB"]["exact"], "ci": frozen_ens["UOB"]["ci"]},
+                    "dev": {"exact": dev_ens["UOB"]["exact"], "ci": dev_ens["UOB"]["ci"]},
+                    "handdrawn": None,
+                },
+                {
+                    "id": "ACS",
+                    "label": "ACS journals",
+                    "frozen": {"exact": frozen_ens["ACS"]["exact"], "ci": frozen_ens["ACS"]["ci"]},
+                    "dev": {"exact": dev_ens["ACS"]["exact"], "ci": dev_ens["ACS"]["ci"]},
+                    "handdrawn": None,
+                },
+                {
+                    "id": "USPTO",
+                    "label": "USPTO patents",
+                    "frozen": {
+                        "exact": frozen_ens["USPTO"]["exact"],
+                        "ci": frozen_ens["USPTO"]["ci"],
+                    },
+                    "dev": {"exact": dev_ens["USPTO"]["exact"], "ci": dev_ens["USPTO"]["ci"]},
+                    "handdrawn": None,
+                },
+                {
+                    "id": "no_stereo",
+                    "label": "No-stereo subset",
+                    "frozen": {
+                        "exact": frozen_ens["no_stereo"]["exact"],
+                        "ci": frozen_ens["no_stereo"]["ci"],
+                    },
+                    "dev": {
+                        "exact": dev_ens["no_stereo"]["exact"],
+                        "ci": dev_ens["no_stereo"]["ci"],
+                    },
+                    "handdrawn": {
+                        "exact": hd_ens["no_stereo"]["exact"],
+                        "ci": hd_ens["no_stereo"]["ci"],
+                    },
+                },
+                {
+                    "id": "has_stereo",
+                    "label": "Stereo subset",
+                    "frozen": {
+                        "exact": frozen_ens["has_stereo"]["exact"],
+                        "ci": frozen_ens["has_stereo"]["ci"],
+                    },
+                    "dev": {
+                        "exact": dev_ens["has_stereo"]["exact"],
+                        "ci": dev_ens["has_stereo"]["ci"],
+                    },
+                    "handdrawn": {
+                        "exact": hd_ens["has_stereo"]["exact"],
+                        "ci": hd_ens["has_stereo"]["ci"],
+                    },
+                },
+            ]
+        },
         "p1_chemveritas": {
             "ablations": p1_ablations,
             "closed_loop_views": p1_closed_loop_views,
             "strain_audit": {
                 "n_pairs": 50,
-                "median_strain_kcal": 45.0,
-                "mean_strain_kcal": 27.68,
-                "pairwise_pref": 92.0,
-                "roc_auc_mace": 0.853,
-                "roc_auc_mmff": 0.919,
+                "n_embed_failures": 30,
+                "n_measured_pairs": 20,
+                "measured_median_mace_kcal": 1.97,
+                "measured_median_mmff_kcal": 2.60,
+                "measured_pref_mace": 80.0,
+                "measured_pref_mmff": 100.0,
+                "pooled_pref": 92.0,
             },
             "literature_nmr": {
                 "n_compounds": 30,
