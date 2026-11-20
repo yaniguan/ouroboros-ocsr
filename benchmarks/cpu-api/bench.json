@@ -1,0 +1,299 @@
+{
+  "cpu": "Intel(R) Xeon(R) Processor",
+  "logical_cpus": 8,
+  "threads": 1,
+  "load_avg_start": [
+    12.515625,
+    13.9248046875,
+    17.50439453125
+  ],
+  "n_images": 298,
+  "variants": {
+    "A_fp32": {
+      "latency_ms": {
+        "wall": {
+          "p50": 376.09393850016204,
+          "p95": 1145.0024875993215,
+          "max": 2647.265781000897
+        },
+        "cpu": {
+          "p50": 314.5633665000034,
+          "p95": 559.5633456999988,
+          "max": 1131.900115999997
+        }
+      },
+      "exact": 0.18120805369127516,
+      "valid": 0.7818791946308725,
+      "exact_by_source": {
+        "ACS": 0.0,
+        "UOB": 0.41,
+        "USPTO": 0.1326530612244898
+      },
+      "selective": {
+        "0.5": {
+          "calibration_even_rows": {
+            "coverage": 0.7718120805369127,
+            "precision": 0.20869565217391303
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.7919463087248322,
+            "precision": 0.2542372881355932
+          }
+        },
+        "0.7": {
+          "calibration_even_rows": {
+            "coverage": 0.7651006711409396,
+            "precision": 0.21052631578947367
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.7718120805369127,
+            "precision": 0.2608695652173913
+          }
+        },
+        "0.8": {
+          "calibration_even_rows": {
+            "coverage": 0.7248322147651006,
+            "precision": 0.2222222222222222
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.6778523489932886,
+            "precision": 0.297029702970297
+          }
+        },
+        "0.85": {
+          "calibration_even_rows": {
+            "coverage": 0.6577181208053692,
+            "precision": 0.24489795918367346
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.6174496644295302,
+            "precision": 0.32608695652173914
+          }
+        },
+        "0.9": {
+          "calibration_even_rows": {
+            "coverage": 0.5838926174496645,
+            "precision": 0.27586206896551724
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.5369127516778524,
+            "precision": 0.375
+          }
+        },
+        "0.95": {
+          "calibration_even_rows": {
+            "coverage": 0.38926174496644295,
+            "precision": 0.41379310344827586
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.40268456375838924,
+            "precision": 0.4666666666666667
+          }
+        },
+        "0.98": {
+          "calibration_even_rows": {
+            "coverage": 0.2080536912751678,
+            "precision": 0.6129032258064516
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.2348993288590604,
+            "precision": 0.6857142857142857
+          }
+        }
+      }
+    },
+    "A_int8": {
+      "latency_ms": {
+        "wall": {
+          "p50": 228.75821599973278,
+          "p95": 358.83988319983473,
+          "max": 645.7563919993845
+        },
+        "cpu": {
+          "p50": 215.36537000000067,
+          "p95": 331.4938653999974,
+          "max": 553.7212749999867
+        }
+      },
+      "exact": 0.18791946308724833,
+      "valid": 0.7885906040268457,
+      "exact_by_source": {
+        "ACS": 0.0,
+        "UOB": 0.41,
+        "USPTO": 0.15306122448979592
+      },
+      "selective": {
+        "0.5": {
+          "calibration_even_rows": {
+            "coverage": 0.7785234899328859,
+            "precision": 0.22413793103448276
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.7986577181208053,
+            "precision": 0.25210084033613445
+          }
+        },
+        "0.7": {
+          "calibration_even_rows": {
+            "coverage": 0.7718120805369127,
+            "precision": 0.22608695652173913
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.785234899328859,
+            "precision": 0.2564102564102564
+          }
+        },
+        "0.8": {
+          "calibration_even_rows": {
+            "coverage": 0.7181208053691275,
+            "precision": 0.24299065420560748
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.6644295302013423,
+            "precision": 0.30303030303030304
+          }
+        },
+        "0.85": {
+          "calibration_even_rows": {
+            "coverage": 0.6577181208053692,
+            "precision": 0.2653061224489796
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.6040268456375839,
+            "precision": 0.3333333333333333
+          }
+        },
+        "0.9": {
+          "calibration_even_rows": {
+            "coverage": 0.5838926174496645,
+            "precision": 0.2988505747126437
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.5302013422818792,
+            "precision": 0.379746835443038
+          }
+        },
+        "0.95": {
+          "calibration_even_rows": {
+            "coverage": 0.40268456375838924,
+            "precision": 0.43333333333333335
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.40939597315436244,
+            "precision": 0.45901639344262296
+          }
+        },
+        "0.98": {
+          "calibration_even_rows": {
+            "coverage": 0.20134228187919462,
+            "precision": 0.6333333333333333
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.21476510067114093,
+            "precision": 0.71875
+          }
+        }
+      },
+      "same_smiles_as_A_fp32": 0.8959731543624161
+    },
+    "C_fp32": {
+      "latency_ms": {
+        "wall": {
+          "p50": 552.4226480001744,
+          "p95": 1406.0836709493733,
+          "max": 2739.68389699985
+        },
+        "cpu": {
+          "p50": 488.86178899999777,
+          "p95": 659.4702285500047,
+          "max": 1086.4022459999774
+        }
+      },
+      "exact": 0.16778523489932887,
+      "valid": 0.7919463087248322,
+      "exact_by_source": {
+        "ACS": 0.01,
+        "UOB": 0.39,
+        "USPTO": 0.10204081632653061
+      },
+      "selective": {
+        "0.5": {
+          "calibration_even_rows": {
+            "coverage": 0.7919463087248322,
+            "precision": 0.23728813559322035
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.7919463087248322,
+            "precision": 0.1864406779661017
+          }
+        },
+        "0.7": {
+          "calibration_even_rows": {
+            "coverage": 0.7583892617449665,
+            "precision": 0.24778761061946902
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.7516778523489933,
+            "precision": 0.19642857142857142
+          }
+        },
+        "0.8": {
+          "calibration_even_rows": {
+            "coverage": 0.7046979865771812,
+            "precision": 0.26666666666666666
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.6778523489932886,
+            "precision": 0.21782178217821782
+          }
+        },
+        "0.85": {
+          "calibration_even_rows": {
+            "coverage": 0.6711409395973155,
+            "precision": 0.28
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.6510067114093959,
+            "precision": 0.2268041237113402
+          }
+        },
+        "0.9": {
+          "calibration_even_rows": {
+            "coverage": 0.5973154362416108,
+            "precision": 0.3146067415730337
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.5771812080536913,
+            "precision": 0.2558139534883721
+          }
+        },
+        "0.95": {
+          "calibration_even_rows": {
+            "coverage": 0.436241610738255,
+            "precision": 0.4307692307692308
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.40939597315436244,
+            "precision": 0.36065573770491804
+          }
+        },
+        "0.98": {
+          "calibration_even_rows": {
+            "coverage": 0.2550335570469799,
+            "precision": 0.631578947368421
+          },
+          "held_out_odd_rows": {
+            "coverage": 0.2214765100671141,
+            "precision": 0.45454545454545453
+          }
+        }
+      },
+      "same_smiles_as_A_fp32": 0.25838926174496646
+    }
+  },
+  "load_avg_end": [
+    18.70068359375,
+    15.4326171875,
+    16.7236328125
+  ]
+}
