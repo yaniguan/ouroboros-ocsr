@@ -3,23 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#0a0f15">
-  <title>Ouroboros: Symmetry-Complete Chemical Structure Recognition from 2D Drawings to 3D Forces</title>
-  <meta name="description" content="Ouroboros pairs planar C8 steerable vision with 3D MACE energetics, multimodal NMR/HRMS Bayesian rescue (ChemVeritas-600), and 3D bioisostere active distillation.">
+  <meta name="theme-color" content="#f8fafc">
+  <title>Ouroboros — Equivariant OCSR, 3D Physics Gates &amp; Lab Vision</title>
+  <meta name="description" content="Clean, symmetry-aware chemical structure recognition from 2D drawings to 3D forces, selective confidence gating, 96-well plate vision, and spectroscopic disambiguation.">
   <link rel="canonical" href="https://yaniguan.github.io/ouroboros-ocsr/">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Ouroboros — From 2D Molecule Drawings to 3D Forces and Spectra">
-  <meta property="og:description" content="Planar C8 equivariant OCSR, 10-gate 3D physics checks, ChemVeritas-600 spectroscopic rescue, and 3D bioisostere force-field distillation.">
+  <meta property="og:title" content="Ouroboros — From 2D Molecule Drawings to 3D Forces and Lab Agents">
+  <meta property="og:description" content="C8 steerable OCSR, sub-second int8 CPU API, selective confidence gating, 96-well plate vision, and 10-gate 3D physical verification.">
   <meta property="og:url" content="https://yaniguan.github.io/ouroboros-ocsr/">
   <meta property="og:image" content="https://yaniguan.github.io/ouroboros-ocsr/assets/ouroboros-poster.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Ouroboros: Symmetry-Complete Chemical Structure Intelligence">
-  <meta name="twitter:description" content="65.8% across 24 rotation angles without augmentation. 54.0% on real figures. 77.0% stereoisomer recovery with MACE + NMR.">
+  <meta name="twitter:title" content="Ouroboros: Symmetry-Aware Chemical Structure Recognition">
+  <meta name="twitter:description" content="65.8% across 24 rotation angles without augmentation. 46.7% (85% UOB) on untouched frozen-test-v2. 229 ms int8 CPU API.">
   <meta name="twitter:image" content="https://yaniguan.github.io/ouroboros-ocsr/assets/ouroboros-poster.png">
   <link rel="icon" href="assets/ouroboros-static.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
   <script defer src="stage.js"></script>
   <script defer src="charts.js"></script>
+  <script defer src="widgets.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
@@ -27,312 +28,483 @@
 
   <header class="site-header">
     <a class="brand" href="#" aria-label="Ouroboros home">
-      <img src="assets/ouroboros-animated.svg" width="62" height="29" alt="">
+      <img src="assets/ouroboros-static.svg" width="36" height="22" alt="">
       <span>Ouroboros</span>
     </a>
     <nav aria-label="Main navigation">
-      <a href="#method">Engine</a>
-      <a href="#chemveritas">P1 · ChemVeritas</a>
-      <a href="#bioisosteres">P2 · Bioisosteres</a>
-      <a href="lab/">Browser 3D Lab</a>
-      <a class="nav-cta" href="https://github.com/yaniguan/ouroboros-ocsr" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
+      <a href="#functions">Functions</a>
+      <a href="#playgrounds">Interactive</a>
+      <a href="#benchmarks">Benchmarks</a>
+      <a href="#research">P1 &amp; P2</a>
+      <a href="lab/">3D Lab</a>
+      <button type="button" class="theme-btn" id="theme-toggle" aria-label="Toggle light or dark theme">☾ Dark</button>
+      <a class="nav-cta" href="https://github.com/yaniguan/ouroboros-ocsr" target="_blank" rel="noopener">GitHub ↗</a>
     </nav>
   </header>
 
   <main id="main">
+    <!-- HERO -->
     <section class="hero wrap">
-      <p class="eyebrow"><span class="status-dot"></span> SE(2) → O(3) Equivariance · Closed-Loop Chemical Intelligence</p>
+      <p class="eyebrow"><span class="status-dot"></span> SE(2) Vision · Selective Gating · 3D Physics</p>
       <h1>
-        <span class="hero-name">Ouroboros<span class="title-colon">:</span></span>
-        <span class="hero-title">From 2D Molecule Drawings to 3D Forces, Strain, and Spectra</span>
+        Read molecule drawings at any angle.<br>
+        <span class="hero-sub">Verify stereochemistry, confidence, and 3D forces.</span>
       </h1>
       <p class="hero-deck">
-        Rotating a drawing on paper does not change the molecule, while flipping a single stereo wedge creates a different diastereomer.
-        Ouroboros connects <strong>C8 steerable vision</strong> to <strong>3D MACE energetics</strong>, <strong>NMR/HRMS verification</strong>, and <strong>active force-field distillation</strong>.
+        Ouroboros turns 2D chemical figures into standardized SMILES with stereochemistry, pairs reads with a <strong>confidence gate</strong> for lab reasoners, and checks generated 3D conformers against <strong>ten physical and symmetry rules</strong>.
       </p>
       <div class="hero-actions">
-        <a class="button primary" href="lab/">Open Browser 3D Lab <span aria-hidden="true">↗</span></a>
-        <a class="button secondary" href="#demo"><span aria-hidden="true">▶</span> Interactive 4-stage demo</a>
-        <a class="button secondary" href="https://github.com/yaniguan/ouroboros-ocsr" target="_blank" rel="noopener">Code &amp; Weights <span aria-hidden="true">↗</span></a>
-        <a class="text-link" href="#citation">BibTeX <span aria-hidden="true">↓</span></a>
+        <a class="button primary" href="lab/">Open Browser 3D Lab ↗</a>
+        <a class="button secondary" href="#playgrounds">Try Live Function Playgrounds ↓</a>
+        <a class="button secondary" href="#functions">Architecture &amp; Pipelines ↓</a>
+        <a class="button secondary" href="https://github.com/yaniguan/ouroboros-ocsr" target="_blank" rel="noopener">Code &amp; Weights ↗</a>
       </div>
       <div class="provenance-strip" aria-label="Project branches and acknowledgements">
         <span>Yani Guan</span>
         <span>·</span>
-        <span>Core Engine: <a href="https://github.com/yaniguan/ouroboros-ocsr/releases/tag/v0.1.0-alpha" target="_blank" rel="noopener">v0.1.0-alpha</a></span>
+        <span>Release: <a href="https://github.com/yaniguan/ouroboros-ocsr/releases/tag/v0.1.0-alpha" target="_blank" rel="noopener">v0.1.0-alpha</a></span>
         <span>·</span>
-        <span>Paper P1: <a href="https://github.com/yaniguan/ouroboros-ocsr/tree/p1-phys-spec-ocsr-bench" target="_blank" rel="noopener">ChemVeritas-600 (p1-v1.0)</a></span>
+        <span>Paper P1: <a href="https://github.com/yaniguan/ouroboros-ocsr/tree/p1-phys-spec-ocsr-bench" target="_blank" rel="noopener">ChemVeritas-600</a></span>
         <span>·</span>
-        <span>Paper P2: <a href="https://github.com/yaniguan/ouroboros-ocsr/tree/p2-mlip-blindspot-distill" target="_blank" rel="noopener">3D Bioisostere Distillation</a></span>
+        <span>Paper P2: <a href="https://github.com/yaniguan/ouroboros-ocsr/tree/p2-mlip-blindspot-distill" target="_blank" rel="noopener">3D Bioisosteres</a></span>
         <span>·</span>
         <span>Supported by Google Antigravity for Science</span>
       </div>
     </section>
 
-    <section class="headline-results wrap" aria-label="Headline measured results">
-      <a class="headline-result" href="#method">
-        <span class="small-label">24-angle synthetic rotation</span>
-        <div class="big-result">
-          <strong>65.8<span>%</span></strong>
-          <span class="vs">vs</span>
-          <span class="baseline orange">25.4<span>%</span></span>
-        </div>
-        <p>C8 steerable encoder vs plain CNN without rotation augmentation, matching 360°-augmented CNN (65.7%) with 25% fewer parameters.</p>
-        <span class="result-arrow" aria-hidden="true">↗</span>
-      </a>
-      <a class="headline-result" href="#core-explorer">
-        <span class="small-label blue">Real literature figures (dev-test)</span>
-        <div class="big-result">
-          <strong>54.0<span>%</span></strong>
-          <span class="vs">·</span>
-          <span class="baseline">84<span>% UOB</span></span>
-        </div>
-        <p>Exact match with full stereochemistry on 298 ACS, UOB, and USPTO dev-test depictions (46.7% and 85% UOB on the untouched 300-image <code>frozen-test-v2</code> holdout).</p>
-        <span class="result-arrow" aria-hidden="true">↗</span>
-      </a>
-      <a class="headline-result" href="#chemveritas">
-        <span class="small-label purple">P1 · Spectroscopic Bayesian rescue</span>
-        <div class="big-result">
-          <strong>77.0<span>%</span></strong>
-          <span class="vs">vs</span>
-          <span class="baseline orange">19.7<span>%</span></span>
-        </div>
-        <p>T2 stereoisomer accuracy on ChemVeritas-600 (+45.0 kcal/mol median MACE strain penalty; 73.3% on published ¹³C NMR).</p>
-        <span class="result-arrow" aria-hidden="true">↗</span>
-      </a>
-    </section>
-
-    <section class="demo-section wrap" id="demo" aria-labelledby="demo-heading">
-      <div class="section-line">
-        <h2 id="demo-heading">See the symmetry loop in motion.</h2>
-        <span>48 seconds · Interactive canvas</span>
-      </div>
-      <div class="film-frame">
-        <canvas id="hero-stage" width="1280" height="720" aria-label="Interactive four-chapter visualization of planar C8 equivariance, 3D steric strain, spectroscopic Bayesian inference, and bioisostere torsion distillation"></canvas>
-        <div class="stage-controls">
-          <button type="button" id="stage-toggle" aria-label="Pause interactive demo">Ⅱ Pause</button>
-        </div>
-      </div>
-      <div class="chapters" aria-label="Jump to an interactive stage">
-        <button type="button" class="active" data-chapter="0"><span>00:00 · Core</span> Planar C8 steerable vision</button>
-        <button type="button" data-chapter="1"><span>00:12 · 3D Audit</span> Silent stereo clash (+45 kcal/mol)</button>
-        <button type="button" data-chapter="2"><span>00:24 · Paper P1</span> ChemVeritas-600 Bayesian rescue</button>
-        <button type="button" data-chapter="3"><span>00:36 · Paper P2</span> Bioisostere PES softening &amp; replay</button>
+    <!-- HEADLINE METRICS -->
+    <section class="wrap" aria-label="Measured results">
+      <div class="metric-grid">
+        <a class="metric-card" href="#benchmarks">
+          <span class="small-label">24-Angle Rotation</span>
+          <div class="metric-big">
+            <span>65.8%</span>
+            <span class="sub">vs 25.4% plain CNN</span>
+          </div>
+          <p>C8 steerable encoder matches 360°-augmented CNN (65.7%) with 25% fewer parameters and zero rotated training images.</p>
+        </a>
+        <a class="metric-card" href="#benchmarks">
+          <span class="small-label">Untouched Holdout (v2)</span>
+          <div class="metric-big">
+            <span>46.7%</span>
+            <span class="sub">· 85.0% UOB</span>
+          </div>
+          <p>Single-shot <code>frozen-test-v2</code> (n = 300) with validation-locked decoding; 54.0% on the 298-image dev-test set.</p>
+        </a>
+        <a class="metric-card" href="#functions">
+          <span class="small-label">CPU Inference API</span>
+          <div class="metric-big">
+            <span>229 ms</span>
+            <span class="sub">p50 · int8 decoder</span>
+          </div>
+          <p>Sub-second single-thread CPU inference (<code>ouroboros.infer</code>) with token-probability gating and only +0.21 pp accuracy drop on PMC val.</p>
+        </a>
+        <a class="metric-card" href="#research">
+          <span class="small-label">Literature ¹³C NMR</span>
+          <div class="metric-big">
+            <span>73.3%</span>
+            <span class="sub">isomer recovery</span>
+          </div>
+          <p>Zero-retraining diastereomer recovery across 30 compounds (15 DOI pairs, MAE 5.25 ppm) using O(3) symmetry orbits.</p>
+        </a>
       </div>
     </section>
 
-    <!-- SECTION 01: CORE ENGINE -->
-    <section class="section wrap" id="method">
-      <div class="section-heading">
-        <p class="eyebrow">01 / Core Engine</p>
-        <h2>Two symmetries.<br><span class="muted-heading">One stereo-aware pipeline.</span></h2>
-        <p class="section-intro">
-          Standard CNNs treat a rotated molecule drawing as an unfamiliar pattern unless trained on rotated copies.
-          Ouroboros builds discrete 2D rotation symmetry directly into the encoder, decodes full stereochemistry, and checks every 3D structure against ten physical gates.
-        </p>
-      </div>
-
-      <div class="method-layout">
-        <div class="loop-steps">
-          <article>
-            <span class="step-number teal">01</span>
-            <div>
-              <h3>C8 steerable encoder (Arm C)</h3>
-              <p>Eight orientation channels cycle cleanly when an input image rotates by multiples of 45°, keeping internal feature error down to 8.1 × 10⁻⁷ at 90° and 180° before invariant token pooling.</p>
-            </div>
-          </article>
-          <article>
-            <span class="step-number purple">02</span>
-            <div>
-              <h3>Controlled 3-arm comparison &amp; ensemble</h3>
-              <p>Arms A (plain CNN), B (360°-augmented CNN), and C (C8 steerable CNN) share the same 6-layer Transformer decoder, data split, and scoring harness. On upright real figures, fusing fine-tuned A + C with beam 5 and pad TTA reaches 54.0%.</p>
-            </div>
-          </article>
-          <article>
-            <span class="step-number blue">03</span>
-            <div>
-              <h3>Leakage-free benchmarks &amp; 3D gates</h3>
-              <p>Connectivity-block gating removes stereoisomer overlap between training and test sets. Alongside the 298-image dev-test set, an untouched 300-image holdout (<code>frozen-test-v2</code>) is locked by SHA-256 to be scored once per release.</p>
-            </div>
-          </article>
-          <div class="memory-callout">
-            <span class="small-label">Honest scope on real figures</span>
-            <p>Decoding settings in the Oct 30 table were compared on the 298-image dev-test set (54.0%).<br><strong>With decoding locked strictly on <code>PMC val</code> (44.6%), the untouched 300-image <code>frozen-test-v2</code> holdout scores 46.7% overall and 85.0% on UOB in a single pass.</strong></p>
-          </div>
-        </div>
-
-        <figure class="figure-shell">
-          <button class="image-expand" type="button" data-image="assets/architecture-loop.svg" data-caption="Ouroboros core pipeline: inscribed 2D depiction, C8 steerable fiber bundle, beam + ensemble SMILES decoding, and 10-gate 3D MACE/MMFF physical verification." aria-label="Enlarge architecture diagram">
-            <img src="assets/architecture-loop.svg" width="1920" height="1080" loading="lazy" alt="Four-stage Ouroboros architecture diagram from rotated 2D depiction through C8 steerable encoder and Transformer decoder to 3D conformer force verification.">
-            <span class="expand-icon" aria-hidden="true">↗</span>
-          </button>
-          <figcaption>Planar C8 equivariance on the 2D canvas meets SE(3)-invariant energies and equivariant forces in 3D space.</figcaption>
-        </figure>
-      </div>
-
-      <div class="chart-shell" id="core-explorer">
-        <div class="chart-heading">
-          <div>
-            <h3>Explore the OCSR benchmarks</h3>
-            <p>Measured 24-angle synthetic rotation sweeps and 298-image real literature subsets</p>
-          </div>
-          <div class="comparison-controls">
-            <label class="select-label" for="core-view-select">Benchmark</label>
-            <select id="core-view-select" aria-label="Select OCSR benchmark view">
-              <option value="rot_exact">24-angle rotation · Exact match (with stereo)</option>
-              <option value="real_subsets">Real figures dev-test · ALL, UOB, ACS, USPTO</option>
-              <option value="rot_stereo">24-angle rotation · Stereo-only subset</option>
-              <option value="rot_tanimoto">24-angle rotation · Mean Tanimoto similarity</option>
-            </select>
-            <label class="ci-toggle" id="core-ci-wrap">
-              <input type="checkbox" id="core-show-ci" checked>
-              <span>Show 95% CI</span>
-            </label>
-          </div>
-        </div>
-        <div id="core-chart-legend" class="chart-legend" aria-label="Model legend"></div>
-        <div id="core-chart" class="interactive-chart"></div>
-        <div id="core-chart-tooltip" class="chart-tooltip" hidden></div>
-        <p id="core-chart-caption" class="chart-caption"></p>
-      </div>
-    </section>
-
-    <!-- SECTION 02: PAPER P1 CHEMVERITAS-600 -->
-    <section class="section evidence-section" id="chemveritas">
+    <!-- SECTION 01: FUNCTION ARCHITECTURE & PIPELINES -->
+    <section class="section band-section" id="functions">
       <div class="wrap">
-        <span class="task-badge">Paper P1 · Branch p1-phys-spec-ocsr-bench (tag p1-v1.0)</span>
         <div class="section-heading">
-          <p class="eyebrow">02 / Thermodynamically &amp; Spectroscopically Informed OCSR</p>
-          <h2>Closing the silent stereochemical gap.<br><span class="muted-heading">The ChemVeritas-600 benchmark.</span></h2>
+          <p class="eyebrow">01 / Functions &amp; Modules</p>
+          <h2>What Ouroboros actually runs.<br><span class="muted-heading">Modular CLI tools, Python APIs, and safety gates.</span></h2>
           <p class="section-intro">
-            When bridged rings or low-DPI Supporting Information scans blur a wedge or dash bond, vision-only OCSR outputs valid-valence SMILES that encode the wrong diastereomer or a severely strained ring junction.
-            Paper P1 pairs visual beams with 3D MACE-OFF23 strain relaxation, exact-mass HRMS, and unassigned ¹³C/¹H NMR matching.
+            Every capability in the repository is a small, testable module. Uncertain reads and invalid geometries are flagged explicitly rather than guessed.
           </p>
         </div>
 
-        <div class="finding-columns">
-          <article>
-            <span class="small-label orange">3D Thermodynamic Strain Audit</span>
-            <h3>Strained ring flips stand out in 3D.</h3>
-            <div class="inline-metric">
-              <strong>+45.0 kcal/mol</strong>
-              <span>median MACE-OFF23-medium penalty · ROC-AUC 0.853 (n = 50 pairs)</span>
-            </div>
-            <p>2D valence checks cannot tell a natural cis-fused cage from an impossible trans-bridged epimer. Relaxing candidate conformers with MACE-OFF23-medium prefers the true stereoisomer in 92.0% of pairs.</p>
+        <figure class="figure-shell">
+          <button class="image-expand" type="button" data-image="assets/func-system-map.svg" data-caption="Ouroboros modular function map connecting 2D OCSR, sub-second CPU quantization, lab-agent molecule_context/v1 gating, 96-well plate geometry, and 3D MACE/NMR verification." aria-label="Enlarge modular function map">
+            <img src="assets/func-system-map.svg" width="1280" height="660" loading="lazy" alt="Modular architecture map of Ouroboros functions from 2D drawings and 96-well plates to SMILES, lab-agent context, and 3D force fields.">
+            <span class="expand-icon" aria-hidden="true">Expand ↗</span>
+          </button>
+          <figcaption>Click any diagram to inspect full resolution. Inputs flow through explicit standardization, confidence, and physical eligibility gates.</figcaption>
+        </figure>
+
+        <div class="func-cards">
+          <article class="func-card">
+            <span class="small-label">Vision &amp; Decoding</span>
+            <h3>C8 Steerable OCSR + Ensemble</h3>
+            <p>Three controlled encoder arms (A, B, C), beam search, RDKit validity reranking, pad/sharpen TTA, and unlabeled shard decoding.</p>
+            <code>scripts/predict_real.py</code>
           </article>
-          <article>
-            <span class="small-label teal">Authentic Literature NMR Validation</span>
-            <h3>Zero-retraining recovery on real spectra.</h3>
-            <div class="inline-metric">
-              <strong class="blue">73.3% / 66.7%</strong>
-              <span>MMFF94s / MACE-OFF23 recovery across 30 compounds (15 DOI isomer pairs)</span>
-            </div>
-            <p>Evaluated on 181 published experimental ¹³C shifts (MAE 5.25 ppm, Pearson r = 0.9810), unassigned Hungarian peak matching + O(3) symmetry-orbit counting recovers true stereoisomers from down-weighted beams.</p>
+          <article class="func-card">
+            <span class="small-label">Fast Edge Serving</span>
+            <h3>int8 CPU API &amp; Quantizer</h3>
+            <p>One-line Python predictor, FastAPI <code>POST /predict</code> server, and dynamic <code>int8</code> / <code>fp16</code> checkpoint quantizer.</p>
+            <code>ouroboros.infer · lab.quantize</code>
+          </article>
+          <article class="func-card">
+            <span class="small-label">Lab Reasoner &amp; RL</span>
+            <h3>Context JSONL &amp; GRPO Verifier</h3>
+            <p>Frozen <code>molecule_context/v1</code> schema (<code>ok</code> vs <code>ask a human</code>, zero <code>gold</code> leakage) plus batched NVTX GRPO reward hooks.</p>
+            <code>lab.molecule_context · lab.grpo_verifier</code>
+          </article>
+          <article class="func-card">
+            <span class="small-label">2D → 3D Force Fields</span>
+            <h3>Alias Expansion &amp; 3D Splits</h3>
+            <p>Expands <code>Me, Et, OMe, Ph, Boc, CO2Et</code>, checks charge/element/stereo gates, embeds 0.1 Å rattles, and splits by connectivity block.</p>
+            <code>scripts/image_to_forcefield.py</code>
+          </article>
+          <article class="func-card">
+            <span class="small-label">Plate Camera Geometry</span>
+            <h3>96-Well Plate Finder</h3>
+            <p>Finds any well on rotated 8×12 rectangular plates (homography + chamfer) and 5-ring circular plates (SO(2) Fourier phase + notch).</p>
+            <code>ouroboros.labvision</code>
+          </article>
+          <article class="func-card">
+            <span class="small-label">Data Hygiene</span>
+            <h3>Connectivity Leakage Gate</h3>
+            <p>Blocks both full-InChIKey and 14-character connectivity-block stereoisomer overlap across every training and evaluation split.</p>
+            <code>scripts/check_leakage.py</code>
           </article>
         </div>
 
-        <div class="chart-shell" style="margin-bottom: 48px;">
+        <figure class="figure-shell">
+          <button class="image-expand" type="button" data-image="assets/func-forcefield-pipeline.svg" data-caption="Six-stage image_to_forcefield.py pipeline: ink cropping, confidence margin gating, monovalent alias expansion, domain/stereo eligibility, 0.1 Å conformer perturbation, and connectivity-disjoint MACE splits." aria-label="Enlarge image-to-forcefield pipeline diagram">
+            <img src="assets/func-forcefield-pipeline.svg" width="1280" height="390" loading="lazy" alt="Six-stage pipeline diagram for image_to_forcefield.py showing cropping, confidence gating, alias expansion, domain checks, conformer rattle, and MACE splits.">
+            <span class="expand-icon" aria-hidden="true">Expand ↗</span>
+          </button>
+          <figcaption>End-to-end <code>image_to_forcefield.py</code> workflow: rejected or ambiguous structures are recorded in <code>manifest.jsonl</code> without silent guessing.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SECTION 02: INTERACTIVE FUNCTION PLAYGROUNDS -->
+    <section class="section wrap" id="playgrounds">
+      <div class="section-heading">
+        <p class="eyebrow">02 / Interactive Playgrounds</p>
+        <h2>Test the core functions right here.<br><span class="muted-heading">Rotate depictions, tune confidence gates, and click 96-well plates.</span></h2>
+        <p class="section-intro">
+          Explore how Ouroboros handles 2D rotation symmetry, selective abstention for LLM lab agents, and symmetry-aware plate indexing directly in your browser.
+        </p>
+      </div>
+
+      <div class="playground-stack">
+        <!-- Playground 1: Rotation & C8 Equivariance -->
+        <div class="playground-card" id="widget-rotation">
+          <div class="playground-head">
+            <div>
+              <span class="small-label">Playground 01 · ouroboros.encoder + ouroboros.demo</span>
+              <h3>2D Rotation &amp; C8 Steerable Equivariance</h3>
+              <p>Rotate a molecule inside the 384 px inscribed circle and watch the eight C8 orientation channels cycle cleanly.</p>
+            </div>
+            <a class="button secondary" href="lab/">Open Full 3D Lab ↗</a>
+          </div>
+
+          <div class="control-bar">
+            <label class="ctrl-group" for="rot-mol">
+              <span>Molecule</span>
+              <select id="rot-mol">
+                <option value="ibuprofen">(S)-Ibuprofen (chiral)</option>
+                <option value="aspirin">Aspirin</option>
+                <option value="bcp">BCP Bioisostere</option>
+              </select>
+            </label>
+            <label class="ctrl-group" for="rot-angle">
+              <span>Angle</span>
+              <input type="range" id="rot-angle" min="0" max="360" step="5" value="90">
+              <strong class="mono" id="rot-angle-val">90°</strong>
+            </label>
+            <div class="preset-pills" aria-label="Quick rotation angles">
+              <button type="button" data-rot-preset="0">0°</button>
+              <button type="button" data-rot-preset="45">45°</button>
+              <button type="button" data-rot-preset="90">90°</button>
+              <button type="button" data-rot-preset="135">135°</button>
+              <button type="button" data-rot-preset="180">180°</button>
+              <button type="button" data-rot-preset="270">270°</button>
+            </div>
+            <label class="ctrl-group">
+              <input type="checkbox" id="rot-ink-crop" checked>
+              <span><code>--ink-crop</code></span>
+            </label>
+          </div>
+
+          <div class="playground-two-col">
+            <canvas id="rot-canvas" class="widget-canvas" width="360" height="276" aria-label="Rotated 2D molecule depiction canvas"></canvas>
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:12.5px;">
+                <strong>C8 Fiber Orientation Activations (8 × 45° cyclic shift)</strong>
+                <span class="mono" style="color:var(--accent);">Feature error: <span id="rot-feat-err">8.1 × 10⁻⁷</span></span>
+              </div>
+              <div id="rot-c8-bars" class="c8-bars" aria-label="Eight C8 orientation channel bars"></div>
+              <div class="readout-grid">
+                <div class="readout-box">
+                  <div class="lbl">
+                    <span>Arm C · C8 Steerable</span>
+                    <span class="pill-badge ok">stereo preserved</span>
+                  </div>
+                  <code id="rot-arm-c-smi">CC(C)Cc1ccc([C@@H](C)C(=O)O)cc1</code>
+                </div>
+                <div class="readout-box">
+                  <div class="lbl">
+                    <span>Arm A · Plain CNN (no rot aug)</span>
+                    <span class="pill-badge warn" id="rot-arm-a-badge">stereo/ring drift</span>
+                  </div>
+                  <code id="rot-arm-a-smi">CC(C)Cc1ccc(C(C)C(=O)O)cc1</code>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Playground 2: Confidence Gate & molecule_context/v1 -->
+        <div class="playground-card" id="widget-gate">
+          <div class="playground-head">
+            <div>
+              <span class="small-label">Playground 02 · ouroboros.decode.confidence + lab.molecule_context</span>
+              <h3>Selective Confidence Gate &amp; Lab-Agent Context Simulator</h3>
+              <p>Tune <code>--min-margin</code> and <code>--max-disagreement</code> to filter uncertain reads before they reach a downstream LLM reasoner or 3D force field.</p>
+            </div>
+            <span class="mono" style="font-size:12.5px; color:var(--accent); font-weight:600;" id="gate-stats-summary"></span>
+          </div>
+
+          <div class="control-bar">
+            <label class="ctrl-group" for="gate-margin">
+              <span><code>--min-margin</code></span>
+              <input type="range" id="gate-margin" min="0" max="0.7" step="0.05" value="0.20">
+              <strong class="mono" id="gate-margin-val">0.20</strong>
+            </label>
+            <label class="ctrl-group" for="gate-disagree">
+              <span><code>--max-disagreement</code></span>
+              <input type="range" id="gate-disagree" min="0" max="0.75" step="0.25" value="0.25">
+              <strong class="mono" id="gate-disagree-val">0.25</strong>
+            </label>
+            <label class="ctrl-group">
+              <input type="checkbox" id="gate-expand-aliases" checked>
+              <span><code>--expand-aliases</code> (Boc, OMe, Ph…)</span>
+            </label>
+          </div>
+
+          <div class="gate-layout">
+            <div class="table-wrap">
+              <table class="gate-table">
+                <thead>
+                  <tr>
+                    <th>Figure</th>
+                    <th>Standardized / Expanded SMILES</th>
+                    <th>Margin</th>
+                    <th>Disagree</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="gate-table-body"></tbody>
+              </table>
+            </div>
+            <div class="prompt-panel">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="small-label">Live YLM Prompt Block (molecule_context/v1)</span>
+                <span class="pill-badge ok">no gold leaked</span>
+              </div>
+              <pre id="gate-prompt-preview"></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Playground 3: 96-Well Plate Finder -->
+        <div class="playground-card" id="widget-labvision">
+          <div class="playground-head">
+            <div>
+              <span class="small-label">Playground 03 · ouroboros.labvision</span>
+              <h3>96-Well Plate Symmetry &amp; Homography Finder</h3>
+              <p>Locate any well across arbitrary 360° camera rotations on rectangular (8×12) or circular (6/12/18/24/36) plates. Click any well to inspect it.</p>
+            </div>
+          </div>
+
+          <div class="control-bar">
+            <label class="ctrl-group" for="well-kind">
+              <span>Plate</span>
+              <select id="well-kind">
+                <option value="rect">Rectangular (8 × 12)</option>
+                <option value="circ">Circular (5 concentric rings)</option>
+              </select>
+            </label>
+            <label class="ctrl-group" for="well-order">
+              <span>Order</span>
+              <select id="well-order">
+                <option value="ROW_MAJOR">ROW_MAJOR (65 → F5)</option>
+                <option value="COL_MAJOR">COL_MAJOR / Opentrons (65 → A9)</option>
+                <option value="RING_MAJOR" disabled>RING_MAJOR (65 → R4S04)</option>
+              </select>
+            </label>
+            <label class="ctrl-group" for="well-index">
+              <span>Well</span>
+              <input type="range" id="well-index" min="1" max="96" step="1" value="65">
+              <strong class="mono" id="well-index-val">#65</strong>
+            </label>
+            <label class="ctrl-group" for="well-rot">
+              <span>Camera</span>
+              <input type="range" id="well-rot" min="0" max="355" step="5" value="35">
+              <strong class="mono" id="well-rot-val">35°</strong>
+            </label>
+            <label class="ctrl-group" for="well-noise">
+              <span>Jitter</span>
+              <input type="range" id="well-noise" min="0" max="2.5" step="0.5" value="0.5">
+              <strong class="mono" id="well-noise-val">0.5 px</strong>
+            </label>
+          </div>
+
+          <div class="playground-two-col">
+            <canvas id="well-canvas" class="widget-canvas" width="360" height="276" aria-label="Interactive 96-well plate viewer"></canvas>
+            <div style="display:flex; flex-direction:column; justify-content:space-between; gap:12px;">
+              <div class="readout-box" id="well-readout" style="font-size:13.5px; line-height:1.6;"></div>
+              <div class="readout-grid">
+                <div class="readout-box">
+                  <div class="lbl"><span>Rectangular Solver</span></div>
+                  <p style="font-size:12.5px; color:var(--muted);">4-corner homography maps to canonical grid; A1 corner chamfer + fiducial dot break 180° flip symmetry (99.2% unflagged accuracy).</p>
+                </div>
+                <div class="readout-box">
+                  <div class="lbl"><span>Circular Solver</span></div>
+                  <p style="font-size:12.5px; color:var(--muted);">Polar unwrap + SO(2) Fourier lattice phase mod 60°, rim notch picks the 60° sector, and off-axis dot catches mirror flips (100% unflagged).</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 03: BENCHMARKS & ANIMATED OVERVIEW -->
+    <section class="section band-section" id="benchmarks">
+      <div class="wrap">
+        <div class="section-heading">
+          <p class="eyebrow">03 / Measured Benchmarks</p>
+          <h2>Every claim backed by committed receipts.<br><span class="muted-heading">Synthetic rotation, untouched real holdout, hand-drawn, and CPU latency.</span></h2>
+          <p class="section-intro">
+            Hover or switch benchmark views below to inspect bootstrap 95% confidence intervals across synthetic rotations, real literature sets, and edge quantization.
+          </p>
+        </div>
+
+        <div class="chart-shell" id="core-explorer" style="margin-bottom: 32px;">
           <div class="chart-heading">
             <div>
-              <h3>Explore ChemVeritas-600 results</h3>
-              <p>600 connectivity-disjoint polycyclic, near-Bredt, superatom, and bioisostere scaffolds</p>
+              <h3>Interactive OCSR Benchmark Explorer</h3>
+              <p>Data loaded directly from committed benchmark receipts (<code>site/assets/benchmark-data.json</code>)</p>
             </div>
             <div class="comparison-controls">
-              <label class="select-label" for="p1-view-select">Evaluation</label>
+              <label class="ctrl-group" for="core-view-select">
+                <span>View</span>
+                <select id="core-view-select" aria-label="Select OCSR benchmark view">
+                  <option value="rot_exact">24-angle rotation · Exact match (with stereo)</option>
+                  <option value="frozen_vs_dev">Real figures · frozen-test-v2 holdout vs subset100 dev-test</option>
+                  <option value="real_subsets">Real dev-test breakdown · ALL, UOB, ACS, USPTO</option>
+                  <option value="rot_stereo">24-angle rotation · Stereo-only subset</option>
+                  <option value="rot_tanimoto">24-angle rotation · Mean Tanimoto similarity</option>
+                </select>
+              </label>
+              <label class="ci-toggle" id="core-ci-wrap">
+                <input type="checkbox" id="core-show-ci" checked>
+                <span>95% CI</span>
+              </label>
+            </div>
+          </div>
+          <div id="core-chart-legend" class="chart-legend" aria-label="Model legend"></div>
+          <div id="core-chart" class="interactive-chart"></div>
+          <div id="core-chart-tooltip" class="chart-tooltip" hidden></div>
+          <p id="core-chart-caption" class="chart-caption"></p>
+        </div>
+
+        <div class="film-frame" id="demo">
+          <canvas id="hero-stage" width="1280" height="720" aria-label="Four-chapter animation of C8 vision, 3D steric strain, NMR rescue, and bioisostere distillation"></canvas>
+          <div class="stage-controls">
+            <button type="button" id="stage-toggle" aria-label="Pause interactive animation">Ⅱ Pause</button>
+          </div>
+        </div>
+        <div class="chapters" aria-label="Jump to an animation chapter">
+          <button type="button" class="active" data-chapter="0"><span>01 · Vision</span> Planar C8 steerable encoder</button>
+          <button type="button" data-chapter="1"><span>02 · 3D Audit</span> Steric clash &amp; strain gate</button>
+          <button type="button" data-chapter="2"><span>03 · Paper P1</span> Spectroscopic Bayesian rescue</button>
+          <button type="button" data-chapter="3"><span>04 · Paper P2</span> Bioisostere PES replay</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 04: RESEARCH EXTENSIONS (P1 & P2) -->
+    <section class="section wrap" id="research">
+      <div class="section-heading">
+        <p class="eyebrow">04 / Research Extensions</p>
+        <h2>Physics-in-the-loop disambiguation &amp; sp³ cages.<br><span class="muted-heading">Self-contained paper branches built on the core engine.</span></h2>
+      </div>
+
+      <div class="two-col-cards">
+        <article class="info-card" id="chemveritas">
+          <span class="small-label">Paper P1 · p1-phys-spec-ocsr-bench</span>
+          <h3>Spectroscopic &amp; 3D Strain Rescue (ChemVeritas-600)</h3>
+          <div class="inline-stat">73.3% real ¹³C NMR recovery · 77.0% T2 upper bound</div>
+          <p>
+            Pairs candidate diastereomers with HRMS formula filtering, 3D strain checks, and O(3) symmetry-orbit ¹³C/¹H NMR peak matching. On the 50-pair strain audit, 30 impossible ring-junction flips are rejected outright by RDKit 3D embedding, and on the 20 embeddable pairs MACE-OFF23 prefers the true isomer in 80% of pairs (median ΔE +1.97 kcal/mol; MMFF94s +2.60 kcal/mol, 20/20).
+          </p>
+        </article>
+        <article class="info-card" id="bioisosteres">
+          <span class="small-label">Paper P2 · p2-mlip-blindspot-distill</span>
+          <h3>3D Bioisostere Blind Spots &amp; Replay Distillation</h3>
+          <div class="inline-stat">112 paired sp³ cages · 7 medicinal motif families</div>
+          <p>
+            Audits MACE-OFF23 and AIMNet2 across strained benzene bioisosteres (BCP, BCH, 2-oxa-BCH, BCHep, cubane, azaspiro/oxetane, and hypervalent <code>-SF₅</code>), pairing offset-free committee force disagreement (<code>σ_F</code>) with conservative K-head anchor replay.
+          </p>
+        </article>
+      </div>
+
+      <div class="chart-shell" style="margin-bottom: 24px;">
+        <div class="chart-heading">
+          <div>
+            <h3>ChemVeritas-600 Ablation &amp; Closed-Loop Explorer</h3>
+            <p>In-model ablation ladder (A0 → A6) and multi-view neural OCSR coupling (V0–V3)</p>
+          </div>
+          <div class="comparison-controls">
+            <label class="ctrl-group" for="p1-view-select">
+              <span>View</span>
               <select id="p1-view-select" aria-label="Select ChemVeritas-600 view">
                 <option value="ablation">Ablation ladder A0 → A6 (T2 Exact, Veritas-RPF, T3 Audit)</option>
                 <option value="views">Closed-loop neural Ouroboros-AC across views V0–V3</option>
               </select>
-            </div>
+            </label>
           </div>
-          <div id="p1-chart-legend" class="chart-legend" aria-label="ChemVeritas metric legend"></div>
-          <div id="p1-chart" class="interactive-chart"></div>
-          <p id="p1-chart-caption" class="chart-caption"></p>
         </div>
+        <div id="p1-chart-legend" class="chart-legend" aria-label="ChemVeritas metric legend"></div>
+        <div id="p1-chart" class="interactive-chart"></div>
+        <p id="p1-chart-caption" class="chart-caption"></p>
+      </div>
 
-        <figure class="figure-shell">
-          <button class="image-expand" type="button" data-image="assets/p1-bayesian-pipeline.svg" data-caption="Paper P1 closed-loop Bayesian posterior combining planar C8 beam log-likelihoods, HRMS formula gating, MACE-OFF23 Boltzmann strain, O(3) ¹³C symmetry orbits, and Karplus ³J_HH couplings." aria-label="Enlarge Paper P1 Bayesian pipeline figure">
-            <img src="assets/p1-bayesian-pipeline.svg" width="1920" height="1080" loading="lazy" alt="Three-panel schematic of Paper P1 showing candidate diastereomer enumeration, five-term Bayesian posterior engine, and measured ChemVeritas-600 plus published NMR outcomes.">
-            <span class="expand-icon" aria-hidden="true">↗</span>
+      <div class="two-col-cards">
+        <figure class="figure-shell" style="margin-bottom:0;">
+          <button class="image-expand" type="button" data-image="assets/architecture-loop.svg" data-caption="Core symmetry loop: 2D C8 steerable fiber bundle, beam + ensemble SMILES decoding, and 10-gate 3D physical verification." aria-label="Enlarge core symmetry loop diagram">
+            <img src="assets/architecture-loop.svg" width="1920" height="1080" loading="lazy" alt="Four-stage Ouroboros symmetry loop diagram.">
+            <span class="expand-icon" aria-hidden="true">Expand ↗</span>
           </button>
-          <figcaption>Five-evidence Bayesian posterior with calibrated 100% abstention when achiral observables cannot distinguish mirror-image enantiomers.</figcaption>
+          <figcaption>Core 2D C8 → 3D SE(3) verification loop.</figcaption>
+        </figure>
+        <figure class="figure-shell" style="margin-bottom:0;">
+          <button class="image-expand" type="button" data-image="assets/p2-bioisostere-distill.svg" data-caption="Paper P2 seven-family 3D bioisostere panel, torsion PES softening diagnostic, and conservative multi-head replay distillation." aria-label="Enlarge Paper P2 bioisostere figure">
+            <img src="assets/p2-bioisostere-distill.svg" width="1920" height="1080" loading="lazy" alt="Paper P2 3D bioisostere benchmark and replay distillation schematic.">
+            <span class="expand-icon" aria-hidden="true">Expand ↗</span>
+          </button>
+          <figcaption>Paper P2 strained bioisostere audit &amp; conservative K-head replay.</figcaption>
         </figure>
       </div>
     </section>
 
-    <!-- SECTION 03: PAPER P2 BIOISOSTERES -->
-    <section class="section wrap" id="bioisosteres">
-      <span class="task-badge blue-badge">Paper P2 · Branch p2-mlip-blindspot-distill</span>
-      <div class="section-heading">
-        <p class="eyebrow">03 / Foundation Force-Field Blind Spots &amp; Active Distillation</p>
-        <h2>Escape from Flatland 2.0.<br><span class="muted-heading">Auditing strained 3D bioisosteres.</span></h2>
-        <p class="section-intro">
-          Modern medicinal chemistry replaces flat benzene rings with strained sp³ cages such as bicyclo[1.1.1]pentane (BCP), bicyclo[2.1.1]hexane (BCH), cubane, and hypervalent -SF₅.
-          Universal organic force fields under-predict rotational barriers and transannular repulsion when these motifs are rare in training data.
-        </p>
-      </div>
-
-      <ol class="workflow" aria-label="Paper P2 active distillation workflow">
-        <li>112-scaffold 7-family panel</li>
-        <li>MACE-OFF23 vs AIMNet2 domain gate</li>
-        <li>Bridgehead torsion &amp; PES softening α</li>
-        <li>Offset-free committee σ_F (QbC + LCMD)</li>
-        <li>Conservative K-head replay distillation</li>
-      </ol>
-
-      <figure class="figure-shell">
-        <button class="image-expand" type="button" data-image="assets/p2-bioisostere-distill.svg" data-caption="Paper P2 seven-family 3D bioisostere benchmark (112 paired scaffolds), PES softening diagnostic, and conservative multi-head replay distillation architecture." aria-label="Enlarge Paper P2 bioisostere distillation figure">
-          <img src="assets/p2-bioisostere-distill.svg" width="1920" height="1080" loading="lazy" alt="Schematic of seven 3D bioisostere motif families, torsion PES barrier softening with committee uncertainty bands, and replay-protected K-head conservative distillation.">
-          <span class="expand-icon" aria-hidden="true">↗</span>
-        </button>
-        <figcaption>Seven strained bioisostere families paired with heavy-atom-matched planar controls, coupled to conservative multi-head active replay.</figcaption>
-      </figure>
-
-      <div class="p2-grid">
-        <div class="spec-list">
-          <div class="spec-card">
-            <h4 class="lime">Strict chemical domain eligibility</h4>
-            <p>Enforces MACE-OFF23’s neutral closed-shell 10-element domain (<code>H, C, N, O, F, P, S, Cl, Br, I</code>) alongside AIMNet2’s 14-element charged-species gate for boron, silicon, and hypervalent <code>-SF₅</code> scaffolds.</p>
-          </div>
-          <div class="spec-card">
-            <h4 class="teal">Transannular C1···C3 &amp; PES softening diagnostics</h4>
-            <p>Tracks nonbonded bridgehead compression (~1.85 Å in BCP) and measures the PES softening slope α across rigid exit-vector torsion scans.</p>
-          </div>
-          <div class="spec-card">
-            <h4 class="blue">Conservative K-head ensemble + anchor replay</h4>
-            <p>Each head predicts scalar energy with exact curl-free forces <code>F = -∇E</code>. Offset-free force disagreement <code>σ_F</code> selects diverse high-error frames while anchor replay prevents forgetting on unstrained molecules.</p>
-          </div>
-        </div>
-        <div>
-          <span class="small-label blue">Reproducible modular package</span>
-          <h3 style="font-size: 27px; font-weight: 560; letter-spacing: -0.7px; margin: 10px 0 14px;">Built for automated image-to-force-field pipelines.</h3>
-          <p style="color: var(--muted); font-size: 15px; line-height: 1.75;">
-            When OCSR extracts novel sp³ bioisosteres from fresh patents and preprints, downstream 3D conformer ranking is only reliable if the force field knows its own blind spots.
-            <code>ouroboros.active</code> connects structure extraction directly to uncertainty gating, Psi4/PySCF quantum oracle labeling, and replay-protected distillation.
-          </p>
-          <div class="status-note">
-            <strong>Current verification status:</strong> The 112-scaffold 7-family panel, eligibility gates, torsion scanner, 5 active selectors (<code>qbc_lcmd_diverse</code>), QM oracle adapters, and conservative K-head trainer are implemented and unit-tested on branch <a href="https://github.com/yaniguan/ouroboros-ocsr/tree/p2-mlip-blindspot-distill" target="_blank" rel="noopener" style="text-decoration: underline;"><code>p2-mlip-blindspot-distill</code></a>. Full-panel ωB97M-D3(BJ) DFT and NVT MD campaigns are tracked openly in <code>PAPER_BRANCH.md</code>.
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SECTION 04: LOCAL 3D PHYSICS LAB -->
-    <section class="section evidence-section" id="workbench">
+    <!-- SECTION 05: WORKBENCH, QUICKSTART & CITATION -->
+    <section class="section band-section" id="workbench">
       <div class="wrap">
         <div class="section-heading">
-          <p class="eyebrow">04 / Interactive Workbench</p>
-          <h2>Try every check in your browser.<br><span class="muted-heading">Zero install on GitHub Pages, or full local Python mode.</span></h2>
-          <p class="section-intro">
-            Open the hosted Browser 3D Lab right now to rotate 3D conformers, inspect C8 steerable feature maps, test stereoisomer strain, or check custom SMILES — or run <code>python -m ouroboros.ui</code> locally for full PyTorch and MACE-OFF23 inference.
-          </p>
-          <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
-            <a class="button primary" href="lab/">Launch Browser 3D Lab (No Install) <span aria-hidden="true">↗</span></a>
-            <a class="button secondary" href="https://github.com/yaniguan/ouroboros-ocsr" target="_blank" rel="noopener">Local Python Setup <span aria-hidden="true">↗</span></a>
+          <p class="eyebrow">05 / Run Locally or in Browser</p>
+          <h2>Zero-install 3D Lab or local Python CLI.<br><span class="muted-heading">Ten 3D chemistry and symmetry checks built in.</span></h2>
+          <div style="margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <a class="button primary" href="lab/">Launch Browser 3D Lab (No Install) ↗</a>
+            <a class="button secondary" href="https://github.com/yaniguan/ouroboros-ocsr" target="_blank" rel="noopener">Repository on GitHub ↗</a>
           </div>
         </div>
 
-        <div class="workbench-grid">
+        <div class="workbench-grid" style="margin-bottom: 28px;">
           <div class="code-box">
             <div class="box-top">
               <span>Quickstart · Python 3.11</span>
@@ -343,53 +515,35 @@
 cd ouroboros-ocsr
 python3.11 -m venv .venv &amp;&amp; source .venv/bin/activate
 pip install -r requirements-inference.txt
-python scripts/prepare_inference.py
-pip install --no-deps -e .
+python scripts/prepare_inference.py &amp;&amp; pip install --no-deps -e .
 
-# Fetch verified C8 steerable checkpoint &amp; launch the 3D Physics Lab
-python -m ouroboros.weights fetch --arm C
+# Download verified weights, run fast int8 CPU API, or open 3D UI
+python -m ouroboros.weights fetch --arm A
+python -m ouroboros.infer figure.png
 python -m ouroboros.ui --port 8787</pre>
           </div>
 
           <div class="gates-panel">
             <h3>Ten built-in 3D chemistry &amp; symmetry checks</h3>
-            <p>Verified live on every generated conformer before force-field export:</p>
+            <p>Verified on every generated conformer in the 3D Lab and <code>image_to_forcefield.py</code>:</p>
             <ul class="gate-pills">
-              <li>Valence &amp; single molecule</li>
-              <li>Domain element &amp; charge gate</li>
-              <li>Assigned stereocenters &amp; E/Z</li>
-              <li>ETKDGv3 3D embedding</li>
-              <li>Pauli clash clearance (&gt; 0.60 Å)</li>
-              <li>CIP R/S kept under relaxation</li>
-              <li>SE(3) rotation/shift invariance</li>
-              <li>SO(3) force vector equivariance</li>
-              <li>Zero net force &amp; net torque</li>
-              <li>Conservative F = -∇E gradient</li>
+              <li>1. Valence &amp; single molecule</li>
+              <li>2. Element &amp; zero net charge</li>
+              <li>3. Assigned R/S &amp; E/Z stereo</li>
+              <li>4. ETKDGv3 3D embedding</li>
+              <li>5. Interatomic clash &gt; 0.60 Å</li>
+              <li>6. CIP chirality kept on relax</li>
+              <li>7. SE(3) energy invariance</li>
+              <li>8. SO(3) force equivariance</li>
+              <li>9. Zero net force &amp; torque</li>
+              <li>10. Conservative F = -∇E</li>
             </ul>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- SECTION 05: CITATION -->
-    <section class="section paper-section" id="citation">
-      <div class="wrap">
-        <div class="paper-heading">
-          <div>
-            <p class="eyebrow">05 / Open Science &amp; Citation</p>
-            <h2>Inspect the code, receipts, and frozen benchmarks.</h2>
-            <p>Every reported score is backed by committed JSON/CSV evaluation receipts, SHA-256 weight verification, and connectivity-disjoint leakage checks.</p>
-          </div>
-          <div class="paper-links">
-            <a class="button primary" href="https://github.com/yaniguan/ouroboros-ocsr" target="_blank" rel="noopener">Repository on GitHub <span aria-hidden="true">↗</span></a>
-            <a class="button secondary" href="https://github.com/yaniguan/ouroboros-ocsr/tree/p1-phys-spec-ocsr-bench" target="_blank" rel="noopener">Paper P1 Branch (p1-v1.0) <span aria-hidden="true">↗</span></a>
-            <a class="button secondary" href="https://github.com/yaniguan/ouroboros-ocsr/tree/p2-mlip-blindspot-distill" target="_blank" rel="noopener">Paper P2 Branch <span aria-hidden="true">↗</span></a>
-          </div>
-        </div>
-
-        <div class="citation-box">
+        <div class="citation-box" id="citation">
           <div class="box-top">
-            <span>BibTeX</span>
+            <span>BibTeX Citation</span>
             <button type="button" class="copy-btn" id="copy-citation">Copy citation</button>
             <span id="copy-status" role="status" aria-live="polite"></span>
           </div>
@@ -398,7 +552,7 @@ python -m ouroboros.ui --port 8787</pre>
   author = {Guan, Yani},
   year   = {2026},
   url    = {https://github.com/yaniguan/ouroboros-ocsr},
-  note   = {v0.1.0-alpha engine and ChemVeritas-600 benchmark}
+  note   = {v0.1.0-alpha engine, frozen-test-v2 benchmark, and ChemVeritas-600}
 }</pre>
         </div>
       </div>
@@ -407,13 +561,15 @@ python -m ouroboros.ui --port 8787</pre>
 
   <footer class="wrap">
     <a class="brand" href="#">
-      <img src="assets/ouroboros-static.svg" width="54" height="25" alt="">
+      <img src="assets/ouroboros-static.svg" width="32" height="20" alt="">
       <span>Ouroboros</span>
     </a>
-    <p>Symmetry-complete chemical structure recognition from 2D depictions to 3D forces.</p>
-    <a href="https://yaniguan.github.io/" target="_blank" rel="noopener">Yani Guan <span aria-hidden="true">↗</span></a>
-    <a href="https://github.com/yaniguan/ouroboros-ocsr/blob/main/DATA.md" target="_blank" rel="noopener">Data &amp; Holdout Rules <span aria-hidden="true">↗</span></a>
-    <span>MIT License · 2026</span>
+    <p>Clean, symmetry-aware chemical structure intelligence from 2D drawings to 3D forces.</p>
+    <div style="display:flex; gap:16px; align-items:center;">
+      <a href="https://yaniguan.github.io/" target="_blank" rel="noopener">Yani Guan ↗</a>
+      <a href="https://github.com/yaniguan/ouroboros-ocsr/blob/main/DATA.md" target="_blank" rel="noopener">Data &amp; Holdout Rules ↗</a>
+      <span>MIT License · 2026</span>
+    </div>
   </footer>
 
   <dialog id="figure-dialog" aria-label="Expanded research figure">

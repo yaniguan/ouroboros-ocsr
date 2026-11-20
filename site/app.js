@@ -1,6 +1,39 @@
-/* Modal figure expansion and clipboard helpers for Ouroboros project site. */
+/* Theme toggle, modal figure expansion, and clipboard helpers for Ouroboros project site. */
 (() => {
   'use strict';
+
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('theme-toggle');
+
+  function applyTheme(theme) {
+    if (theme === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+      if (themeBtn) themeBtn.textContent = '☀ Light';
+    } else {
+      root.removeAttribute('data-theme');
+      if (themeBtn) themeBtn.textContent = '☾ Dark';
+    }
+    window.dispatchEvent(new CustomEvent('ouroboros-theme-change', { detail: { theme } }));
+  }
+
+  try {
+    const saved = localStorage.getItem('ouroboros-site-theme');
+    if (saved === 'dark' || saved === 'light') applyTheme(saved);
+  } catch {
+    /* ignore storage restrictions */
+  }
+
+  if (themeBtn) {
+    themeBtn.addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      try {
+        localStorage.setItem('ouroboros-site-theme', next);
+      } catch {
+        /* ignore */
+      }
+    });
+  }
 
   const dialog = document.getElementById('figure-dialog');
   const expandedImg = document.getElementById('expanded-image');
@@ -38,7 +71,7 @@
         setTimeout(() => {
           btn.textContent = labelText;
           if (status) status.textContent = '';
-        }, 2400);
+        }, 2200);
       } catch {
         const sel = window.getSelection();
         const range = document.createRange();

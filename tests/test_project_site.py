@@ -22,7 +22,7 @@ def _load_script(name: str):
 def test_project_site_assets_and_links_exist():
     assert (SITE / ".nojekyll").is_file()
     html = (SITE / "index.html").read_text(encoding="utf-8")
-    for required in ("styles.css", "stage.js", "charts.js", "app.js"):
+    for required in ("styles.css", "stage.js", "charts.js", "widgets.js", "app.js"):
         assert (SITE / required).is_file()
         assert required in html
 
@@ -44,6 +44,7 @@ def test_benchmark_data_matches_receipts():
     assert committed == mod.build_data()
     assert len(committed["rotation_sweep"]["angles"]) == 24
     assert len(committed["p1_chemveritas"]["ablations"]) == 7
+    assert len(committed["frozen_vs_dev"]["groups"]) == 6
 
 
 def test_browser_lab_assets_complete():
