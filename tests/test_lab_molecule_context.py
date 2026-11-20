@@ -71,9 +71,53 @@ def test_prompt_block_only_trusts_ok(ctx):
     lines = mc.prompt_block(list(ctx.values())).splitlines()
     by_id = {ln.split(":")[0][2:]: ln for ln in lines[1:]}
     assert "SMILES" in by_id["aspirin"]
-    assert "confirm with a human" in by_id["r_group"]
+    assert "ask a human" in by_id["r_group"] and "confirm with a human" in by_id["r_group"]
+    assert "SMILES" not in by_id["r_group"]
+    assert "SMILES" not in by_id["alanine_flat"]
     for k in ("broken", "empty", "low_margin"):
         assert "structure unknown" in by_id[k] and "SMILES" not in by_id[k]
+
+
+def test_frozen_schema_roundtrip_and_gold_rejection(tmp_path):
+    assert mc.SCHEMA_FROZEN is True
+    out = tmp_path / "ctx.jsonl"
+    mc.main([FIXTURE, "--out", str(out)])
+    loaded = mc.read_context_jsonl(out)
+    assert len(loaded) == 8
+    prompt = mc.prompt_block(loaded)
+    assert "ask a human" in prompt
+    assert "CCN" not in prompt  # gold from low_margin never reaches prompt
+
+    # Tampered JSONL containing a gold field must be refused.
+    bad = tmp_path / "bad.jsonl"
+    row = json.loads(out.read_text(encoding="utf-8").splitlines()[0])
+    row["gold"] = "CCO"
+    bad.write_text(json.dumps(row) + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="gold"):
+        mc.read_context_jsonl(bad)
+
+
+def test_write_pseudo_manifest_keeps_only_ok(tmp_path):
+    out_jsonl = tmp_path / "ctx.jsonl"
+    manifest = tmp_path / "pseudo.csv"
+    assert (
+        mc.main(
+            [
+                FIXTURE,
+                "--out",
+                str(out_jsonl),
+                "--manifest-out",
+                str(manifest),
+                "--image-template",
+                "imgs/{id}.png",
+            ]
+        )
+        == 0
+    )
+    lines = manifest.read_text(encoding="utf-8").splitlines()
+    assert lines[0] == "image,smiles,source,split,id"
+    assert len(lines) == 4  # header + 3 status=ok rows (aspirin, acetate_salt, l_alanine)
+    assert all(k not in "\n".join(lines) for k in ("r_group", "alanine_flat", "low_margin"))
 
 
 def test_ungated_csv_has_empty_gate(tmp_path):
