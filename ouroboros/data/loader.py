@@ -88,10 +88,18 @@ class ShardDataset(Dataset):
         max_samples: int | None = None,
         image_size: int | None = None,
         exclude_key14: frozenset | set | None = None,
+        labeled: bool = True,
     ):
         """``exclude_key14``: InChIKey connectivity blocks to skip at load time (leakage control
         when shards were rendered before the real eval sets were known). The prefix of length
-        ``max_samples`` is taken AFTER exclusion."""
+        ``max_samples`` is taken AFTER exclusion.
+
+        ``labeled=False``: the shards may have no ``smiles`` metadata (images only). Samples then
+        get ``smiles = ""``; leakage keys and target tokens need a label, so ``exclude_key14``
+        and ``tokenizer`` are not allowed."""
+        if not labeled and (exclude_key14 or tokenizer is not None):
+            raise ValueError("labeled=False cannot use exclude_key14 or a tokenizer")
+        self.labeled = labeled
         self.entries: list[tuple[Path, dict]] = []
         self._fh: dict[Path, io.BufferedReader] = {}
         self._fh_pid: int | None = os.getpid()
@@ -171,7 +179,8 @@ class ShardDataset(Dataset):
         if self.image_size is not None and img.size[0] != self.image_size:
             img = img.resize((self.image_size, self.image_size), Image.BILINEAR)
         ink = 1.0 - torch.from_numpy(np.asarray(img, dtype=np.float32)) / 255.0
-        out = {"image": ink[None], "smiles": meta["smiles"], "key": s["key"], "index": i}
+        smiles = meta["smiles"] if self.labeled else ""
+        out = {"image": ink[None], "smiles": smiles, "key": s["key"], "index": i}
         if self.tokenizer is not None:
             out["ids"] = torch.tensor(self.tokenizer.encode(meta["smiles"]), dtype=torch.long)
         return out

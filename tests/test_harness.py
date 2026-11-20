@@ -234,3 +234,29 @@ def test_committed_v2_devtest_reports_include_stereo_rows():
         assert groups["no_stereo"]["n"] == 249
         assert len(groups["has_stereo"]["exact_ci95"]) == 2
         assert len(groups["no_stereo"]["exact_ci95"]) == 2
+
+
+def test_empty_gold_refused_unless_skipped(tmp_path):
+    rows = [
+        {"id": "1", "gold": "CCO", "pred": "CCO", "subset": "S"},
+        {"id": "2", "gold": "", "pred": "CCN", "subset": "S"},
+        {"id": "3", "gold": " ", "pred": "", "subset": "S"},
+    ]
+    src = _write_csv(tmp_path / "p.csv", rows)
+    with pytest.raises(ValueError, match="empty gold.*--skip-unlabeled"):
+        harness.main([str(src), "--quiet"])
+
+    out_json, out_md = tmp_path / "r.json", tmp_path / "r.md"
+    rc = harness.main([str(src), "--skip-unlabeled", "--json", str(out_json),
+                       "--md", str(out_md), "--quiet"])
+    assert rc == 0
+    rep = json.loads(out_json.read_text())
+    assert rep["unlabeled"] == {"n": 2, "ids": ["2", "3"]}
+    assert rep["n_rows"] == 1 and rep["n_scored"] == 1
+    assert rep["gold_invalid"]["n"] == 0
+    assert _groups(rep)[("ALL", None)]["exact"] == 1.0
+    assert "Skipped 2 unlabeled row(s)" in out_md.read_text()
+
+    only_unlabeled = _write_csv(tmp_path / "u.csv", rows[1:])
+    with pytest.raises(ValueError, match="no labeled rows"):
+        harness.main([str(only_unlabeled), "--skip-unlabeled", "--quiet"])

@@ -233,3 +233,52 @@ def test_predict_real_beam_ensemble_tta(tmp_path):
 
     mod.main(["--ckpt", str(c0), *base, "--beam", "2", "--out", str(tmp_path / "b2.csv")])
     assert len(_rows(tmp_path / "b2.csv")) == 3
+
+
+def _unlabeled_shards(tmp_path: Path) -> Path:
+    """Images only: the sample metadata has no ``smiles`` key."""
+    import tarfile
+
+    from ouroboros.data.build import _add
+    from ouroboros.data.render import encode_png
+
+    out = tmp_path / "unlabeled"
+    out.mkdir()
+    with tarfile.open(out / "test-000000.tar", "w", format=tarfile.USTAR_FORMAT) as tar:
+        for i in range(3):
+            arr = np.full((64, 64), 255, np.uint8)
+            arr[20 + 8 * i : 26 + 8 * i, 10:-10] = 0
+            _add(tar, f"fig{i}.png", encode_png(Image.fromarray(arr, "L")))
+            _add(tar, f"fig{i}.json", json.dumps({"id": f"fig{i}", "source": "FIGS"}).encode())
+    return out
+
+
+def test_predict_real_unlabeled(tmp_path):
+    from ouroboros.data.loader import ShardDataset
+    from ouroboros.eval import harness
+
+    mod = _load_script("predict_real")
+    shards = _unlabeled_shards(tmp_path)
+    ds = ShardDataset(shards, "test", labeled=False)
+    assert len(ds) == 3 and ds[0]["smiles"] == "" and ds[0]["image"].shape == (1, 64, 64)
+    with pytest.raises(ValueError, match="labeled=False"):
+        ShardDataset(shards, "test", labeled=False, exclude_key14={"X"})
+    with pytest.raises(KeyError):  # labeled mode still needs smiles
+        ShardDataset(shards, "test")[0]
+
+    ckpt = _ckpt(tmp_path / "a.pt", 0)
+    base = ["--ckpt", str(ckpt), "--shards", str(shards), "--batch-size", "2", "--unlabeled"]
+    out = tmp_path / "preds.csv"
+    mod.main([*base, "--out", str(out)])
+    rows = _rows(out)
+    assert list(rows[0]) == ["id", "gold", "pred", "subset"]
+    assert [r["id"] for r in rows] == ["fig0", "fig1", "fig2"]
+    assert all(r["gold"] == "" and r["subset"] == "FIGS" for r in rows)
+
+    nb = tmp_path / "preds.jsonl"
+    mod.main([*base, "--beam", "2", "--out", str(tmp_path / "b2.csv"), "--nbest-out", str(nb)])
+    recs = [json.loads(line) for line in nb.read_text().splitlines()]
+    assert len(recs) == 3 and all(r["gold"] == "" for r in recs)
+
+    with pytest.raises(ValueError, match="--skip-unlabeled"):
+        harness.main([str(out), "--quiet"])
