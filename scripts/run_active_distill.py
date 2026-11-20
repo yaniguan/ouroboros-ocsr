@@ -15,6 +15,8 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # run from a fresh checkout
+
 from ouroboros.active.committee import SELECTORS
 from ouroboros.active.distill import run_active_distillation_benchmark
 from ouroboros.active.motifs import build_bioisostere_panel
