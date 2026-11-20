@@ -1,0 +1,52 @@
+{
+  "eval_set": "frozen-test-v2",
+  "locked_on": "pmc_val",
+  "min_margin": 0.05,
+  "max_disagreement": 0.0,
+  "overall": {
+    "n": 300,
+    "base_exact": 0.466667,
+    "accepted": 90,
+    "coverage": 0.3,
+    "accepted_exact": 88,
+    "precision": 0.977778
+  },
+  "per_subset": {
+    "ACS": {
+      "n": 100,
+      "base_exact": 0.3,
+      "accepted": 10,
+      "coverage": 0.1,
+      "accepted_exact": 10,
+      "precision": 1.0
+    },
+    "UOB": {
+      "n": 100,
+      "base_exact": 0.85,
+      "accepted": 70,
+      "coverage": 0.7,
+      "accepted_exact": 68,
+      "precision": 0.971429
+    },
+    "USPTO": {
+      "n": 100,
+      "base_exact": 0.25,
+      "accepted": 10,
+      "coverage": 0.1,
+      "accepted_exact": 10,
+      "precision": 1.0
+    }
+  },
+  "molecule_context_ok": {
+    "n_ok": 85,
+    "coverage": 0.283333,
+    "exact": 83,
+    "precision": 0.976471,
+    "status_counts": {
+      "ok": 85,
+      "review": 5,
+      "rejected": 209,
+      "invalid": 1
+    }
+  }
+}

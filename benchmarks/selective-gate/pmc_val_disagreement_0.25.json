@@ -1,0 +1,104 @@
+[
+  {
+    "min_margin": 0.0,
+    "overall": {
+      "n": 963,
+      "accepted": 310,
+      "coverage": 0.32191069574247144,
+      "precision": 0.8161290322580645
+    },
+    "subsets": {
+      "PMC": {
+        "n": 963,
+        "accepted": 310,
+        "coverage": 0.32191069574247144,
+        "precision": 0.8161290322580645
+      }
+    }
+  },
+  {
+    "min_margin": 0.05,
+    "overall": {
+      "n": 963,
+      "accepted": 272,
+      "coverage": 0.2824506749740395,
+      "precision": 0.8786764705882353
+    },
+    "subsets": {
+      "PMC": {
+        "n": 963,
+        "accepted": 272,
+        "coverage": 0.2824506749740395,
+        "precision": 0.8786764705882353
+      }
+    }
+  },
+  {
+    "min_margin": 0.1,
+    "overall": {
+      "n": 963,
+      "accepted": 219,
+      "coverage": 0.22741433021806853,
+      "precision": 0.8904109589041096
+    },
+    "subsets": {
+      "PMC": {
+        "n": 963,
+        "accepted": 219,
+        "coverage": 0.22741433021806853,
+        "precision": 0.8904109589041096
+      }
+    }
+  },
+  {
+    "min_margin": 0.2,
+    "overall": {
+      "n": 963,
+      "accepted": 87,
+      "coverage": 0.09034267912772585,
+      "precision": 0.896551724137931
+    },
+    "subsets": {
+      "PMC": {
+        "n": 963,
+        "accepted": 87,
+        "coverage": 0.09034267912772585,
+        "precision": 0.896551724137931
+      }
+    }
+  },
+  {
+    "min_margin": 0.3,
+    "overall": {
+      "n": 963,
+      "accepted": 25,
+      "coverage": 0.02596053997923157,
+      "precision": 0.88
+    },
+    "subsets": {
+      "PMC": {
+        "n": 963,
+        "accepted": 25,
+        "coverage": 0.02596053997923157,
+        "precision": 0.88
+      }
+    }
+  },
+  {
+    "min_margin": 0.5,
+    "overall": {
+      "n": 963,
+      "accepted": 6,
+      "coverage": 0.006230529595015576,
+      "precision": 1.0
+    },
+    "subsets": {
+      "PMC": {
+        "n": 963,
+        "accepted": 6,
+        "coverage": 0.006230529595015576,
+        "precision": 1.0
+      }
+    }
+  }
+]

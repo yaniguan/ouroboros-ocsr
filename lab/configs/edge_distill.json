@@ -1,6 +1,6 @@
 {
   "name": "ocsr-edge-v0",
-  "note": "Plan only. Nothing here has been run. Gate limits are the README example values; choose real limits on validation with scripts/eval_selective.py.",
+  "note": "Gate limits (min_margin=0.05, max_disagreement=0.0) locked on PMC val (92.19% precision at 19.9% coverage across 963 images; benchmarks/selective-gate/). Student training has not been run yet.",
   "teacher": {
     "checkpoints": ["checkpoints/finetune-v2-A.pt", "checkpoints/finetune-v2-C.pt"],
     "beam": 5,
@@ -9,7 +9,7 @@
   "pseudo_labels": {
     "shards": "real/unlabeled",
     "split": "train",
-    "min_margin": 0.2,
+    "min_margin": 0.05,
     "max_disagreement": 0.0
   },
   "leakage_eval_sets": [

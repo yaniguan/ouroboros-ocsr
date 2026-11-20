@@ -1,0 +1,558 @@
+{
+  "split": "pmc_val",
+  "n": 963,
+  "grid": {
+    "none": [
+      {
+        "min_margin": 0.0,
+        "overall": {
+          "n": 963,
+          "accepted": 944,
+          "coverage": 0.980269989615784,
+          "precision": 0.4523305084745763
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 944,
+            "coverage": 0.980269989615784,
+            "precision": 0.4523305084745763
+          }
+        }
+      },
+      {
+        "min_margin": 0.05,
+        "overall": {
+          "n": 963,
+          "accepted": 484,
+          "coverage": 0.5025960539979232,
+          "precision": 0.6942148760330579
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 484,
+            "coverage": 0.5025960539979232,
+            "precision": 0.6942148760330579
+          }
+        }
+      },
+      {
+        "min_margin": 0.1,
+        "overall": {
+          "n": 963,
+          "accepted": 308,
+          "coverage": 0.31983385254413293,
+          "precision": 0.788961038961039
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 308,
+            "coverage": 0.31983385254413293,
+            "precision": 0.788961038961039
+          }
+        }
+      },
+      {
+        "min_margin": 0.2,
+        "overall": {
+          "n": 963,
+          "accepted": 111,
+          "coverage": 0.11526479750778816,
+          "precision": 0.8198198198198198
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 111,
+            "coverage": 0.11526479750778816,
+            "precision": 0.8198198198198198
+          }
+        }
+      },
+      {
+        "min_margin": 0.3,
+        "overall": {
+          "n": 963,
+          "accepted": 30,
+          "coverage": 0.03115264797507788,
+          "precision": 0.7666666666666667
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 30,
+            "coverage": 0.03115264797507788,
+            "precision": 0.7666666666666667
+          }
+        }
+      },
+      {
+        "min_margin": 0.5,
+        "overall": {
+          "n": 963,
+          "accepted": 8,
+          "coverage": 0.008307372793354102,
+          "precision": 0.75
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 8,
+            "coverage": 0.008307372793354102,
+            "precision": 0.75
+          }
+        }
+      },
+      {
+        "min_margin": 0.8,
+        "overall": {
+          "n": 963,
+          "accepted": 2,
+          "coverage": 0.0020768431983385254,
+          "precision": 0.0
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 2,
+            "coverage": 0.0020768431983385254,
+            "precision": 0.0
+          }
+        }
+      },
+      {
+        "min_margin": 1.0,
+        "overall": {
+          "n": 963,
+          "accepted": 2,
+          "coverage": 0.0020768431983385254,
+          "precision": 0.0
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 2,
+            "coverage": 0.0020768431983385254,
+            "precision": 0.0
+          }
+        }
+      }
+    ],
+    "0.5": [
+      {
+        "min_margin": 0.0,
+        "overall": {
+          "n": 963,
+          "accepted": 562,
+          "coverage": 0.5835929387331257,
+          "precision": 0.6779359430604982
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 562,
+            "coverage": 0.5835929387331257,
+            "precision": 0.6779359430604982
+          }
+        }
+      },
+      {
+        "min_margin": 0.05,
+        "overall": {
+          "n": 963,
+          "accepted": 391,
+          "coverage": 0.40602284527518173,
+          "precision": 0.8132992327365729
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 391,
+            "coverage": 0.40602284527518173,
+            "precision": 0.8132992327365729
+          }
+        }
+      },
+      {
+        "min_margin": 0.1,
+        "overall": {
+          "n": 963,
+          "accepted": 271,
+          "coverage": 0.2814122533748702,
+          "precision": 0.8782287822878229
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 271,
+            "coverage": 0.2814122533748702,
+            "precision": 0.8782287822878229
+          }
+        }
+      },
+      {
+        "min_margin": 0.2,
+        "overall": {
+          "n": 963,
+          "accepted": 103,
+          "coverage": 0.10695742471443406,
+          "precision": 0.8737864077669902
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 103,
+            "coverage": 0.10695742471443406,
+            "precision": 0.8737864077669902
+          }
+        }
+      },
+      {
+        "min_margin": 0.3,
+        "overall": {
+          "n": 963,
+          "accepted": 28,
+          "coverage": 0.029075804776739357,
+          "precision": 0.8214285714285714
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 28,
+            "coverage": 0.029075804776739357,
+            "precision": 0.8214285714285714
+          }
+        }
+      },
+      {
+        "min_margin": 0.5,
+        "overall": {
+          "n": 963,
+          "accepted": 7,
+          "coverage": 0.007268951194184839,
+          "precision": 0.8571428571428571
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 7,
+            "coverage": 0.007268951194184839,
+            "precision": 0.8571428571428571
+          }
+        }
+      },
+      {
+        "min_margin": 0.8,
+        "overall": {
+          "n": 963,
+          "accepted": 1,
+          "coverage": 0.0010384215991692627,
+          "precision": 0.0
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 1,
+            "coverage": 0.0010384215991692627,
+            "precision": 0.0
+          }
+        }
+      },
+      {
+        "min_margin": 1.0,
+        "overall": {
+          "n": 963,
+          "accepted": 1,
+          "coverage": 0.0010384215991692627,
+          "precision": 0.0
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 1,
+            "coverage": 0.0010384215991692627,
+            "precision": 0.0
+          }
+        }
+      }
+    ],
+    "0.25": [
+      {
+        "min_margin": 0.0,
+        "overall": {
+          "n": 963,
+          "accepted": 310,
+          "coverage": 0.32191069574247144,
+          "precision": 0.8161290322580645
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 310,
+            "coverage": 0.32191069574247144,
+            "precision": 0.8161290322580645
+          }
+        }
+      },
+      {
+        "min_margin": 0.05,
+        "overall": {
+          "n": 963,
+          "accepted": 272,
+          "coverage": 0.2824506749740395,
+          "precision": 0.8786764705882353
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 272,
+            "coverage": 0.2824506749740395,
+            "precision": 0.8786764705882353
+          }
+        }
+      },
+      {
+        "min_margin": 0.1,
+        "overall": {
+          "n": 963,
+          "accepted": 219,
+          "coverage": 0.22741433021806853,
+          "precision": 0.8904109589041096
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 219,
+            "coverage": 0.22741433021806853,
+            "precision": 0.8904109589041096
+          }
+        }
+      },
+      {
+        "min_margin": 0.2,
+        "overall": {
+          "n": 963,
+          "accepted": 87,
+          "coverage": 0.09034267912772585,
+          "precision": 0.896551724137931
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 87,
+            "coverage": 0.09034267912772585,
+            "precision": 0.896551724137931
+          }
+        }
+      },
+      {
+        "min_margin": 0.3,
+        "overall": {
+          "n": 963,
+          "accepted": 25,
+          "coverage": 0.02596053997923157,
+          "precision": 0.88
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 25,
+            "coverage": 0.02596053997923157,
+            "precision": 0.88
+          }
+        }
+      },
+      {
+        "min_margin": 0.5,
+        "overall": {
+          "n": 963,
+          "accepted": 6,
+          "coverage": 0.006230529595015576,
+          "precision": 1.0
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 6,
+            "coverage": 0.006230529595015576,
+            "precision": 1.0
+          }
+        }
+      },
+      {
+        "min_margin": 0.8,
+        "overall": {
+          "n": 963,
+          "accepted": 0,
+          "coverage": 0.0,
+          "precision": null
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 0,
+            "coverage": 0.0,
+            "precision": null
+          }
+        }
+      },
+      {
+        "min_margin": 1.0,
+        "overall": {
+          "n": 963,
+          "accepted": 0,
+          "coverage": 0.0,
+          "precision": null
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 0,
+            "coverage": 0.0,
+            "precision": null
+          }
+        }
+      }
+    ],
+    "0.0": [
+      {
+        "min_margin": 0.0,
+        "overall": {
+          "n": 963,
+          "accepted": 205,
+          "coverage": 0.21287642782969884,
+          "precision": 0.8975609756097561
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 205,
+            "coverage": 0.21287642782969884,
+            "precision": 0.8975609756097561
+          }
+        }
+      },
+      {
+        "min_margin": 0.05,
+        "overall": {
+          "n": 963,
+          "accepted": 192,
+          "coverage": 0.19937694704049844,
+          "precision": 0.921875
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 192,
+            "coverage": 0.19937694704049844,
+            "precision": 0.921875
+          }
+        }
+      },
+      {
+        "min_margin": 0.1,
+        "overall": {
+          "n": 963,
+          "accepted": 166,
+          "coverage": 0.17237798546209762,
+          "precision": 0.9397590361445783
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 166,
+            "coverage": 0.17237798546209762,
+            "precision": 0.9397590361445783
+          }
+        }
+      },
+      {
+        "min_margin": 0.2,
+        "overall": {
+          "n": 963,
+          "accepted": 70,
+          "coverage": 0.07268951194184839,
+          "precision": 0.9571428571428572
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 70,
+            "coverage": 0.07268951194184839,
+            "precision": 0.9571428571428572
+          }
+        }
+      },
+      {
+        "min_margin": 0.3,
+        "overall": {
+          "n": 963,
+          "accepted": 20,
+          "coverage": 0.020768431983385256,
+          "precision": 0.95
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 20,
+            "coverage": 0.020768431983385256,
+            "precision": 0.95
+          }
+        }
+      },
+      {
+        "min_margin": 0.5,
+        "overall": {
+          "n": 963,
+          "accepted": 6,
+          "coverage": 0.006230529595015576,
+          "precision": 1.0
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 6,
+            "coverage": 0.006230529595015576,
+            "precision": 1.0
+          }
+        }
+      },
+      {
+        "min_margin": 0.8,
+        "overall": {
+          "n": 963,
+          "accepted": 0,
+          "coverage": 0.0,
+          "precision": null
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 0,
+            "coverage": 0.0,
+            "precision": null
+          }
+        }
+      },
+      {
+        "min_margin": 1.0,
+        "overall": {
+          "n": 963,
+          "accepted": 0,
+          "coverage": 0.0,
+          "precision": null
+        },
+        "subsets": {
+          "PMC": {
+            "n": 963,
+            "accepted": 0,
+            "coverage": 0.0,
+            "precision": null
+          }
+        }
+      }
+    ]
+  }
+}
