@@ -111,13 +111,19 @@ def plan(cfg: dict) -> list[dict]:
     primary_real = real_roots[0]
     extra_real = [*real_roots[1:], f"{pseudo}/shards"]
     synth_root = s.get("synthetic_root", "data/synth-aug/shards")
+    eval_keys = f"{run}/eval_keys.txt"
+    val_spec = f"val={sel['shards']}:{sel['split']}"
+    eval_specs = [*cfg["leakage_eval_sets"], val_spec]
     beam = "" if s.get("decoding", "greedy") == "greedy" else " --beam 5"
+    q_method = q.get("method", "none")
+    q_ckpt = f"{run}/student_quantized.pt" if q_method != "none" else student_ckpt
+    q_out = f" --out {q_ckpt}" if q_method != "none" else ""
     if s.get("init"):
         extra_arg = f" --extra-real-root {' '.join(extra_real)}" if extra_real else ""
         train_cmd = (
             f"python scripts/prepare_real_finetune.py --ckpt {s['init']} --config {s['config']} "
             f"--synthetic-root {synth_root} --real-root {primary_real}{extra_arg} "
-            f"--out-dir {run}/student_cfg "
+            f"--exclude-keys {eval_keys} --out-dir {run}/student_cfg "
             f"&& python -m ouroboros.train --config {run}/student_cfg/finetune.yaml "
             f"--out {run}/student"
         )
@@ -125,7 +131,7 @@ def plan(cfg: dict) -> list[dict]:
         roots_csv = ",".join([primary_real, *extra_real])
         train_cmd = (
             f"python -m ouroboros.train --config {s['config']} --out {run}/student "
-            f"--set data.real_roots=[{roots_csv}]"
+            f"--set data.real_roots=[{roots_csv}] data.exclude_keys={eval_keys}"
         )
     steps = [
         dict(name="choose gate limits on validation", status="exists",
@@ -145,8 +151,9 @@ def plan(cfg: dict) -> list[dict]:
                  f"--out {pseudo}/shards"),
         dict(name="leakage gate vs all eval sets", status="exists",
              cmd="python scripts/check_leakage.py --eval "
-                 + " ".join(cfg["leakage_eval_sets"])
-                 + f" --train pseudo={pseudo}/manifest.csv --fail-on-connectivity"),
+                 + " ".join(eval_specs)
+                 + f" --train pseudo={pseudo}/manifest.csv --dump-eval-keys {eval_keys}"
+                 + " --fail-on-connectivity"),
         dict(name=f"train student arm {s['arm']}", status="exists",
              cmd=train_cmd),
         dict(name="score student on validation", status="exists",
@@ -154,12 +161,12 @@ def plan(cfg: dict) -> list[dict]:
                  f"--shards {sel['shards']} --split {sel['split']} --out {run}/val_student.csv "
                  f"&& python scripts/eval_predictions.py {run}/val_student.csv "
                  f"--json {run}/val_student.json"),
-        dict(name=f"quantize ({q.get('method', 'none')})", status="exists",
-             cmd=f"python -m lab.quantize {student_ckpt} --method {q.get('method', 'none')} "
+        dict(name=f"quantize ({q_method})", status="exists",
+             cmd=f"python -m lab.quantize {student_ckpt} --method {q_method} "
                  f"--shards {sel['shards']} --split {sel['split']} "
-                 f"--report {run}/val_quantized.json"),
+                 f"--report {run}/val_quantized.json{q_out}"),
         dict(name=f"latency on {tgt['device']}", status="exists",
-             cmd=f"python scripts/profile_infer.py --ckpt {student_ckpt} --shards {sel['shards']} "
+             cmd=f"python scripts/profile_infer.py --ckpt {q_ckpt} --shards {sel['shards']} "
                  f"--split {sel['split']} --beam 1 --name student --out-dir {run}/profile"),
     ]
     for i, step in enumerate(steps, 1):

@@ -52,11 +52,16 @@ def load_checkpoint(path: str | Path, device: torch.device):
     return model, state["config"]
 
 
+def _row_id(meta: dict, i: int):
+    val = meta.get("id")
+    return val if val not in (None, "") else i
+
+
 def _nbest_record(meta: dict, i: int, gold: str, pred: str, ranked: list[Candidate]) -> dict:
     from ouroboros.eval.smiles import is_valid
 
     return {
-        "id": meta.get("id", i),
+        "id": _row_id(meta, i),
         "gold": gold,
         "subset": meta.get("source", ""),
         "pred": pred,
@@ -136,7 +141,7 @@ def main(argv=None) -> None:
                         min_margin=a.min_margin,
                         max_disagreement=a.max_disagreement,
                     )
-                    w.writerow({"id": m.get("id", i), "gold": gold, "pred": p,
+                    w.writerow({"id": _row_id(m, i), "gold": gold, "pred": p,
                                 "subset": m.get("source", "")} | (gate if gated else {}))
                     if nbest_f is not None:
                         nbest_rec = _nbest_record(m, i, gold, p, ranked) | {
