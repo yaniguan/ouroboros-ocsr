@@ -100,7 +100,8 @@ def test_leakage_check_connectivity_gate(pmc, tmp_path):
         "--fail-on-connectivity", "--json", str(tmp_path / "leak.json"),
     ]
     assert leak.main(clean) == 0
-    assert all(r["overlap_connectivity"] == 0 for r in json.loads((tmp_path / "leak.json").read_text()))
+    leak_rows = json.loads((tmp_path / "leak.json").read_text())
+    assert all(r["overlap_connectivity"] == 0 for r in leak_rows)
     # an enantiomer in training: full InChIKey differs, connectivity block matches
     bad_manifest = tmp_path / "bad.csv"
     bad_manifest.write_text("image,smiles,source,split,id\nt.png,C[C@@H](N)C(=O)O,T,train,0\n")
@@ -121,12 +122,14 @@ def _tiny_config(tmp_path, real_root, labels):
     Image.new("L", (32, 32), 255).save(blob, format="PNG")
     with tarfile.open(synth / "train-000000.tar", "w") as tar:
         for i, label in enumerate(labels):
-            for ext, data in (("png", blob.getvalue()), ("json", json.dumps({"smiles": label}).encode())):
+            pair = (("png", blob.getvalue()), ("json", json.dumps({"smiles": label}).encode()))
+            for ext, data in pair:
                 item = tarfile.TarInfo(f"s_{i}.{ext}")
                 item.size = len(data)
                 tar.addfile(item, io.BytesIO(data))
     vocab = tmp_path / "vocab.json"
-    SmilesTokenizer.build(labels + ["CCCO", "c1ccccc1O", "CCN", "CC(=O)O", "CCCCN", "OCCO"]).save(vocab)
+    extra_smis = ["CCCO", "c1ccccc1O", "CCN", "CC(=O)O", "CCCCN", "OCCO"]
+    SmilesTokenizer.build(labels + extra_smis).save(vocab)
     return {
         "seed": 3,
         "data": {
@@ -146,8 +149,17 @@ def _tiny_config(tmp_path, real_root, labels):
         },
         "train": {"device": "cpu", "amp": "none", "steps": 4, "batch_size": 4, "warmup": 1,
                   "lr": 1e-3, "ckpt_every": 2, "log_every": 1},
-        "validation": {"enabled": True, "at_start": True, "keep_only_best": True, "root": str(real_root), "samples": 3,
-                       "batch_size": 2, "every": 2, "patience": 5, "min_delta": 0.0},
+        "validation": {
+            "enabled": True,
+            "at_start": True,
+            "keep_only_best": True,
+            "root": str(real_root),
+            "samples": 3,
+            "batch_size": 2,
+            "every": 2,
+            "patience": 5,
+            "min_delta": 0.0,
+        },
     }
 
 

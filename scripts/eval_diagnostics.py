@@ -34,9 +34,9 @@ PRESERVE = ("redraw", "rot45", "rot90")
 EDITS = ("stereo_flip", "bond_order", "atom_swap")
 
 
-def wilson(k: int, n: int, z: float = 1.96) -> list[float]:
+def wilson(k: int, n: int, z: float = 1.96) -> list[float | None]:
     if n == 0:
-        return [float("nan"), float("nan")]
+        return [None, None]
     p = k / n
     d = 1 + z * z / n
     c = (p + z * z / (2 * n)) / d
@@ -49,10 +49,14 @@ def predict(lab: RotationLab, paths: list[Path], batch: int = 32) -> list[str]:
     for s in range(0, len(paths), batch):
         imgs = []
         for p in paths[s : s + batch]:
-            gray = np.asarray(Image.open(p).convert("L"), dtype=np.float32)
+            with Image.open(p) as im:
+                im_l = im.convert("L")
+                if im_l.size != (lab.size, lab.size):
+                    im_l = im_l.resize((lab.size, lab.size), Image.Resampling.BILINEAR)
+                gray = np.asarray(im_l, dtype=np.float32)
             imgs.append(torch.from_numpy(1.0 - gray / 255.0)[None])
         with torch.inference_mode():
-            preds += lab.model.generate(torch.stack(imgs))
+            preds += lab.model.generate(torch.stack(imgs).to(lab.device))
     return preds
 
 

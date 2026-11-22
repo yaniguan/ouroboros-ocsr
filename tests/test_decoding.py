@@ -96,7 +96,8 @@ def test_beam_returns_k_sorted_hypotheses(model, images):
         # unfinished hypotheses (hit max_len) have MAX_LEN - 1 tokens and no EOS to count
         norm = [lp / (len(ids) + (len(ids) < MAX_LEN - 1)) for ids, lp in hyps]
         assert norm == sorted(norm, reverse=True)
-        assert all(tok.eos_id not in ids for ids, _ in hyps)  # BOS may appear from a random model, as in greedy
+        # BOS may appear from a random model, as in greedy
+        assert all(tok.eos_id not in ids for ids, _ in hyps)
     nbest = model.generate_nbest(images, beam_size=K)
     assert len(nbest) == len(images) and all(len(c) == K for c in nbest)
 

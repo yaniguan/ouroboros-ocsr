@@ -18,9 +18,14 @@ from __future__ import annotations
 
 import argparse
 import json
-import resource
+import sys
 import time
 from pathlib import Path
+
+try:
+    import resource
+except ImportError:  # Windows
+    resource = None  # type: ignore[assignment]
 
 import torch
 
@@ -101,7 +106,12 @@ def main():
         "max_batch_bf16_40GB": int(
             ((a.gpu_gb * 1e9 / 1.2 - static) * 2 - meas[1]) // per_sample + 1
         ),
-        "peak_rss_GiB_local": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**20,
+        "peak_rss_GiB_local": (
+            resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+            / (2**30 if sys.platform == "darwin" else 2**20)
+            if resource is not None
+            else None
+        ),
         "method": "saved-tensor bytes at batch 1 and 2 on CPU (fp32), linear extrapolation; "
         "bf16 = fp32/2; +20% margin; 16 B/param static",
         "date": time.strftime("%Y-%m-%d"),

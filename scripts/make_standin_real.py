@@ -30,24 +30,27 @@ def main(argv=None) -> None:
     a = ap.parse_args(argv)
     out = Path(a.out)
     (out / "images").mkdir(parents=True, exist_ok=True)
-    ds = ShardDataset(a.src, "val")
-    rng = random.Random(0)
-    rows = []
-    for i in range(a.n_train + a.n_test):
-        ink = ds[i]["image"][0].numpy()
-        ys, xs = np.nonzero(ink > 0.3)
-        m = rng.randint(4, 30)
-        y0, y1 = max(0, ys.min() - m), min(ink.shape[0], ys.max() + m)
-        x0, x1 = max(0, xs.min() - m), min(ink.shape[1], xs.max() + m)
-        img = Image.fromarray(((1 - ink[y0:y1, x0:x1]) * 255).astype(np.uint8), "L")
-        scale = rng.uniform(0.6, 1.6)
-        img = img.resize((max(8, int(img.width * scale)), max(8, int(img.height * scale))))
-        ext = rng.choice(["png", "jpg"])
-        name = f"images/standin_{i:05d}.{ext}"
-        img.save(out / name)
-        split = "train" if i < a.n_train else "test"
-        rows.append([name, ds.meta(i)["smiles"], "STANDIN", split, f"val{i}"])
-    with open(out / "manifest.csv", "w", newline="") as f:
+    with ShardDataset(a.src, "val") as ds:
+        rng = random.Random(0)
+        rows = []
+        for i in range(a.n_train + a.n_test):
+            ink = ds[i]["image"][0].numpy()
+            ys, xs = np.nonzero(ink > 0.3)
+            m = rng.randint(4, 30)
+            if len(ys) == 0:
+                y0, y1, x0, x1 = 0, ink.shape[0], 0, ink.shape[1]
+            else:
+                y0, y1 = max(0, int(ys.min()) - m), min(ink.shape[0], int(ys.max()) + m)
+                x0, x1 = max(0, int(xs.min()) - m), min(ink.shape[1], int(xs.max()) + m)
+            img = Image.fromarray(((1 - ink[y0:y1, x0:x1]) * 255).astype(np.uint8), "L")
+            scale = rng.uniform(0.6, 1.6)
+            img = img.resize((max(8, int(img.width * scale)), max(8, int(img.height * scale))))
+            ext = rng.choice(["png", "jpg"])
+            name = f"images/standin_{i:05d}.{ext}"
+            img.save(out / name)
+            split = "train" if i < a.n_train else "test"
+            rows.append([name, ds.meta(i)["smiles"], "STANDIN", split, f"val{i}"])
+    with open(out / "manifest.csv", "w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
         w.writerow(["image", "smiles", "source", "split", "id"])
         w.writerows(rows)

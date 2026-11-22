@@ -74,7 +74,8 @@ def test_generic_and_chiral_core():
     out = substitute(mol, random.Random(1), 'R1')
     assert '[R1]' in labelled_smiles(out)
     assert '@' in labelled_smiles(out)
-    assert labelled_smiles(substitute(Chem.MolFromSmiles('c1ccccc1'), random.Random(1))) == 'c1ccccc1'
+    benzene_out = substitute(Chem.MolFromSmiles('c1ccccc1'), random.Random(1))
+    assert labelled_smiles(benzene_out) == 'c1ccccc1'
 
 
 def test_real_style_deterministic_and_morphology():

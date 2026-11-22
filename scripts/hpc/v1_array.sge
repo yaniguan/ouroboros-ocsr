@@ -4,7 +4,7 @@
 #$ -N ouro_v1
 #$ -l gpu,A6000,cuda=1,h_rt=06:00:00,h_data=8G
 #$ -pe shared 4
-# One v1 grid task per array index: qsub -t 1-33 -hold_jid <prep job id> scripts/hpc/v1_array.sge
+# One v1 grid task per array index: qsub -t 1-36 -hold_jid <prep job id> scripts/hpc/v1_array.sge
 set -euo pipefail
 export LC_ALL=C LANG=C
 O=${SCRATCH_ROOT:-/scratch}/ouroboros-20260930

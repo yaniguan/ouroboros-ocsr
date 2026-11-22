@@ -2,6 +2,7 @@
 import argparse
 import json
 from pathlib import Path
+
 from ouroboros.eval.nbest import diagnose
 
 

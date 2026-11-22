@@ -132,7 +132,10 @@ def prepare(
             if not data:
                 r["image_missing"] += 1
                 continue
-            rid = f"{rec.get('pmcid')}_{rec.get('figure_id')}_{rec.get('crop_index')}_{path.stem}_{i}"
+            rid = (
+                f"{rec.get('pmcid')}_{rec.get('figure_id')}"
+                f"_{rec.get('crop_index')}_{path.stem}_{i}"
+            )
             safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in rid)
             p = d / f"{safe}.png"
             if not p.exists():

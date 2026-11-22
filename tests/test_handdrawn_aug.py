@@ -39,11 +39,14 @@ def test_wobble_moves_lines_but_keeps_ink():
 
 
 def test_ink_and_paper_ranges():
-    out = np.asarray(handdrawn_augment(_page(), np.random.default_rng(2), ink_var=0.5, paper_noise=8))
+    aug = handdrawn_augment(_page(), np.random.default_rng(2), ink_var=0.5, paper_noise=8)
+    out = np.asarray(aug)
     assert out.min() < 128 and np.median(out) > 200
 
 
-@pytest.mark.parametrize('kw', [dict(wobble=-1), dict(width_var=2), dict(wobble_scale=1), dict(blur=-1)])
+@pytest.mark.parametrize(
+    'kw', [dict(wobble=-1), dict(width_var=2), dict(wobble_scale=1), dict(blur=-1)]
+)
 def test_invalid(kw):
     with pytest.raises(ValueError):
         handdrawn_augment(_page(), np.random.default_rng(), **kw)

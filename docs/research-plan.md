@@ -1,7 +1,7 @@
 # Ouroboros — rotation-equivariant OCSR with stereochemistry → 3D energy
 
-**Try the interactive rotation lab:** [notebook](notebooks/05_rotation_demo.ipynb) ·
-[setup and guide](docs/rotation-demo.md). Drag a slider to rotate a molecule and measure
+**Try the interactive rotation lab:** [notebook](../notebooks/05_rotation_demo.ipynb) ·
+[setup and guide](rotation-demo.md). Drag a slider to rotate a molecule and measure
 equivariance on CPU, without training or datasets. Load your own checkpoint to compare
 original/rotated predictions, molecule redraws and stereo-aware ground-truth scores.
 
@@ -176,7 +176,7 @@ Methods used here:
 
 ## Reliable restarts and GPU probes
 
-See [reliable runs](docs/reliability.md) for checkpoint/data identity checks, verified shard
+See [reliable runs](reliability.md) for checkpoint/data identity checks, verified shard
 reuse, transactional filtering, resumable evaluation/energy caches and current-model CUDA
 capacity/resume commands. Legacy outputs without provenance require new output directories;
 old checkpoints remain usable for evaluation. Historical local A100 reports are explicitly

@@ -1,9 +1,11 @@
 import json
+
 import numpy as np
 import pytest
-from rdkit import Chem
 from ase.calculators.calculator import Calculator, all_changes
 from ase.io import read
+from rdkit import Chem
+
 from ouroboros.geometry.conformers import embed_conformers
 from ouroboros.geometry.displacements import displaced_conformers, geometry_rejection
 
@@ -47,7 +49,9 @@ def test_clash_and_stereo_rejection():
     assert records[0]['rejection_reason'] == 'stereo_mismatch'
     assert out.GetNumConformers() == 1
     out, records = displaced_conformers(mol, smiles, 2, min_distance=100)
-    assert all(r['rejection_reason'] == 'minimum_distance' and r['conf_id'] is None for r in records)
+    assert all(
+        r['rejection_reason'] == 'minimum_distance' and r['conf_id'] is None for r in records
+    )
     assert out.GetNumConformers() == 1
 
 

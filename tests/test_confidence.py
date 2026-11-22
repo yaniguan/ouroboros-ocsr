@@ -1,5 +1,7 @@
 import json
+
 import pytest
+
 from ouroboros.decode.confidence import confidence, selective_report
 
 

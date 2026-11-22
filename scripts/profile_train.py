@@ -26,7 +26,9 @@ def summarise_phase_times(times):
         p = (len(values) - 1) * 0.9
         lo = int(p)
         p90 = values[lo] + (values[min(lo + 1, len(values) - 1)] - values[lo]) * (p - lo)
-        result[name] = dict(mean_ms=statistics.mean(values), median_ms=statistics.median(values), p90_ms=p90)
+        result[name] = dict(
+            mean_ms=statistics.mean(values), median_ms=statistics.median(values), p90_ms=p90
+        )
     return result
 
 
@@ -49,9 +51,12 @@ def parse_nvidia_smi_csv(text):
 def start_nvidia_smi(path):
     handle = Path(path).open('a')
     try:
-        proc = subprocess.Popen([
-            'nvidia-smi', '--query-gpu=timestamp,utilization.gpu,utilization.memory,memory.used,power.draw',
-            '--format=csv', '-lms', '200'], stdout=handle, stderr=subprocess.DEVNULL)
+        query = "--query-gpu=timestamp,utilization.gpu,utilization.memory,memory.used,power.draw"
+        proc = subprocess.Popen(
+            ["nvidia-smi", query, "--format=csv", "-lms", "200"],
+            stdout=handle,
+            stderr=subprocess.DEVNULL,
+        )
     except OSError:
         handle.close()
         return None
@@ -105,7 +110,8 @@ def main(argv=None):
     with tempfile.TemporaryDirectory(prefix='ouroboros-profile-') as temporary:
         tr = Trainer(cfg, temporary)
         loader = iter(tr.loader())
-        times = {k: [] for k in ('data_loading', 'host_to_device', 'forward', 'backward', 'optimizer')}
+        phase_names = ('data_loading', 'host_to_device', 'forward', 'backward', 'optimizer')
+        times = {k: [] for k in phase_names}
         images_count = tokens_count = 0
 
         def step(record=False):
@@ -126,8 +132,13 @@ def main(argv=None):
                     loader = iter(tr.loader())
                     return next(loader)
             batch = timed('data_loading', fetch)
-            images, ids = timed('host_to_device', lambda: (
-                batch['image'].to(tr.dev, non_blocking=True), batch['ids'].to(tr.dev, non_blocking=True)))
+            images, ids = timed(
+                'host_to_device',
+                lambda: (
+                    batch['image'].to(tr.dev, non_blocking=True),
+                    batch['ids'].to(tr.dev, non_blocking=True),
+                ),
+            )
             def forward():
                 augmented, angles = tr.augment_with_angles(images)
                 with torch.autocast(tr.dev.type, dtype=torch.bfloat16,
@@ -168,7 +179,9 @@ def main(argv=None):
         activities = [torch.profiler.ProfilerActivity.CPU]
         if tr.dev.type == 'cuda':
             activities.append(torch.profiler.ProfilerActivity.CUDA)
-        with torch.profiler.profile(activities=activities, record_shapes=True, profile_memory=True) as prof:
+        with torch.profiler.profile(
+            activities=activities, record_shapes=True, profile_memory=True
+        ) as prof:
             for _ in range(a.trace_steps):
                 step()
                 prof.step()

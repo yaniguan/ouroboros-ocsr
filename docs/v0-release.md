@@ -17,7 +17,7 @@ is not a release requirement; the original baseline ≥70% milestone remains sep
 
 ## How to run
 
-Follow the [README](../README.md#how-to-run) for inference. Python 3.11 is tested.
+Follow the [README](../README.md#quickstart) for inference. Python 3.11 is tested.
 Use the exact Linux CUDA requirements for training. macOS inference uses the lightweight
 requirements and verified upstream `lie-learn` data tables.
 

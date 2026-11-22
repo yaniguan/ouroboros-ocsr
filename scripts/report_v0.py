@@ -10,13 +10,22 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
-def main():
+def main(argv=None):
+    import argparse
+
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument(
+        "--write-docs",
+        action="store_true",
+        help="also write benchmarks/v0.1.0-alpha/summary-generated.md",
+    )
+    a = ap.parse_args(argv)
     root = Path(__file__).resolve().parents[1]
     reports = root / "benchmarks/v0.1.0-alpha"
     rows = []
     curves = {}
     for arm in ("A", "B", "C"):
-        report = json.loads((reports / f"{arm}-summary.json").read_text())
+        report = json.loads((reports / f"{arm}-summary.json").read_text(encoding="utf-8"))
         full = [e for e in report["entries"] if e["set"] == "rendered_test"]
         sweep = sorted(
             [e for e in report["entries"] if e["set"] == "rendered_test:sweep"],
@@ -106,13 +115,14 @@ def main():
         "## Interpretation boundaries\n",
         "These results describe this training budget, renderer distribution and seed only.",
         "A/B share the same architecture; B adds random rotation. C has fewer encoder parameters",
-        "under a FLOP-matching design. Hardware and wall times are recorded separately in the",
-        "[benchmark notes](../benchmarks/v0.1.0-alpha/README.md). No real-document or paper",
-        "parity claim follows from these results. The original ≥70% baseline gate is separate.\n",
+        "under a FLOP-matching design. Hardware and wall times are recorded separately in",
+        "[MODEL_CARD.md](../../MODEL_CARD.md) and [v0-results.md](../../docs/v0-results.md).",
+        "No real-document or paper parity claim follows from these results.\n",
         "Raw aggregate summaries and CSVs: `benchmarks/v0.1.0-alpha/`. Rebuild with",
         "`python scripts/report_v0.py`; missing arms or incomplete angle grids are rejected.",
     ]
-    (root / "docs/v0-results.md").write_text("\n".join(lines) + "\n")
+    if a.write_docs:
+        (reports / "summary-generated.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

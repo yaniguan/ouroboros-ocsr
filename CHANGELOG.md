@@ -1,9 +1,17 @@
 # Changelog
 
+## 2026-11 — Holdout evaluation, lab modules, 3D workbench & codebase audit
+
+- Froze the 300-image `frozen-test-v2` holdout (`ACS` 100, `UOB` 100, `USPTO` 100) and scored it once with `PMC val`-locked decoding (`AC-ensemble-beam5-ttapad`): `46.7%` exact match overall (`85.0%` `UOB`, `30.0%` `ACS`, `25.0%` `USPTO`; `benchmarks/frozen-test-v2/`).
+- Added the 200-image `DECIMER Hand-drawn` evaluation subset (`4.5%` exact match for fine-tune v2 A + C beam 5; `benchmarks/handdrawn-decimer/`).
+- Locked selective confidence-gate limits (`min_margin=0.05`, `max_disagreement=0.0`) on `PMC val` (`92.19%` precision at `19.9%` coverage) and scored `frozen-test-v2` once (`97.78%` exact precision across `88/90` accepted figures, `30.0%` coverage; `benchmarks/selective-gate/`).
+- Added the `ouroboros.infer` CPU `int8` inference API (`benchmarks/cpu-api/`), `ouroboros.labvision` 96-well rectangular & circular plate finder, `lab.molecule_context` (`ouroboros.molecule_context/v1`), `lab.edge_plan`, `lab.quantize` (`benchmarks/quantize-cpu/`), and `lab.grpo_verifier`.
+- Launched the interactive project website and zero-install Browser 3D Lab (`site/`, `ouroboros.ui`), enforced `ruff check .` in CI, and hardened cross-platform Windows/CUDA/chemistry/API edge cases.
+
 ## 2026-10-30 — Real-figure fine-tune v2
 
 - Fine-tuned arms A and C on real PMC figures (`colab/finetune_v2.ipynb`), selecting checkpoints on the molecule-disjoint real validation split.
-- On the 298-image real benchmark sample (ACS 100, UOB 100, USPTO 98), the A + C ensemble reached 54.0% exact match with stereochemistry (beam 5 + TTA) and 52.4% without TTA; single-model greedy scores were 51.0% for A and 37.6% for C (`benchmarks/finetune-v2-oct30/`).
+- On the 298-image real benchmark sample (ACS 100, UOB 100, USPTO 98), the A + C ensemble reached 54.0% exact match with stereochemistry (beam 5 + TTA) and 52.3% without TTA; single-model greedy scores were 51.0% for A and 37.6% for C (`benchmarks/finetune-v2-oct30/`).
 
 ## 2026-10-15 — Baseline B and v0.1.0-alpha weights
 

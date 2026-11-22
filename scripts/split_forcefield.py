@@ -2,7 +2,9 @@
 import argparse
 import json
 from pathlib import Path
+
 from ase.io import read, write
+
 from ouroboros.geometry.splits import split_dataset
 
 
