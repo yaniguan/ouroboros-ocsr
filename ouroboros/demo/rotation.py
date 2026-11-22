@@ -125,9 +125,15 @@ class RotationLab:
 
     def _prediction(self, smiles: str, reference: str) -> dict:
         mol = parse(smiles)
+        img_url = None
+        if mol is not None:
+            try:
+                img_url = png_url(render(mol, RenderStyle(), size=320).image)
+            except (ValueError, RuntimeError):
+                img_url = None
         return {
             "smiles": smiles,
-            "image": png_url(render(mol, RenderStyle(), size=320).image) if mol else None,
+            "image": img_url,
             "score": asdict(score_pair(smiles, reference)),
         }
 

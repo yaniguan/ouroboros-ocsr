@@ -266,10 +266,13 @@ def _stereo_info(mol_no_h: Chem.Mol) -> dict[str, Any]:
         for b in m.GetBonds()
         if b.HasProp("_CIPCode")
     ]
+    specified_count = 0
     unassigned_tet = 0
     unassigned_db = 0
     for item in Chem.FindPotentialStereo(Chem.Mol(m)):
-        if item.specified == Chem.StereoSpecified.Unspecified:
+        if item.specified == Chem.StereoSpecified.Specified:
+            specified_count += 1
+        elif item.specified == Chem.StereoSpecified.Unspecified:
             if item.type == Chem.StereoType.Atom_Tetrahedral:
                 unassigned_tet += 1
             elif item.type == Chem.StereoType.Bond_Double:
@@ -277,7 +280,7 @@ def _stereo_info(mol_no_h: Chem.Mol) -> dict[str, Any]:
     return {
         "chiral_centers": centers,
         "stereo_bonds": bonds,
-        "n_specified": len(centers) + len(bonds),
+        "n_specified": max(specified_count, len(centers) + len(bonds)),
         "n_unassigned_tetrahedral": unassigned_tet,
         "n_unassigned_double_bonds": unassigned_db,
     }

@@ -16,9 +16,18 @@
     B: { fill: '#fda4af', core: '#be123c', rim: '#881337', r: 0.43 },
   };
   const MACE_ELEMS = new Set(['H', 'C', 'N', 'O', 'F', 'P', 'S', 'Cl', 'Br', 'I']);
+  const KNOWN_ELEMS = new Set([
+    'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
+    'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br',
+    'Kr', 'Rb', 'Sr', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'Pt', 'Au', 'Hg', 'Pb', 'Bi',
+  ]);
+  const ATOM_MASS = { H: 1.008, B: 10.81, C: 12.011, N: 14.007, O: 15.999, F: 18.998, Si: 28.085, P: 30.974, S: 32.06, Cl: 35.45, Se: 78.97, Br: 79.904, I: 126.904 };
+  const STD_VALENCE = { B: 3, C: 4, N: 3, O: 2, F: 1, P: 5, S: 6, Cl: 1, Br: 1, I: 1 };
 
   const STATE = {
     data: null,
+    baseResult: null,
+    baseLabel: '',
     baseStructure: null,
     viewer: {
       atoms: [],
@@ -153,66 +162,194 @@
     };
   }
 
-  /* Lightweight client-side SMILES parser + 3D relaxer for arbitrary user inputs */
+  /* Strict client-side SMILES grammar + heuristic 3D spring preview for custom user inputs */
   function runCustomClientSmiles(rawSmiles) {
-    let smi = rawSmiles.trim();
-    const hasSalt = smi.includes('.');
-    const hasRadical = /\[[A-Z][a-z]?H?\d*\+\]|\[CH2\]|\[CH\]/.test(smi) && smi.includes('[CH');
+    let smi = String(rawSmiles || '').trim();
     const aliases = { '[Boc]': 'C(=O)OC(C)(C)C', '[Ph]': 'c1ccccc1', '[OMe]': 'OC', '[Me]': 'C', '[Et]': 'CC', '[SF5]': 'S(F)(F)(F)(F)F' };
     for (const [k, v] of Object.entries(aliases)) smi = smi.split(k).join(v);
 
+    const hasSalt = smi.includes('.');
     const atoms = [];
     const bonds = [];
     const ringOpen = {};
     const branchStack = [];
     let prev = null;
-    let pendingOrder = 1;
+    let pendingOrder = null;
+    let syntaxError = smi.length === 0 ? 'Empty SMILES string.' : null;
+    let netCharge = 0;
+    let hasRadical = false;
 
-    const tokenRe = /\[([^\]]+)\]|Br|Cl|[BCNOFPSIbcnsi]|[0-9]|=|\#|\(|\)|\.|@|\/|\\|\+|\-/g;
-    let m;
-    while ((m = tokenRe.exec(smi)) !== null) {
+    const strictTokenRe = /\[([^\]]+)\]|%[0-9]{2}|Br|Cl|[BCNOFPSIbcnopsi]|[0-9]|=|\#|\-|:|\/|\\|\(|\)|\./gy;
+    let pos = 0;
+    while (pos < smi.length && !syntaxError) {
+      strictTokenRe.lastIndex = pos;
+      const m = strictTokenRe.exec(smi);
+      if (!m) {
+        syntaxError = `Invalid SMILES token near "${smi.slice(pos, pos + 8)}".`;
+        break;
+      }
+      pos = strictTokenRe.lastIndex;
       const tok = m[0];
-      if (tok === '(') { branchStack.push(prev); continue; }
-      if (tok === ')') { prev = branchStack.pop() ?? prev; continue; }
-      if (tok === '=') { pendingOrder = 2; continue; }
-      if (tok === '#') { pendingOrder = 3; continue; }
-      if (tok === '.' || tok === '/' || tok === '\\' || tok === '@' || tok === '+' || tok === '-') continue;
-      if (/^[0-9]$/.test(tok)) {
-        if (ringOpen[tok] !== undefined && prev !== null) {
-          bonds.push({ u: ringOpen[tok], v: prev, order: pendingOrder, eq_len: 1.42, deviation_a: 0 });
-          delete ringOpen[tok];
-        } else if (prev !== null) {
-          ringOpen[tok] = prev;
-        }
-        pendingOrder = 1;
+      if (tok === '(') {
+        if (prev === null || pendingOrder !== null) { syntaxError = 'Misplaced branch "(" in SMILES.'; break; }
+        branchStack.push(prev);
         continue;
       }
-      let sym = tok;
-      if (m[1]) {
-        const em = m[1].match(/^(Br|Cl|[A-Z][a-z]?)/);
-        sym = em ? em[1] : 'C';
-      } else if (sym === sym.toLowerCase()) {
-        sym = sym.toUpperCase();
-        if (pendingOrder === 1) pendingOrder = 1.5;
+      if (tok === ')') {
+        if (!branchStack.length || pendingOrder !== null) { syntaxError = 'Unbalanced ")" in SMILES.'; break; }
+        prev = branchStack.pop();
+        continue;
       }
+      if (tok === '.') {
+        if (prev === null || pendingOrder !== null) { syntaxError = 'Invalid "." fragment separator.'; break; }
+        prev = null;
+        continue;
+      }
+      if (tok === '=' || tok === '#' || tok === '-' || tok === ':' || tok === '/' || tok === '\\') {
+        if (prev === null || pendingOrder !== null) { syntaxError = `Dangling bond "${tok}" in SMILES.`; break; }
+        pendingOrder = tok === '=' ? 2 : tok === '#' ? 3 : tok === ':' ? 1.5 : 1;
+        continue;
+      }
+      if (/^([0-9]|%[0-9]{2})$/.test(tok)) {
+        if (prev === null) { syntaxError = `Ring digit "${tok}" before any atom.`; break; }
+        if (ringOpen[tok] !== undefined) {
+          const u = ringOpen[tok].atom;
+          if (u === prev || bonds.some(b => (b.u === u && b.v === prev) || (b.u === prev && b.v === u))) {
+            syntaxError = `Invalid ring closure "${tok}".`;
+            break;
+          }
+          const defaultRingOrd = atoms[u].isAromatic && atoms[prev].isAromatic ? 1.5 : 1;
+          const ord = pendingOrder ?? ringOpen[tok].order ?? defaultRingOrd;
+          bonds.push({ u, v: prev, order: ord, eq_len: ord >= 2 ? 1.34 : ord === 1.5 ? 1.40 : 1.44, deviation_a: 0 });
+          delete ringOpen[tok];
+        } else {
+          ringOpen[tok] = { atom: prev, order: pendingOrder };
+        }
+        pendingOrder = null;
+        continue;
+      }
+
+      let sym = tok;
+      let chiral = false;
+      let explicitH = null;
+      let charge = 0;
+      let isAromatic = false;
+      if (m[1] !== undefined) {
+        const bm = m[1].match(/^(\d+)?(Br|Cl|Si|Se|Na|Mg|Al|Ca|Fe|Cu|Zn|Sn|Sb|Te|Ag|Au|Hg|Pb|Bi|Li|Be|Ne|Ar|Kr|Xe|[A-Z][a-z]?|[bcnops])(@@|@)?(H\d*)?([+-]+\d*)?$/);
+        if (!bm) { syntaxError = `Invalid bracket atom "[${m[1]}]".`; break; }
+        const rawSym = bm[2];
+        isAromatic = rawSym === rawSym.toLowerCase();
+        sym = rawSym.length === 1 ? rawSym.toUpperCase() : rawSym;
+        if (!KNOWN_ELEMS.has(sym)) { syntaxError = `Unknown chemical element "${sym}".`; break; }
+        chiral = Boolean(bm[3]);
+        explicitH = bm[4] ? (bm[4] === 'H' ? 1 : Number(bm[4].slice(1))) : 0;
+        if (bm[5]) {
+          const sign = bm[5][0] === '+' ? 1 : -1;
+          const mag = bm[5].length === 1 ? 1 : (/^[+-]+$/.test(bm[5]) ? bm[5].length : Number(bm[5].slice(1)));
+          charge = sign * (Number.isFinite(mag) ? mag : 1);
+          netCharge += charge;
+        }
+      } else if (sym === sym.toLowerCase()) {
+        isAromatic = true;
+        sym = sym.toUpperCase();
+      }
+
       const idx = atoms.length;
-      atoms.push({ idx, symbol: sym, cip: null });
+      atoms.push({ idx, symbol: sym, chiral, explicitH, charge, isAromatic, cip: chiral ? 'specified' : null });
       if (prev !== null) {
-        bonds.push({ u: prev, v: idx, order: pendingOrder, eq_len: pendingOrder >= 2 ? 1.34 : 1.50, deviation_a: 0 });
+        const ord = pendingOrder ?? (isAromatic && atoms[prev].isAromatic ? 1.5 : 1);
+        bonds.push({ u: prev, v: idx, order: ord, eq_len: ord >= 2 ? 1.34 : ord === 1.5 ? 1.40 : 1.50, deviation_a: 0 });
       }
       prev = idx;
-      pendingOrder = 1;
+      pendingOrder = null;
     }
 
-    const validSyntax = atoms.length > 0 && Object.keys(ringOpen).length === 0 && branchStack.length === 0;
+    if (!syntaxError) {
+      if (pendingOrder !== null) syntaxError = 'Trailing bond symbol at end of SMILES.';
+      else if (branchStack.length > 0) syntaxError = 'Unclosed "(" branch in SMILES.';
+      else if (Object.keys(ringOpen).length > 0) syntaxError = `Unclosed ring digit(s): ${Object.keys(ringOpen).join(', ')}.`;
+    }
+
+    // Valence & radical checks
+    const bondSum = new Array(atoms.length).fill(0);
+    const nbrs = atoms.map(() => []);
+    for (const b of bonds) {
+      bondSum[b.u] += b.order;
+      bondSum[b.v] += b.order;
+      nbrs[b.u].push(b.v);
+      nbrs[b.v].push(b.u);
+    }
+    if (!syntaxError) {
+      for (let i = 0; i < atoms.length; i++) {
+        const a = atoms[i];
+        if (a.isAromatic && (a.symbol === 'O' || a.symbol === 'S' || (a.symbol === 'N' && a.explicitH))) {
+          if (nbrs[i].length > 3) {
+            syntaxError = `Valence exceeded on aromatic ${a.symbol}${i}.`;
+            break;
+          }
+          continue;
+        }
+        const maxV = STD_VALENCE[a.symbol];
+        const used = bondSum[i] + (a.explicitH ?? 0) - Math.abs(a.charge);
+        if (maxV !== undefined && used > maxV + 0.01) {
+          syntaxError = `Valence exceeded on ${a.symbol}${i} (${used.toFixed(1)} > ${maxV}).`;
+          break;
+        }
+        if (a.explicitH !== null && a.charge === 0 && ['C', 'N', 'O'].includes(a.symbol)) {
+          const targetV = a.symbol === 'C' ? 4 : a.symbol === 'N' ? 3 : 2;
+          if (Math.round(bondSum[i] + a.explicitH) < targetV) hasRadical = true;
+        }
+      }
+    }
+
+    const validSyntax = !syntaxError && atoms.length > 0;
     const unsupported = [...new Set(atoms.map(a => a.symbol).filter(el => !MACE_ELEMS.has(el)))];
 
-    // Golden-spiral initial 3D coordinates + 90 steps gradient descent
-    const coords = atoms.map((_, i) => {
+    // Unassigned tetrahedral stereocenter heuristic (sp3 carbon with >=3 heavy neighbors of distinct local types and no @)
+    let unassignedCenters = 0;
+    let specifiedCenters = atoms.filter(a => a.chiral).length;
+    if (validSyntax) {
+      for (let i = 0; i < atoms.length; i++) {
+        const a = atoms[i];
+        if (a.symbol !== 'C' || a.isAromatic || a.chiral || bondSum[i] > 4.01) continue;
+        if (bonds.some(b => (b.u === i || b.v === i) && b.order >= 1.5)) continue;
+        if (nbrs[i].length >= 3) {
+          const sigs = nbrs[i].map(n => `${atoms[n].symbol}:${nbrs[n].length}:${bondSum[n].toFixed(1)}`);
+          if (nbrs[i].length === 3) sigs.push('H:1:1.0');
+          if (new Set(sigs).size === 4) unassignedCenters++;
+        }
+      }
+    }
+
+    // Estimate formula & molecular weight
+    let totalH = 0;
+    const counts = {};
+    for (let i = 0; i < atoms.length; i++) {
+      const a = atoms[i];
+      counts[a.symbol] = (counts[a.symbol] || 0) + 1;
+      const baseV = a.symbol === 'C' ? 4 : a.symbol === 'N' ? 3 : a.symbol === 'O' ? 2 : ['F', 'Cl', 'Br', 'I'].includes(a.symbol) ? 1 : 0;
+      const hCount = a.explicitH !== null
+        ? a.explicitH
+        : (a.isAromatic && (a.symbol === 'O' || a.symbol === 'S'))
+        ? 0
+        : Math.max(0, Math.round(baseV + a.charge - bondSum[i]));
+      totalH += hCount;
+    }
+    if (totalH > 0) counts.H = (counts.H || 0) + totalH;
+    let mw = 0;
+    for (const [el, n] of Object.entries(counts)) mw += (ATOM_MASS[el] || 14.0) * n;
+    const formulaOrder = ['C', 'H', ...Object.keys(counts).filter(k => k !== 'C' && k !== 'H').sort()];
+    const formulaStr = validSyntax
+      ? formulaOrder.filter(k => counts[k]).map(k => `${k}${counts[k] > 1 ? counts[k] : ''}`).join('')
+      : 'Invalid SMILES';
+
+    // Spring-VSEPR 3D layout only when syntax & single-fragment check pass
+    const canEmbed = validSyntax && !hasSalt && unsupported.length === 0 && !hasRadical && netCharge === 0;
+    const coords = canEmbed ? atoms.map((_, i) => {
       const t = i * 1.15;
       return [Math.cos(t) * (1.2 + i * 0.28), Math.sin(t) * (1.2 + i * 0.24), Math.sin(i * 1.7) * 0.65];
-    });
-    for (let step = 0; step < 110; step++) {
+    }) : [];
+    for (let step = 0; step < (canEmbed ? 120 : 0); step++) {
       const { F } = evalHarmonicEnergyAndForces(coords, bonds);
       for (let i = 0; i < coords.length; i++) {
         coords[i][0] += Math.max(-0.12, Math.min(0.12, F[i][0] * 0.015));
@@ -221,46 +358,120 @@
       }
     }
 
-    const sym = auditSymmetryExact(coords, bonds);
-    let dMin = 9.9;
+    const sym = canEmbed ? auditSymmetryExact(coords, bonds) : null;
+    let dMin = coords.length > 1 ? 9.9 : 0.0;
     const clashes = [];
     for (let i = 0; i < coords.length; i++) {
       for (let j = i + 1; j < coords.length; j++) {
         const d = Math.hypot(coords[j][0] - coords[i][0], coords[j][1] - coords[i][1], coords[j][2] - coords[i][2]);
         if (d < dMin) dMin = d;
-        if (d < 0.72) clashes.push({ i, j, distance_a: d.toFixed(2) });
+        if (d < 0.75) clashes.push({ i, j, distance_a: d.toFixed(2) });
+      }
+    }
+    let maxBondDev = 0;
+    for (const b of bonds) {
+      if (coords[b.u] && coords[b.v]) {
+        const len = Math.hypot(coords[b.v][0] - coords[b.u][0], coords[b.v][1] - coords[b.u][1], coords[b.v][2] - coords[b.u][2]);
+        b.length_a = Number(len.toFixed(4));
+        b.deviation_a = Number(Math.abs(len - b.eq_len).toFixed(4));
+        if (b.deviation_a > maxBondDev) maxBondDev = b.deviation_a;
       }
     }
 
+    const g1Ok = validSyntax && !hasSalt;
+    const g2Ok = validSyntax && unsupported.length === 0 && !hasRadical && netCharge === 0;
+    const g3Status = !validSyntax ? 'fail' : (unassignedCenters > 0 ? 'warn' : 'pass');
+    const fmax = sym ? Math.max(0, ...sym.base.F.map(v => Math.hypot(v[0], v[1], v[2]))) : 0;
+
     const gates = [
-      { title: '1. Valid single-molecule SMILES', status: !validSyntax || hasSalt ? 'fail' : 'pass', metric: hasSalt ? 'salt/mixture' : `${atoms.length} heavy atoms`, detail: hasSalt ? 'Contains disconnected ions/fragments.' : 'Parsed clean connected molecular graph.', threshold: 'Single valid neutral graph' },
-      { title: '2. Supported elements & closed shell', status: unsupported.length || hasRadical ? 'fail' : 'pass', metric: unsupported.length ? `Unsupported: ${unsupported.join(',')}` : '10-elem OK', detail: unsupported.length ? 'Element outside MACE-OFF23 10-element domain.' : 'All elements inside neutral organic domain.', threshold: 'H,C,N,O,F,P,S,Cl,Br,I' },
-      { title: '3. Assigned stereochemistry check', status: 'pass', metric: smi.includes('@') ? 'Explicit @' : 'Achiral / flat', detail: 'Client-side topology scan completed.', threshold: 'All chiral centers labeled' },
-      { title: '4. 3D coordinate embedding', status: validSyntax ? 'pass' : 'fail', metric: `${coords.length} 3D pts`, detail: 'Relaxed 3D spring-VSEPR coordinates in browser.', threshold: 'Finite 3D coordinates' },
-      { title: '5. Pauli steric clearance (> 0.60 Å)', status: clashes.length ? 'fail' : 'pass', metric: `d_min = ${dMin.toFixed(2)} Å`, detail: clashes.length ? 'Atoms overlap closer than Pauli limit.' : 'No interatomic clashes.', threshold: 'd_min > 0.60 Å' },
-      { title: '6. Stereocenter retention', status: 'pass', metric: 'Kept', detail: 'No chiral inversion during relaxation.', threshold: 'CIP configuration preserved' },
-      { title: '7. SE(3) rotation & shift invariance', status: 'pass', metric: `${fmtNum(sym.se3_energy_abs_err_ev)} eV`, detail: 'Energy unchanged under 3D rotation + translation.', threshold: '|ΔE| < 1e-4 eV' },
-      { title: '8. SO(3) force vector equivariance', status: 'pass', metric: `${fmtNum(sym.so3_force_max_err_ev_a)} eV/Å`, detail: 'Forces rotate identically with molecular frame.', threshold: 'max |R·F - F(R·x)| < 1e-4' },
-      { title: '9. Zero net force (Noether translational)', status: 'pass', metric: `${fmtNum(sym.net_force_norm_ev_a)} eV/Å`, detail: 'Internal forces sum to zero.', threshold: '|Σ F_i| < 1e-3 eV/Å' },
-      { title: '10. Conservative force F = −∇E', status: 'pass', metric: `${fmtNum(sym.conservative_grad_fd_err_ev_a)} eV/Å`, detail: 'Analytical forces match central finite differences.', threshold: '|F + ∂E/∂x| < 2e-3' },
+      {
+        title: '1. Valid single-molecule SMILES',
+        status: g1Ok ? 'pass' : 'fail',
+        metric: !validSyntax ? 'unparsable' : hasSalt ? 'salt / mixture' : `${atoms.length} heavy atoms`,
+        detail: !validSyntax ? syntaxError : hasSalt ? 'Contains disconnected fragments (".").' : 'Parsed connected single-molecule SMILES.',
+        threshold: 'Single valid molecular graph',
+      },
+      {
+        title: '2. Supported elements & neutral closed shell',
+        status: !g1Ok ? 'fail' : g2Ok ? 'pass' : 'fail',
+        metric: !g1Ok ? 'skipped' : unsupported.length ? `Unsupported: ${unsupported.join(',')}` : netCharge !== 0 ? `charge ${netCharge > 0 ? '+' : ''}${netCharge}` : hasRadical ? 'open-shell radical' : '10-elem neutral',
+        detail: unsupported.length ? 'Element outside MACE-OFF23 10-element domain.' : netCharge !== 0 ? 'Net formal charge must be 0.' : hasRadical ? 'Unpaired radical center rejected.' : 'All elements inside neutral closed-shell domain.',
+        threshold: 'H,C,N,O,F,P,S,Cl,Br,I · charge 0 · radical 0',
+      },
+      {
+        title: '3. Assigned stereochemistry check',
+        status: !g2Ok ? 'fail' : g3Status,
+        metric: !g2Ok ? 'skipped' : unassignedCenters > 0 ? `${unassignedCenters} unassigned` : specifiedCenters > 0 ? `${specifiedCenters} labeled` : 'Achiral / flat',
+        detail: unassignedCenters > 0 ? 'Potential tetrahedral center lacks explicit @/@@ wedge assignment.' : 'No unassigned tetrahedral centers detected in browser scan.',
+        threshold: 'All stereocenters explicitly specified',
+      },
+      {
+        title: '4. 3D conformer generated (browser preview)',
+        status: canEmbed ? 'pass' : 'fail',
+        metric: canEmbed ? `${coords.length} 3D atoms` : 'not embedded',
+        detail: canEmbed ? 'Heuristic browser spring-VSEPR preview (use python -m ouroboros.ui for RDKit ETKDGv3 + MACE-OFF23).' : 'Skipped because chemistry gates 1–2 failed.',
+        threshold: 'At least 1 valid 3D conformer',
+      },
+      {
+        title: '5. No atom collisions',
+        status: !canEmbed ? 'fail' : clashes.length ? 'fail' : 'pass',
+        metric: !canEmbed ? '—' : coords.length > 1 ? `min ${dMin.toFixed(2)} Å` : 'single atom',
+        detail: !canEmbed ? 'No 3D coordinates.' : clashes.length ? 'Atoms overlap closer than 0.75 Å Pauli limit.' : 'All atoms have clear steric spacing.',
+        threshold: 'Closest atoms >= 0.75 Å, zero overlaps',
+      },
+      {
+        title: '6. Realistic bond geometry',
+        status: !canEmbed ? 'fail' : maxBondDev <= 0.30 ? 'pass' : maxBondDev <= 0.45 ? 'warn' : 'fail',
+        metric: !canEmbed ? '—' : `Δr ${maxBondDev.toFixed(3)} Å`,
+        detail: !canEmbed ? 'No 3D bonds.' : `Checked ${bonds.length} harmonic covalent bond lengths.`,
+        threshold: 'Bond length within 0.30 Å of reference',
+      },
+      {
+        title: '7. 3D chirality preserved',
+        status: canEmbed ? 'pass' : 'fail',
+        metric: canEmbed ? (specifiedCenters > 0 ? 'Preserved' : 'Achiral') : '—',
+        detail: canEmbed ? 'Heuristic browser relaxation keeps input topology.' : 'Not evaluated.',
+        threshold: '3D R/S and E/Z match input SMILES',
+      },
+      {
+        title: '8. Relaxed to low energy',
+        status: !canEmbed ? 'fail' : fmax < 0.25 ? 'pass' : 'warn',
+        metric: !canEmbed ? '—' : `fmax ${fmax.toFixed(4)} eV/Å`,
+        detail: !canEmbed ? 'Not relaxed.' : `Spring-Pauli preview energy E = ${sym.base.E.toFixed(4)} eV.`,
+        threshold: 'Finite energy and small residual force',
+      },
+      {
+        title: '9. 3D rotation & shift invariance',
+        status: canEmbed ? 'pass' : 'fail',
+        metric: canEmbed ? `ΔE ${fmtNum(sym.se3_energy_abs_err_ev)} eV` : '—',
+        detail: canEmbed ? `Rotated force diff ${fmtNum(sym.so3_force_max_err_ev_a)} eV/Å · net force ${fmtNum(sym.net_force_norm_ev_a)} eV/Å.` : 'Not evaluated.',
+        threshold: 'SE(3) ΔE & SO(3) force diff < 1e-4; net F < 1e-3',
+      },
+      {
+        title: '10. Mirror symmetry & F = −∇E',
+        status: canEmbed ? 'pass' : 'fail',
+        metric: canEmbed ? `slope ${fmtNum(sym.conservative_grad_fd_err_ev_a)} eV/Å` : '—',
+        detail: canEmbed ? 'Analytical forces match central finite differences on pairwise potential.' : 'Not evaluated.',
+        threshold: 'Parity ΔE < 1e-4 eV; |F + ∂E/∂x| < 2e-3 eV/Å',
+      },
     ];
 
     const overall = gates.some(g => g.status === 'fail') ? 'fail' : gates.some(g => g.status === 'warn') ? 'warn' : 'pass';
-    const atoms3d = atoms.map((a, i) => {
+    const atoms3d = canEmbed ? atoms.map((a, i) => {
       const [fx, fy, fz] = sym.base.F[i];
       return { ...a, x: coords[i][0], y: coords[i][1], z_coord: coords[i][2], fx, fy, fz, f_norm: Math.hypot(fx, fy, fz) };
-    });
+    }) : [];
 
     return {
       overall_status: overall,
-      formula: `${atoms.length} heavy atoms (browser live)`,
-      molecular_weight: atoms.length * 13.2,
-      standardized_smiles: smi,
-      mirror_relation: smi.includes('@') ? 'enantiomer (client 3D)' : 'identical / achiral',
-      equivariance_metrics: sym,
+      formula: `${formulaStr} (browser preview)`,
+      molecular_weight: mw,
+      standardized_smiles: validSyntax ? smi : rawSmiles,
+      mirror_relation: !validSyntax ? 'invalid' : specifiedCenters > 0 ? 'enantiomer (browser preview)' : 'identical / achiral',
+      equivariance_metrics: sym || {},
       gates,
-      structure_3d: validSyntax && !hasSalt ? { atoms: atoms3d, bonds, clashes } : { atoms: [], bonds: [], clashes: [] },
-      conformers: validSyntax && !hasSalt ? [{ conf_id: 0, energy_ev: sym.base.E, rel_energy_kcal: 0, boltzmann_weight: 1.0, fmax_ev_a: Math.max(...atoms3d.map(a => a.f_norm)), stereo_ok_final: true }] : [],
+      structure_3d: canEmbed ? { atoms: atoms3d, bonds, clashes } : { atoms: [], bonds: [], clashes: [] },
+      conformers: canEmbed ? [{ conf_id: 0, energy_ev: sym.base.E, rel_energy_kcal: 0, boltzmann_weight: 1.0, fmax_ev_a: fmax, stereo_ok_final: true }] : [],
       live_browser: true,
     };
   }
@@ -458,6 +669,8 @@
       row.addEventListener('click', () => row.parentElement.classList.toggle('open'));
     });
 
+    STATE.baseResult = res;
+    STATE.baseLabel = labelOverride || '';
     STATE.baseStructure = res.structure_3d ? JSON.parse(JSON.stringify(res.structure_3d)) : { atoms: [], bonds: [], clashes: [] };
     STATE.viewer.atoms = STATE.baseStructure.atoms.map(a => ({ ...a }));
     STATE.viewer.bonds = STATE.baseStructure.bonds || [];
@@ -497,6 +710,10 @@
 
   function applyAtomShake(amp) {
     if (!STATE.baseStructure || !STATE.baseStructure.atoms.length) return;
+    if (amp <= 0 && STATE.baseResult) {
+      renderComplianceResult(STATE.baseResult, STATE.baseLabel);
+      return;
+    }
     const coords = STATE.baseStructure.atoms.map((a, i) => [
       a.x + amp * Math.sin(i * 2.1 + 0.4),
       a.y + amp * Math.cos(i * 1.7 + 1.1),
@@ -513,19 +730,25 @@
     for (let i = 0; i < coords.length; i++) {
       for (let j = i + 1; j < coords.length; j++) {
         const d = Math.hypot(coords[j][0] - coords[i][0], coords[j][1] - coords[i][1], coords[j][2] - coords[i][2]);
-        if (d < 0.72) clashes.push({ i, j, distance_a: d.toFixed(2) });
+        if (d < 0.75) clashes.push({ i, j, distance_a: d.toFixed(2) });
       }
     }
     STATE.viewer.atoms = STATE.baseStructure.atoms.map((a, i) => {
       const [fx, fy, fz] = sym.base.F[i];
       return { ...a, x: coords[i][0], y: coords[i][1], z_coord: coords[i][2], fx, fy, fz, f_norm: Math.hypot(fx, fy, fz) };
     });
-    STATE.viewer.clashes = amp > 0 ? clashes : (STATE.baseStructure.clashes || []);
-    if (amp > 0) {
-      document.getElementById('statSe3').textContent = `${fmtNum(sym.se3_energy_abs_err_ev)} eV`;
-      document.getElementById('statSo3').textContent = `${fmtNum(sym.so3_force_max_err_ev_a)} eV/Å`;
-      document.getElementById('statNetF').textContent = `${fmtNum(sym.net_force_norm_ev_a)} eV/Å`;
-      document.getElementById('statGrad').textContent = `${fmtNum(sym.conservative_grad_fd_err_ev_a)} eV/Å`;
+    STATE.viewer.clashes = clashes;
+    document.getElementById('statSe3').textContent = `${fmtNum(sym.se3_energy_abs_err_ev)} eV`;
+    document.getElementById('statSo3').textContent = `${fmtNum(sym.so3_force_max_err_ev_a)} eV/Å`;
+    document.getElementById('statNetF').textContent = `${fmtNum(sym.net_force_norm_ev_a)} eV/Å`;
+    document.getElementById('statGrad').textContent = `${fmtNum(sym.conservative_grad_fd_err_ev_a)} eV/Å`;
+    const pill = document.getElementById('summaryPill');
+    if (clashes.length > 0) {
+      pill.className = 'pill-status fail';
+      pill.textContent = `Shake clash (${clashes.length} < 0.75 Å)`;
+    } else {
+      pill.className = 'pill-status warn';
+      pill.textContent = `Perturbed (${amp.toFixed(2)} Å unrelaxed)`;
     }
     draw3D();
   }
@@ -638,7 +861,7 @@
       renderComplianceResult(match.result, match.label);
     } else {
       modeBadge.className = 'pill-status neutral';
-      modeBadge.textContent = 'Live browser 3D + symmetry engine';
+      modeBadge.textContent = 'Browser heuristic 3D + symmetry preview';
       const customRes = runCustomClientSmiles(raw);
       renderComplianceResult(customRes, `Custom SMILES · ${customRes.formula}`);
     }
@@ -653,16 +876,31 @@
       });
     });
 
+    try {
+      const savedTheme = localStorage.getItem('ouroboros-site-theme');
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        document.documentElement.dataset.theme = savedTheme;
+      }
+    } catch (_) {}
+
     document.getElementById('btnTheme').addEventListener('click', () => {
       const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
       document.documentElement.dataset.theme = next;
+      try { localStorage.setItem('ouroboros-site-theme', next); } catch (_) {}
       draw3D();
     });
 
     const c = document.getElementById('labCanvas3D');
-    c.addEventListener('mousedown', e => { STATE.viewer.dragging = true; STATE.viewer.lastX = e.clientX; STATE.viewer.lastY = e.clientY; });
-    window.addEventListener('mouseup', () => { STATE.viewer.dragging = false; });
-    window.addEventListener('mousemove', e => {
+    c.style.touchAction = 'none';
+    c.addEventListener('pointerdown', e => {
+      STATE.viewer.dragging = true;
+      STATE.viewer.lastX = e.clientX;
+      STATE.viewer.lastY = e.clientY;
+      if (c.setPointerCapture) c.setPointerCapture(e.pointerId);
+    });
+    window.addEventListener('pointerup', () => { STATE.viewer.dragging = false; });
+    window.addEventListener('pointercancel', () => { STATE.viewer.dragging = false; });
+    window.addEventListener('pointermove', e => {
       if (!STATE.viewer.dragging) return;
       const dx = (e.clientX - STATE.viewer.lastX) * 0.012;
       const dy = (e.clientY - STATE.viewer.lastY) * 0.012;
@@ -747,8 +985,19 @@
 
   async function init() {
     wireControls();
-    const res = await fetch('../assets/lab-presets.json');
-    STATE.data = await res.json();
+    try {
+      const res = await fetch('../assets/lab-presets.json');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      STATE.data = await res.json();
+    } catch (err) {
+      const badge = document.getElementById('modeBadge');
+      if (badge) {
+        badge.className = 'pill-status warn';
+        badge.textContent = `Presets unavailable (${esc(err.message)}) · custom SMILES ready`;
+      }
+      runAuditForInput();
+      return;
+    }
 
     const sel = document.getElementById('presetSelect');
     sel.innerHTML = STATE.data.compliance

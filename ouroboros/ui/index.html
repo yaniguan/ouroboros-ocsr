@@ -967,7 +967,7 @@
           </div>
           <div class="field-mini" style="min-width:200px;">
             <label for="ocsrRef">Reference SMILES (optional)</label>
-            <input type="text" id="ocsrRef" class="mono" value="CC(C)Cc1ccc([C@@H](C)C(=O)O)cc1">
+            <input type="text" id="ocsrRef" class="mono" value="" placeholder="Defaults to input SMILES">
           </div>
           <label class="chk"><input type="checkbox" id="ocsrTtaPad"> Pad TTA</label>
           <label class="chk"><input type="checkbox" id="ocsrTtaSharpen"> Sharpen TTA</label>
@@ -1549,10 +1549,21 @@ function draw3D() {
 }
 
 (() => {
+  const savedTheme = localStorage.getItem("ouroboros-site-theme");
+  if (savedTheme === "light" || savedTheme === "dark") {
+    document.documentElement.dataset.theme = savedTheme;
+  }
   const c = document.getElementById("molCanvas3D");
-  c.addEventListener("mousedown", e => { STATE.viewer.dragging = true; STATE.viewer.lastX = e.clientX; STATE.viewer.lastY = e.clientY; });
-  window.addEventListener("mouseup", () => { STATE.viewer.dragging = false; });
-  window.addEventListener("mousemove", e => {
+  c.style.touchAction = "none";
+  c.addEventListener("pointerdown", e => {
+    STATE.viewer.dragging = true;
+    STATE.viewer.lastX = e.clientX;
+    STATE.viewer.lastY = e.clientY;
+    if (c.setPointerCapture) c.setPointerCapture(e.pointerId);
+  });
+  window.addEventListener("pointerup", () => { STATE.viewer.dragging = false; });
+  window.addEventListener("pointercancel", () => { STATE.viewer.dragging = false; });
+  window.addEventListener("pointermove", e => {
     if (!STATE.viewer.dragging) return;
     const dx = (e.clientX - STATE.viewer.lastX) * 0.012;
     const dy = (e.clientY - STATE.viewer.lastY) * 0.012;
@@ -1601,6 +1612,7 @@ function draw3D() {
     themeBtn.addEventListener("click", () => {
       const cur = document.documentElement.dataset.theme === "light" ? "dark" : "light";
       document.documentElement.dataset.theme = cur;
+      try { localStorage.setItem("ouroboros-site-theme", cur); } catch (_) {}
       draw3D();
     });
   }
@@ -1961,7 +1973,8 @@ async function runForceFieldBuilder() {
 
   document.getElementById("ffStatIn").textContent = res.total_inputs;
   document.getElementById("ffStatAcc").textContent = res.accepted_molecules;
-  document.getElementById("ffStatRej").textContent = res.rejected_molecules;
+  document.getElementById("ffStatRej").textContent =
+    res.rejected_molecules ?? (res.total_inputs - res.accepted_molecules);
   document.getElementById("ffStatFrames").textContent = res.total_frames_written;
 
   document.getElementById("btnDlFfExtxyz").disabled = !res.extxyz_preview;
@@ -2006,8 +2019,9 @@ async function runBatchEval() {
   document.getElementById("evExact").textContent = `${((agg.exact || 0) * 100).toFixed(1)}%`;
   document.getElementById("evFlat").textContent = `${((agg.exact_flat || 0) * 100).toFixed(1)}%`;
   document.getElementById("evTan").textContent = (agg.tanimoto || 0).toFixed(3);
+  const stAcc = agg.stereo_elem_acc_strict ?? agg.exact_on_stereo_subset;
   document.getElementById("evStereo").textContent =
-    agg.stereo_accuracy !== null && agg.stereo_accuracy !== undefined ? `${(agg.stereo_accuracy * 100).toFixed(1)}%` : "—";
+    stAcc !== null && stAcc !== undefined ? `${(stAcc * 100).toFixed(1)}%` : "—";
 
   const tbody = document.querySelector("#evRowsTable tbody");
   tbody.innerHTML = (res.rows || []).map(r => `
