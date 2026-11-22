@@ -1,7 +1,9 @@
 """Split force-field frames by molecular connectivity, keeping stereoisomers together."""
+
 import hashlib
 import math
-from ouroboros.eval.standardize import standardize, flat_smiles
+
+from ouroboros.eval.standardize import flat_smiles, standardize
 
 NAMES = ('train', 'val', 'test')
 

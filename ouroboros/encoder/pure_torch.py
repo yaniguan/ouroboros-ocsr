@@ -212,7 +212,8 @@ class GroupRelPosBias(nn.Module):
         c, s = torch.cos(ang), torch.sin(ang)  # R_h^{-1}
         rx = c[:, None, None] * rel[..., 0] - s[:, None, None] * rel[..., 1]  # [N(h), P, P]
         ry = s[:, None, None] * rel[..., 0] + c[:, None, None] * rel[..., 1]
-        pos = self.mlp(torch.stack([rx, ry], dim=-1) / scale)  # [N(h), P(x), P(y), heads]
+        rel_xy = (torch.stack([rx, ry], dim=-1) / scale).to(self.rot_emb.dtype)
+        pos = self.mlp(rel_xy)  # [N(h), P(x), P(y), heads]
         dh = (torch.arange(N)[None, :] - torch.arange(N)[:, None]) % N  # [N(h), N(h')]
         rot = self.rot_emb[dh.to(coords.device)]  # [N(h), N(h'), heads]
         b = pos[:, :, :, None, :] + rot[:, None, None, :, :]  # [h, x, y, h', heads]

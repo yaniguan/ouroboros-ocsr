@@ -34,7 +34,8 @@ def scan_augment(image: Image.Image, rng: np.random.Generator, *,
         gradient = np.linspace(0, rng.uniform(-3*scan_noise, 0), w)[None, :]
         img = Image.fromarray(np.clip(a + noise + gradient, 0, 255).astype('uint8'))
     if morphology:
-        filtered = img.filter(ImageFilter.MinFilter(3) if morphology > 0 else ImageFilter.MaxFilter(3))
+        filt = ImageFilter.MinFilter(3) if morphology > 0 else ImageFilter.MaxFilter(3)
+        filtered = img.filter(filt)
         # Partial morphology preserves one-pixel bonds and small glyphs under thinning.
         img = Image.blend(img, filtered, .6 if morphology > 0 else .4)
     if threshold:
@@ -86,8 +87,12 @@ def handdrawn_augment(image: Image.Image, rng: np.random.Generator, *,
     img = image.convert('L')
     a = np.asarray(img, dtype=np.float32)
     h, w = a.shape
-    dy = wobble * _smooth_field(rng, h, w, wobble_scale) + jitter * _smooth_field(rng, h, w, 4 * wobble_scale)
-    dx = wobble * _smooth_field(rng, h, w, wobble_scale) + jitter * _smooth_field(rng, h, w, 4 * wobble_scale)
+    dy = wobble * _smooth_field(rng, h, w, wobble_scale) + jitter * _smooth_field(
+        rng, h, w, 4 * wobble_scale
+    )
+    dx = wobble * _smooth_field(rng, h, w, wobble_scale) + jitter * _smooth_field(
+        rng, h, w, 4 * wobble_scale
+    )
     a = _remap(a, dy, dx)
     if width_var:
         cur = Image.fromarray(np.clip(a, 0, 255).astype('uint8'))

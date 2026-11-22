@@ -25,16 +25,20 @@ from __future__ import annotations
 import io
 import math
 import random
+import threading
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageFilter
-from ouroboros.labels import labelled_smiles, set_draw_labels
 from rdkit import Chem
 from rdkit.Chem import rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Geometry import Point3D
+
+from ouroboros.labels import labelled_smiles, set_draw_labels
+
+_COORDGEN_LOCK = threading.Lock()
 
 
 def _font_dir() -> Path:
@@ -118,8 +122,12 @@ def depict(mol: Chem.Mol, style: RenderStyle, mirror: bool = False) -> Chem.Mol:
     mirrored drawing, which inverts every tetrahedral center (E/Z is unchanged by a reflection).
     """
     m = Chem.Mol(mol)
-    rdDepictor.SetPreferCoordGen(style.coordgen)
-    rdDepictor.Compute2DCoords(m)
+    with _COORDGEN_LOCK:
+        rdDepictor.SetPreferCoordGen(style.coordgen)
+        try:
+            rdDepictor.Compute2DCoords(m)
+        finally:
+            rdDepictor.SetPreferCoordGen(False)
     m = rdMolDraw2D.PrepareMolForDrawing(m, kekulize=True, addChiralHs=True, wedgeBonds=True)
     if mirror:
         conf = m.GetConformer()

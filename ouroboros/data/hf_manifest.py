@@ -357,7 +357,8 @@ def _image_ext(data: bytes) -> str:
 
 
 def _safe_name(s: str) -> str:
-    return re.sub(r"[^A-Za-z0-9._-]+", "_", s).strip("_") or "real"
+    cleaned = re.sub(r"[^A-Za-z0-9._-]+", "_", s).strip("._")
+    return cleaned or "real"
 
 
 def _resolve_image_path(value: str, table_dir: Path, root: Path) -> Path:
@@ -388,6 +389,9 @@ def write_manifests(
     if normalize_split(default_split) is None:
         raise ValueError(f"default_split {default_split!r} is not a split name")
     split_map = split_map or {}
+    bad_targets = [v for v in split_map.values() if v not in ("train", "val", "test", "drop")]
+    if bad_targets:
+        raise ValueError(f"split_map target(s) {bad_targets!r} must be train, val, test, or drop")
     img_dir = out_dir / "images"
     man_dir = out_dir / "manifests"
     img_dir.mkdir(parents=True, exist_ok=True)
@@ -396,73 +400,78 @@ def write_manifests(
     counts: Counter = Counter()
     skipped: Counter = Counter()
     tables = []
-    for path in find_tables(root):
-        rel = path.relative_to(root)
-        head = []
-        try:
-            for r in iter_table(path):
-                head.append(r)
-                if len(head) >= 64:
-                    break
-        except (ValueError, OSError) as e:
-            tables.append({"file": str(rel), "used": False, "error": f"{type(e).__name__}: {e}"})
-            continue
-        col = detect_columns(head, overrides)
-        if col.image is None or col.smiles is None:
-            tables.append({"file": str(rel), "used": False, "notes": col.notes})
-            continue
-        tables.append({"file": str(rel), "used": True, "columns": col.__dict__ | {}})
-        path_split = split_from_path(rel)
-        path_source = config_from_path(rel)
-        for i, r in enumerate(iter_table(path)):
-            smiles = r.get(col.smiles)
-            value = r.get(col.image)
-            if not isinstance(smiles, str) or not smiles.strip():
-                skipped["no_smiles"] += 1
+    try:
+        for path in find_tables(root):
+            rel = path.relative_to(root)
+            rel_posix = rel.as_posix()
+            head = []
+            try:
+                for r in iter_table(path):
+                    head.append(r)
+                    if len(head) >= 64:
+                        break
+            except (ValueError, OSError) as e:
+                tables.append(
+                    {"file": rel_posix, "used": False, "error": f"{type(e).__name__}: {e}"}
+                )
                 continue
-            split = normalize_split(r.get(col.split)) if col.split else None
-            split = split or path_split or default_split
-            split = split_map.get(split, split)
-            if split == "drop":
-                skipped["split_dropped"] += 1
+            col = detect_columns(head, overrides)
+            if col.image is None or col.smiles is None:
+                tables.append({"file": rel_posix, "used": False, "notes": col.notes})
                 continue
-            source = str(r.get(col.source) or "") if col.source else ""
-            source = _safe_name(source or path_source or default_source)
-            rid = r.get(col.id) if col.id else None
-            rid = str(rid) if isinstance(rid, (str, int)) and str(rid) else f"{rel}#{i}"
-            if isinstance(value, dict):
-                data, vpath = value.get("bytes"), value.get("path")
-            elif isinstance(value, (bytes, bytearray)):
-                data, vpath = bytes(value), None
-            else:
-                data, vpath = None, value
-            if data:
-                name = f"{source}/{split}/{counts[source, split]:08d}{_image_ext(bytes(data))}"
-                (img_dir / name).parent.mkdir(parents=True, exist_ok=True)
-                (img_dir / name).write_bytes(bytes(data))
-                image = str((img_dir / name).resolve())
-            elif isinstance(vpath, str) and vpath:
-                image = str(_resolve_image_path(vpath, path.parent, root))
-            else:
-                skipped["no_image"] += 1
-                continue
-            if source not in writers:
-                fh = open(man_dir / f"{source}.csv", "w", newline="")
-                w = csv.DictWriter(fh, fieldnames=["image", "smiles", "source", "split", "id"])
-                w.writeheader()
-                writers[source] = (fh, w)
-            writers[source][1].writerow(
-                {
-                    "image": image,
-                    "smiles": smiles.strip(),
-                    "source": source,
-                    "split": split,
-                    "id": rid,
-                }
-            )
-            counts[source, split] += 1
-    for fh, _ in writers.values():
-        fh.close()
+            tables.append({"file": rel_posix, "used": True, "columns": col.__dict__ | {}})
+            path_split = split_from_path(rel)
+            path_source = config_from_path(rel)
+            for i, r in enumerate(iter_table(path)):
+                smiles = r.get(col.smiles)
+                value = r.get(col.image)
+                if not isinstance(smiles, str) or not smiles.strip():
+                    skipped["no_smiles"] += 1
+                    continue
+                split = normalize_split(r.get(col.split)) if col.split else None
+                split = split or path_split or default_split
+                split = split_map.get(split, split)
+                if split == "drop":
+                    skipped["split_dropped"] += 1
+                    continue
+                source = str(r.get(col.source) or "") if col.source else ""
+                source = _safe_name(source or path_source or default_source)
+                rid = r.get(col.id) if col.id else None
+                rid = str(rid) if isinstance(rid, (str, int)) and str(rid) else f"{rel_posix}#{i}"
+                if isinstance(value, dict):
+                    data, vpath = value.get("bytes"), value.get("path")
+                elif isinstance(value, (bytes, bytearray)):
+                    data, vpath = bytes(value), None
+                else:
+                    data, vpath = None, value
+                if data:
+                    name = f"{source}/{split}/{counts[source, split]:08d}{_image_ext(bytes(data))}"
+                    (img_dir / name).parent.mkdir(parents=True, exist_ok=True)
+                    (img_dir / name).write_bytes(bytes(data))
+                    image = (img_dir / name).resolve().as_posix()
+                elif isinstance(vpath, str) and vpath:
+                    image = _resolve_image_path(vpath, path.parent, root).as_posix()
+                else:
+                    skipped["no_image"] += 1
+                    continue
+                if source not in writers:
+                    fh = open(man_dir / f"{source}.csv", "w", encoding="utf-8", newline="")
+                    w = csv.DictWriter(fh, fieldnames=["image", "smiles", "source", "split", "id"])
+                    w.writeheader()
+                    writers[source] = (fh, w)
+                writers[source][1].writerow(
+                    {
+                        "image": image,
+                        "smiles": smiles.strip(),
+                        "source": source,
+                        "split": split,
+                        "id": rid,
+                    }
+                )
+                counts[source, split] += 1
+    finally:
+        for fh, _ in writers.values():
+            fh.close()
     stats = {
         "root": str(root),
         "tables": tables,
@@ -471,5 +480,7 @@ def write_manifests(
         "skipped": dict(skipped),
         "manifests": sorted(str(man_dir / f"{s}.csv") for s in writers),
     }
-    (out_dir / "hf_manifest_stats.json").write_text(json.dumps(stats, indent=1, default=str))
+    (out_dir / "hf_manifest_stats.json").write_text(
+        json.dumps(stats, indent=1, default=str), encoding="utf-8"
+    )
     return stats

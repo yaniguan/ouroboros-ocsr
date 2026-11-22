@@ -66,12 +66,19 @@ def polar_unwrap(img, center, radius: float, n_r: int = 64, n_theta: int = 720):
 
 def otsu(img: np.ndarray, bins: int = 256) -> float:
     """Otsu threshold of an image with values in [0, 1]."""
-    hist, edges = np.histogram(np.clip(img, 0, 1), bins=bins, range=(0, 1))
-    p = hist / hist.sum()
+    clipped = np.clip(img, 0, 1)
+    hist, edges = np.histogram(clipped, bins=bins, range=(0, 1))
+    total = hist.sum()
+    if total == 0:
+        return 0.5
+    p = hist / total
     mid = (edges[:-1] + edges[1:]) / 2
     w0 = np.cumsum(p)
     m0 = np.cumsum(p * mid)
     w1 = 1 - w0
     with np.errstate(divide="ignore", invalid="ignore"):
         between = (m0[-1] * w0 - m0) ** 2 / (w0 * w1)
-    return float(mid[np.nanargmax(np.where(w1 > 0, between, np.nan))])
+    valid = np.where((w0 > 0) & (w1 > 0) & np.isfinite(between), between, np.nan)
+    if not np.isfinite(valid).any():
+        return float(clipped.mean())
+    return float(mid[np.nanargmax(valid)])

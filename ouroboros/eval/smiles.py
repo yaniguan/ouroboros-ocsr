@@ -24,9 +24,9 @@ from collections.abc import Sequence
 from rdkit import DataStructs
 from rdkit.Chem import rdFingerprintGenerator
 
-from ouroboros.labels import labelled_smiles
 from ouroboros.eval import standardize as _std
 from ouroboros.eval.metrics import PairScore, aggregate, score_pair
+from ouroboros.labels import labelled_smiles
 
 _GENERATORS: dict[tuple[int, int, bool], object] = {}
 

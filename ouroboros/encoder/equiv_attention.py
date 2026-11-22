@@ -1,4 +1,4 @@
-"""Arm D: steerable conv stem + group-equivariant self-attention (option (b) of constraint 3).
+"""Arm D: steerable conv stem + group-equivariant self-attention.
 
 Tokens live on the group-lifted grid: one token per (location x, rotation h in C_N), taken
 directly from the regular-representation fields of the steerable trunk (channel h of every field).
@@ -43,8 +43,6 @@ from ouroboros.model import register_encoder
 
 _ensure_escnn_2d_shim()
 from escnn import nn as enn  # noqa: E402
-
-_ExportedEquivAttn = ExportedEquivAttentionEncoder
 
 
 class EquivAttentionEncoder(ImageEncoder):

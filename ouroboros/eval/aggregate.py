@@ -1,4 +1,4 @@
-"""Aggregate sweep runs into a results table and plots (Phase 4, Am1-D).
+"""Aggregate sweep runs into a results table and plots.
 
 Input: run directories, each with ``config.yaml`` (``meta``: arm, size, real_fraction, seed) and
 ``eval/predictions.jsonl`` from ``ouroboros.eval.evaluate.run_eval``.
@@ -37,12 +37,19 @@ class MixedKindsError(ValueError):
     """Raised when asked to combine rendered and real-document sets into one number."""
 
 
+def _arm_sort_key(arm: str) -> tuple[int, str]:
+    return (ARM_ORDER.index(arm), arm) if arm in ARM_ORDER else (len(ARM_ORDER), arm)
+
+
 def load_runs(run_dirs: list[str | Path]) -> list[dict]:
     runs = []
     for d in map(Path, run_dirs):
-        cfg = yaml.safe_load((d / "config.yaml").read_text())
+        cfg = yaml.safe_load((d / "config.yaml").read_text(encoding="utf-8"))
         meta = cfg.get("meta", {})
-        recs = [json.loads(x) for x in (d / "eval" / "predictions.jsonl").read_text().splitlines()]
+        recs = [
+            json.loads(x)
+            for x in (d / "eval" / "predictions.jsonl").read_text(encoding="utf-8").splitlines()
+        ]
         runs.append(
             {
                 "dir": str(d),
@@ -112,7 +119,7 @@ def results_table(runs: list[dict], angle: float = 0.0, n_boot: int = 1000) -> d
         groups[(r["arm"], r["size"], r["real_fraction"])].append(r)
     rows = []
     for (arm, size, frac), rs in sorted(
-        groups.items(), key=lambda kv: (ARM_ORDER.index(kv[0][0]), kv[0][1], kv[0][2])
+        groups.items(), key=lambda kv: (_arm_sort_key(kv[0][0]), kv[0][1], kv[0][2])
     ):
         row = {"arm": arm, "size": size, "real_fraction": frac, "n_seeds": len(rs), "sets": {}}
         for s in sorted(set_kinds):
@@ -250,8 +257,9 @@ def plot_curves(table_by_x: dict, x_key: str, xlabel: str, out: Path, logx: bool
         slices = sorted({r[other] for r in table_by_x["rows"]})
         fig, axes = plt.subplots(1, len(slices), figsize=(4.2 * len(slices), 3.4), squeeze=False)
         fig.patch.set_facecolor(SURFACE)
+        arms_present = sorted({r["arm"] for r in table_by_x["rows"]}, key=_arm_sort_key)
         for ax, sl in zip(axes[0], slices, strict=True):
-            for arm in ARM_ORDER:
+            for arm in arms_present:
                 pts = sorted(
                     (r[x_key], r["sets"][s])
                     for r in table_by_x["rows"]
@@ -329,7 +337,8 @@ def plot_rotation(sweep: dict, out: Path) -> list[Path]:
     for s, kind, size, frac in keys:
         fig, ax = plt.subplots(figsize=(6.4, 3.4))
         fig.patch.set_facecolor(SURFACE)
-        for arm in ARM_ORDER:
+        arms_present = sorted({c["arm"] for c in sweep["curves"]}, key=_arm_sort_key)
+        for arm in arms_present:
             for c in sweep["curves"]:
                 if (c["arm"], c["set"], c["size"], c["real_fraction"]) != (arm, s, size, frac):
                     continue

@@ -120,7 +120,7 @@ def weights_file(folder: Path, kind: str = "model") -> Path:
 def read_checksums(folder: Path) -> dict[str, str]:
     """``checksums.txt`` (sha256sum format: ``<hex>  <filename>``) as {filename: hex}."""
     out = {}
-    for line in (Path(folder) / CHECKSUMS_FILE).read_text().splitlines():
+    for line in (Path(folder) / CHECKSUMS_FILE).read_text(encoding="utf-8").splitlines():
         if line.strip():
             digest, name = line.split(maxsplit=1)
             out[name.strip()] = digest
@@ -129,12 +129,13 @@ def read_checksums(folder: Path) -> dict[str, str]:
 
 def verify_checksums(folder: Path, names: list[str] | None = None) -> None:
     """Raise if a listed file (default: all) is missing or differs from ``checksums.txt``."""
+    base = Path(folder).resolve()
     sums = read_checksums(folder)
     for name in names if names is not None else sorted(sums):
         if name not in sums:
             raise ValueError(f"{name} is not listed in {CHECKSUMS_FILE}")
-        path = Path(folder) / name
-        if not path.is_file() or sha256(path) != sums[name]:
+        path = (base / name).resolve()
+        if not path.is_relative_to(base) or not path.is_file() or sha256(path) != sums[name]:
             raise ValueError(f"checksum mismatch for {name} in {folder}")
 
 
@@ -157,10 +158,10 @@ def load_pretrained(
     has_checksums = verify and (folder / CHECKSUMS_FILE).is_file()
     if has_checksums:
         verify_checksums(folder, [CONFIG_FILE, VOCAB_FILE])
-    config = json.loads((folder / CONFIG_FILE).read_text())
+    config = json.loads((folder / CONFIG_FILE).read_text(encoding="utf-8"))
     if config.get("format") != FORMAT:
         raise ValueError(f"{folder / CONFIG_FILE}: expected format {FORMAT!r}")
-    tok = SmilesTokenizer(json.loads((folder / VOCAB_FILE).read_text()))
+    tok = SmilesTokenizer(json.loads((folder / VOCAB_FILE).read_text(encoding="utf-8")))
     if len(tok) != config["vocab_size"]:
         raise ValueError(f"vocab.json has {len(tok)} tokens, config says {config['vocab_size']}")
     enc_cfg = config["model"]["encoder"]

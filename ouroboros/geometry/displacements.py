@@ -1,6 +1,8 @@
 """Make small random coordinate changes to ETKDG conformers."""
+
 import numpy as np
 from rdkit import Chem
+
 from ouroboros.geometry.conformers import stereo_matches
 
 
@@ -43,8 +45,9 @@ def displaced_conformers(mol, smiles, n_samples, amplitude=.1, seed=0, min_dista
                 conf.SetAtomPosition(i, pos.tolist())
             cid = out.AddConformer(conf, assignId=True)
             reason = base_reason or geometry_rejection(out, smiles, cid, min_distance)
+            disp_max = float(np.linalg.norm(offsets, axis=1).max()) if len(offsets) else 0.0
             rec = dict(parent_conf_id=parent_id, sample_id=sample_id, seed=seed,
-                       displacement_max=float(np.linalg.norm(offsets, axis=1).max()),
+                       displacement_max=disp_max,
                        conf_id=cid if reason is None else None, rejection_reason=reason)
             if reason:
                 out.RemoveConformer(cid)

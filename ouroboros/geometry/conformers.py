@@ -103,11 +103,15 @@ def stereo_matches(mol: Chem.Mol, smiles: str, conf_id: int = -1) -> bool:
     """Does the 3D geometry reproduce every stereo element SPECIFIED in ``smiles``?
 
     Elements left unspecified in the input are ignored (a 3D structure necessarily picks some
-    configuration for them). Compared through CIP labels at the same atom indices (``AddHs``
-    appends hydrogens, so heavy-atom indices of the embedded molecule equal the input's).
+    configuration for them). Tetrahedral parity and double-bond cis/trans relations are checked
+    locally (covering ring cis/trans centres without CIP codes as well as R/S and E/Z).
     """
-    ref = Chem.MolFromSmiles(smiles)
-    ref_atoms, ref_bonds = _cip_labels(ref)
+    from ouroboros.eval.metrics import _cip, _db_same, _stereo_elements, _tet_same
+
+    ref = Chem.MolFromSmiles(smiles) if smiles else None
+    if ref is None:
+        return False
+    ref_atoms, ref_bonds = _stereo_elements(ref)
     if not ref_atoms and not ref_bonds:
         return True
     m = Chem.Mol(mol)
@@ -117,10 +121,31 @@ def stereo_matches(mol: Chem.Mol, smiles: str, conf_id: int = -1) -> bool:
         m.AddConformer(conf, assignId=True)
     Chem.RemoveStereochemistry(m)
     Chem.AssignStereochemistryFrom3D(m)
-    got_atoms, got_bonds = _cip_labels(Chem.RemoveHs(m))
-    return all(got_atoms.get(i) == c for i, c in ref_atoms.items()) and all(
-        got_bonds.get(k) == c for k, c in ref_bonds.items()
-    )
+    got = Chem.RemoveHs(m)
+    if got.GetNumAtoms() != ref.GetNumAtoms():
+        return False
+    r_cip, p_cip = _cip(ref), _cip(got)
+    identity = tuple(range(ref.GetNumAtoms()))
+    if all(_tet_same(r_cip, p_cip, a, identity) for a in ref_atoms) and all(
+        _db_same(r_cip, p_cip, b, identity) for b in ref_bonds
+    ):
+        return True
+    # Allow symmetric unlabelled bridge swaps (e.g. trans-1,4-cyclohexanediol) while pinning
+    # every specified stereocentre and double bond to its embedded 3D atom/bond index.
+    bond_ends = [
+        (ref.GetBondWithIdx(b).GetBeginAtomIdx(), ref.GetBondWithIdx(b).GetEndAtomIdx())
+        for b in ref_bonds
+    ]
+    for match in p_cip.GetSubstructMatches(r_cip, uniquify=False, useChirality=False):
+        if any(match[a] != a for a in ref_atoms):
+            continue
+        if any((match[u], match[v]) != (u, v) for u, v in bond_ends):
+            continue
+        if all(_tet_same(r_cip, p_cip, a, match) for a in ref_atoms) and all(
+            _db_same(r_cip, p_cip, b, match) for b in ref_bonds
+        ):
+            return True
+    return False
 
 
 def stereo_preserved(mol: Chem.Mol, smiles: str) -> list[bool]:
@@ -179,7 +204,7 @@ def relax(atoms, calc, fmax: float = FMAX, steps: int = 500, optimizer: str = "L
         positions=atoms.get_positions(),
         converged=converged,
         steps=int(opt.nsteps),
-        fmax=float(np.linalg.norm(f, axis=1).max()),
+        fmax=float(np.linalg.norm(f, axis=1).max()) if len(f) else 0.0,
         seconds=time.perf_counter() - t0,
     )
 

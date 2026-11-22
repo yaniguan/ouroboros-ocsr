@@ -99,12 +99,15 @@ class CanonicalizedEncoder(ImageEncoder):
 
     def forward(self, images: torch.Tensor) -> EncoderOutput:
         canon, logits = self.canonicalize(images)
-        self.last_logits = logits
+        self.last_logits = logits if self.training else None
         return self.encoder(canon)
 
     def prior_loss(self, angles_deg: torch.Tensor | None) -> torch.Tensor:
         """Cross-entropy towards the true orientation of the last batch (0 = upright)."""
         logits = self.last_logits
+        if logits is None:
+            raise RuntimeError("prior_loss() requires a preceding forward() call in training mode")
+        self.last_logits = None
         if angles_deg is None:
             target = torch.zeros(logits.shape[0], dtype=torch.long, device=logits.device)
         else:

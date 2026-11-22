@@ -76,12 +76,9 @@ def prepare_pool(
     limit: int | None = None,
     batch_size: int = 1000,
 ) -> dict:
-    """Filter/dedupe with a transactional batch cursor and content-bound restart."""
+    """Filter and deduplicate molecules in SQLite batches so interrupted runs resume safely."""
     from ouroboros.data import chem, pool_cache, stereo
     from ouroboros.data import filter as filtering
-
-    from ouroboros.data import augment, rgroups
-    import ouroboros.labels as labels_module
 
     identity = {
         "schema": 1,
@@ -170,44 +167,49 @@ def _compose_split(
     none = [r for r in order if r["n_db"] == 0 and r["n_tet"] == 0]
     tet = [r for r in order if r["n_db"] == 0 and r["n_tet"] > 0]
     pool = Pool(workers) if workers > 1 else None
-    # Stereo assignments for ez / tet rows, consumed in exactly the order the rows are popped.
-    # Prefetch roughly the expected number of pops (+5% +1000); later pops fall back to serial.
-    f, E, T, Z = cfg.stereo_fraction, len(ez), len(tet), len(none)
-    exp_ez = f * n * E / max(1, E + T)
-    exp_tet = f * n * T / max(1, E + T) + (1 - f) * n * T / max(1, Z + T)
-    ez_assign = _Assigner(list(ez), pool, min(E, int(1.05 * exp_ez) + 1000))
-    tet_assign = _Assigner(list(tet), pool, min(T, int(1.05 * exp_tet) + 1000))
-    for bucket in (ez, none, tet):
-        bucket.reverse()  # pop() from the end == take in hash order
-    rng = random.Random(f"{cfg.seed}-{split}")
-    out: list[dict] = []
-    n_stereo = 0
-    while len(out) < n:
-        want_stereo = n_stereo < cfg.stereo_fraction * (len(out) + 1)
-        if want_stereo:
-            if not ez and not tet:
-                raise RuntimeError(f"{split}: ran out of stereo-capable molecules")
-            use_ez = bool(ez) and (not tet or rng.random() < len(ez) / (len(ez) + len(tet)))
-            r = (ez if use_ez else tet).pop()
-            smi = (ez_assign if use_ez else tet_assign).next()
-            if not has_stereo(smi):  # degenerate (e.g. para-stereo collapsed): skip
-                continue
-        else:
-            if not none and not tet:
-                raise RuntimeError(f"{split}: ran out of non-stereo molecules")
-            use_none = bool(none) and (not tet or rng.random() < len(none) / (len(none) + len(tet)))
-            r = (none if use_none else tet).pop()
-            if not use_none:
-                tet_assign.i += 1  # keep the assigner aligned with the tet pops (result unused)
-                if tet_assign.i <= tet_assign.prefetch:
-                    next(tet_assign.it)
-            smi = r["flat"]
-        is_st = has_stereo(smi)
-        n_stereo += is_st
-        out.append({"key14": r["key14"], "smiles": smi, "stereo": int(is_st), "src": r["src"]})
-    if pool is not None:
-        pool.terminate()
-    return out
+    try:
+        # Stereo assignments for ez / tet rows, consumed in the order the rows are popped.
+        # Prefetch roughly the expected number of pops (+5% +1000); later pops fall back to serial.
+        f, E, T, Z = cfg.stereo_fraction, len(ez), len(tet), len(none)
+        exp_ez = f * n * E / max(1, E + T)
+        exp_tet = f * n * T / max(1, E + T) + (1 - f) * n * T / max(1, Z + T)
+        ez_assign = _Assigner(list(ez), pool, min(E, int(1.05 * exp_ez) + 1000))
+        tet_assign = _Assigner(list(tet), pool, min(T, int(1.05 * exp_tet) + 1000))
+        for bucket in (ez, none, tet):
+            bucket.reverse()  # pop() from the end == take in hash order
+        rng = random.Random(f"{cfg.seed}-{split}")
+        out: list[dict] = []
+        n_stereo = 0
+        while len(out) < n:
+            want_stereo = n_stereo < cfg.stereo_fraction * (len(out) + 1)
+            if want_stereo:
+                if not ez and not tet:
+                    raise RuntimeError(f"{split}: ran out of stereo-capable molecules")
+                use_ez = bool(ez) and (not tet or rng.random() < len(ez) / (len(ez) + len(tet)))
+                r = (ez if use_ez else tet).pop()
+                smi = (ez_assign if use_ez else tet_assign).next()
+                if not has_stereo(smi):  # degenerate (e.g. para-stereo collapsed): skip
+                    continue
+            else:
+                if not none and not tet:
+                    raise RuntimeError(f"{split}: ran out of non-stereo molecules")
+                use_none = bool(none) and (
+                    not tet or rng.random() < len(none) / (len(none) + len(tet))
+                )
+                r = (none if use_none else tet).pop()
+                if not use_none:
+                    tet_assign.i += 1  # keep the assigner aligned with the tet pops
+                    if tet_assign.i <= tet_assign.prefetch:
+                        next(tet_assign.it)
+                smi = r["flat"]
+            is_st = has_stereo(smi)
+            n_stereo += is_st
+            out.append({"key14": r["key14"], "smiles": smi, "stereo": int(is_st), "src": r["src"]})
+        return out
+    finally:
+        if pool is not None:
+            pool.terminate()
+            pool.join()
 
 
 def composition_identity(pool: list[dict], cfg: ComposeConfig) -> dict:
@@ -374,8 +376,8 @@ def render_shards(
         raise ValueError("shard_size and workers must be positive")
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    from ouroboros.data import augment, rgroups
     import ouroboros.labels as labels_module
+    from ouroboros.data import augment, rgroups
 
     identity = {
         "schema": 1,

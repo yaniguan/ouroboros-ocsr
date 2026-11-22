@@ -1,6 +1,8 @@
 """Check where the correct molecule appears among ranked candidates."""
+
 from collections import defaultdict
-from ouroboros.eval.standardize import standardize, flat_smiles
+
+from ouroboros.eval.standardize import flat_smiles, standardize
 
 
 def diagnose(records, ks=(1, 3, 5)):

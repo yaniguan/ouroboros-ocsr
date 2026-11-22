@@ -1,4 +1,4 @@
-"""Content identities and atomic metadata publication (single writer per output directory)."""
+"""SHA-256 file hashes and crash-safe JSON file writes."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ def atomic_json(path: str | Path, value) -> None:
     tmp = None
     try:
         with tempfile.NamedTemporaryFile(
-            mode="w", dir=path.parent, suffix=".part", delete=False
+            mode="w", encoding="utf-8", dir=path.parent, suffix=".part", delete=False
         ) as f:
             tmp = Path(f.name)
             json.dump(value, f, sort_keys=True, indent=2)
@@ -43,7 +43,7 @@ def atomic_json(path: str | Path, value) -> None:
 
 def implementation_identity(root: str | Path) -> dict:
     root = Path(root)
-    return {str(p.relative_to(root)): file_sha256(p) for p in sorted(root.rglob("*.py"))}
+    return {p.relative_to(root).as_posix(): file_sha256(p) for p in sorted(root.rglob("*.py"))}
 
 
 class JsonCache:
@@ -56,7 +56,7 @@ class JsonCache:
     def get(self, settings, compute):
         path = self.directory / f"{json_sha256(settings)}.json"
         if path.exists():
-            saved = json.loads(path.read_text())
+            saved = json.loads(path.read_text(encoding="utf-8"))
             if saved["settings"] != settings or saved["sha256"] != json_sha256(saved["result"]):
                 raise ValueError(f"Corrupt cache entry: {path}")
             return saved["result"]
