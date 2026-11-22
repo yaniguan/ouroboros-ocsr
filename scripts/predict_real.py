@@ -111,9 +111,9 @@ def main(argv=None) -> None:
         nbest_f = open(a.nbest_out, "w")  # noqa: SIM115
     t0 = time.time()
     try:
-        with open(a.out, "w", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=["id", "gold", "pred", "subset"] +
-                               (["accepted", "rejection_reason", "margin", "disagreement"] if gated else []))
+        with open(a.out, "w", encoding="utf-8", newline="") as f:
+            gate_cols = ["accepted", "rejection_reason", "margin", "disagreement"] if gated else []
+            w = csv.DictWriter(f, fieldnames=["id", "gold", "pred", "subset", *gate_cols])
             w.writeheader()
             for start in range(0, len(ds), a.batch_size):
                 idx = range(start, min(len(ds), start + a.batch_size))
@@ -128,14 +128,23 @@ def main(argv=None) -> None:
                 for i, (p, ranked) in zip(idx, results, strict=True):
                     m = ds.meta(i)
                     gold = "" if a.unlabeled else m["smiles"]
-                    gate = confidence(p, ranked or [], source_predictions[i-start] if source_predictions else [],
-                                      min_margin=a.min_margin, max_disagreement=a.max_disagreement)
+                    src_p = source_predictions[i - start] if source_predictions else []
+                    gate = confidence(
+                        p,
+                        ranked or [],
+                        src_p,
+                        min_margin=a.min_margin,
+                        max_disagreement=a.max_disagreement,
+                    )
                     w.writerow({"id": m.get("id", i), "gold": gold, "pred": p,
                                 "subset": m.get("source", "")} | (gate if gated else {}))
                     if nbest_f is not None:
-                        nbest_f.write(json.dumps(_nbest_record(m, i, gold, p, ranked) |
-                            {"subset": m.get("source", ""), "source_predictions": source_predictions[i-start],
-                             "confidence": gate}) + "\n")
+                        nbest_rec = _nbest_record(m, i, gold, p, ranked) | {
+                            "subset": m.get("source", ""),
+                            "source_predictions": src_p,
+                            "confidence": gate,
+                        }
+                        nbest_f.write(json.dumps(nbest_rec) + "\n")
                 print(f"{min(len(ds), start + a.batch_size)}/{len(ds)}  {time.time() - t0:.0f}s",
                       flush=True)
     finally:

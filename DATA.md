@@ -13,8 +13,9 @@ enforced twice:
 1. `.gitignore` excludes `/data/`, `/data_cache/`, `/real_data/`, `/real/`, `shards/`, `runs/`,
    `checkpoints/`, `*.tar`, `*.idx.json`, `*.tsv.gz`, `*.ckpt`, `*.pt`.
 2. A pre-commit guard, `scripts/check_no_data.py`, refuses staged files that live in those
-   directories, have archive/checkpoint suffixes, are raster images outside `benchmarks/` (or
-   inside it with "real" in the path), or exceed 5 MB. Install it once per clone:
+   directories, have archive/checkpoint suffixes, are raster images outside `benchmarks/`, `site/`,
+   or `docs/profiling/charts/` (or inside them with "real" in the path), or exceed 5 MB. Install it
+   once per clone:
 
    ```bash
    bash scripts/install_git_hooks.sh      # or: pre-commit install (uses .pre-commit-config.yaml)

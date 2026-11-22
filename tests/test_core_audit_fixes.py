@@ -98,6 +98,11 @@ def test_canonicalized_encoder_clears_eval_and_consumed_logits():
     assert enc.last_logits is not None
     loss = enc.prior_loss(None)
     assert torch.isfinite(loss)
+    enc.eval()
+    assert enc.last_logits is None
+    enc.train()
+    with torch.no_grad():
+        enc(x)
     assert enc.last_logits is None
 
 

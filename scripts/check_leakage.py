@@ -103,8 +103,17 @@ def main(argv=None) -> int:
     )
     ap.add_argument("--json", default=None, help="write the overlap table to this JSON file")
     a = ap.parse_args(argv)
-    evals = {s.split("=", 1)[0]: load_keys(s.split("=", 1)[1]) for s in a.eval}
-    trains = {s.split("=", 1)[0]: load_keys(s.split("=", 1)[1]) for s in a.train}
+    def _parse_pairs(items: list[str]) -> dict[str, set[str]]:
+        parsed: dict[str, set[str]] = {}
+        for item in items:
+            if "=" not in item:
+                ap.error(f"expected NAME=SPEC, got {item!r}")
+            name, spec = item.split("=", 1)
+            parsed[name] = load_keys(spec)
+        return parsed
+
+    evals = _parse_pairs(a.eval)
+    trains = _parse_pairs(a.train)
     if a.dump_eval_keys:
         keys = sorted(set().union(*evals.values()))
         Path(a.dump_eval_keys).write_text("\n".join(keys) + "\n")

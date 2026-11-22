@@ -1,4 +1,5 @@
 import pytest
+
 from ouroboros.eval.nbest import diagnose
 
 

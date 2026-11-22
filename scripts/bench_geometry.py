@@ -36,8 +36,8 @@ OUT = Path(__file__).resolve().parents[1] / "benchmarks" / "geometry"
 
 def _save(name, obj):
     OUT.mkdir(parents=True, exist_ok=True)
-    obj.update(date=time.strftime("%Y-%m-%d"), host=platform.node())
-    (OUT / f"{name}.json").write_text(json.dumps(obj, indent=1))
+    obj.update(date=time.strftime("%Y-%m-%d"), platform=platform.system())
+    (OUT / f"{name}.json").write_text(json.dumps(obj, indent=1), encoding="utf-8")
     print(json.dumps({k: v for k, v in obj.items() if k != "failures"}, indent=1))
 
 
@@ -58,19 +58,21 @@ def cmd_embed(a, rows):
             continue
         stereo_total += 1
         stereo_ok += all(stereo_preserved(mol, r["smiles"]))
+    total_eval = min(a.n, len(rows))
+    denom = max(1, total_eval)
     _save(
         "embed",
         {
-            "n": min(a.n, len(rows)),
+            "n": total_eval,
             "n_conf": a.n_conf,
             "success": n_ok,
-            "success_rate": n_ok / min(a.n, len(rows)),
+            "success_rate": n_ok / denom,
             "failure_reasons": dict(Counter(f["reason"] for f in fails)),
             "failures": fails,
             "stereo_n": stereo_total,
             "stereo_all_conformers_ok": stereo_ok,
             "stereo_rate": stereo_ok / max(1, stereo_total),
-            "embed_sec_per_mol": t_embed / min(a.n, len(rows)),
+            "embed_sec_per_mol": t_embed / denom,
         },
     )
 
@@ -133,8 +135,8 @@ def cmd_enantio(a, rows):
         "enantiomers",
         {
             "n_pairs": len(pairs),
-            "max_abs_dE_eV": float(dE.max()),
-            "pass": bool(len(pairs) >= 20 and dE.max() < 1e-3),
+            "max_abs_dE_eV": float(dE.max()) if dE.size else None,
+            "pass": bool(len(pairs) >= 20 and dE.size and dE.max() < 1e-3),
             "pairs": pairs,
             "skipped_not_embeddable": skipped,
             "protocol": "mirror (x -> -x) of the same ETKDG conformer, identical "

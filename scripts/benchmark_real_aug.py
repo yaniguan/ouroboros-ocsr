@@ -72,7 +72,9 @@ def main(argv=None):
              'labelled_outputs': sum('[' in s for s in labels),
              'threads': {key: os.environ.get(key) for key in
                          ('OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'OPENBLAS_NUM_THREADS')},
-             'scope': 'one CPU process; PIL/numpy augmentation; includes randomized fonts and drawing styles'}
+             'scope': (
+                 'one CPU process; PIL/numpy augmentation; includes randomized fonts and styles'
+             )}
     (out / 'throughput.json').write_text(json.dumps(stats, indent=2) + '\n')
     print(json.dumps(stats, indent=2))
 

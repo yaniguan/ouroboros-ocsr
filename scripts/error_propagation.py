@@ -82,6 +82,8 @@ def main(argv=None) -> None:
         help="MMFF-relax all conformers, send only the k lowest to MACE",
     )
     a = ap.parse_args(argv)
+    if not a.predictions and not a.pairs_tsv:
+        ap.error("pass --predictions or --pairs-tsv")
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     calc = mace_calculator(a.model)
@@ -154,10 +156,10 @@ def main(argv=None) -> None:
 
     t0 = time.time()
     results = []
-    with open(out / "pairs.jsonl", "w") as f:
+    with open(out / "pairs.jsonl", "w", encoding="utf-8") as f:
         for p in load_pairs(a):
             cat = categorize(p["pred"], p["ref"])
-            rec = {**p, "category": cat, "dE": float("nan"), "isomer": False}
+            rec = {**p, "category": cat, "dE": math.nan, "isomer": False}
             if cat not in ("invalid",) and not (cat == "correct" and a.skip_correct):
                 ps, rs = standardize(p["pred"]).smiles, standardize(p["ref"]).smiles
                 rec["isomer"] = same_formula(ps, rs)
@@ -216,7 +218,9 @@ def main(argv=None) -> None:
         by[r["category"]].append(r)
     for cat in CATEGORIES:
         rs = by.get(cat, [])
-        d = np.array([abs(r["dE"]) for r in rs if not math.isnan(r["dE"])])
+        d = np.array(
+            [abs(r["dE"]) for r in rs if r["dE"] is not None and not math.isnan(r["dE"])]
+        )
         summary["categories"][cat] = {
             "n": len(rs),
             "n_isomer_pairs_with_energy": int(d.size),

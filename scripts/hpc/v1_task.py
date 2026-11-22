@@ -34,7 +34,10 @@ def main() -> None:
     ap.add_argument("--v0", type=Path, required=True)
     ap.add_argument("--root", type=Path, required=True)
     a = ap.parse_args()
-    t = grid()[a.task - 1]
+    tasks = grid()
+    if not 1 <= a.task <= len(tasks):
+        ap.error(f"--task must be in 1..{len(tasks)}, got {a.task}")
+    t = tasks[a.task - 1]
     root, code = a.root, a.root / "code"
     synth = a.v0 / "data/full/shards"
     run = root / "runs" / t["run_id"]

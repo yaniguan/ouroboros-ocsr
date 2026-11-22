@@ -14,7 +14,7 @@ must carry their scoring protocol, because exact-match definitions differ betwee
 | Oct 29 synthetic-only fine-tune | A 8.39%, C 13.76% | `docs/WORKLOG_oct30.md` |
 | Real-PMC fine-tune A (Oct 30, greedy) | 28.19% (84/298): ACS 7%, UOB 64%, USPTO 13.27% | Drive `real_pmc_oct30/summary.json` |
 | Released A + beam 5 + validity rerank (CPU, this branch) | 20.13% (60/298): ACS 2%, UOB 46%, USPTO 12.24% | `docs/WORKLOG_oct30_v2.md` |
-| Fine-tune v2 (all-epoch PMC, 20k steps, beam/ensemble) | _pending: `colab/finetune_v2.ipynb`_ | — |
+| Fine-tune v2 (all-epoch PMC + R-group synth, 20k steps, A + C beam 5 + pad TTA) | 54.03% (161/298 dev-test); 46.67% (140/300 `frozen-test-v2` holdout) | `benchmarks/finetune-v2-oct30/`, `benchmarks/frozen-test-v2/` |
 
 Known failure modes on the real subset: ACS is near 0% (R-groups / abbreviations, which PMC
 labels never contain), USPTO errors are dominated by long molecules (> 60 tokens), and stereo

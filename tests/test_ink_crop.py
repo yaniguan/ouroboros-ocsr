@@ -1,7 +1,7 @@
-import math
 import numpy as np
 import pytest
 from PIL import Image
+
 from ouroboros.data.real import crop_ink, fit_to_canvas, ingest
 
 
@@ -29,9 +29,9 @@ def test_crop_canvas_rotation_bounds():
 
 
 def test_ingestion_shared_policy(tmp_path):
+    import io
     import json
     import tarfile
-    import io
     image = Image.new('L', (100, 80), 255)
     image.paste(0, (35, 20, 65, 50))
     image.save(tmp_path / 'image.png')
@@ -45,6 +45,7 @@ def test_ingestion_shared_policy(tmp_path):
 
 def test_image_inference_uses_same_policy(tmp_path, monkeypatch):
     import torch
+
     from scripts import image_to_forcefield as ff
     image = Image.new('RGBA', (130, 80), 'white')
     image.paste('black', (40, 30, 60, 45))

@@ -97,9 +97,15 @@ class CanonicalizedEncoder(ImageEncoder):
         angles = -k.to(torch.float32) * (360.0 / self.c.N)  # rotate back to canonical
         return rotate_images(images, angles), logits
 
+    def train(self, mode: bool = True) -> CanonicalizedEncoder:
+        super().train(mode)
+        if not mode:
+            self.last_logits = None
+        return self
+
     def forward(self, images: torch.Tensor) -> EncoderOutput:
         canon, logits = self.canonicalize(images)
-        self.last_logits = logits if self.training else None
+        self.last_logits = logits if (self.training and torch.is_grad_enabled()) else None
         return self.encoder(canon)
 
     def prior_loss(self, angles_deg: torch.Tensor | None) -> torch.Tensor:
@@ -107,7 +113,6 @@ class CanonicalizedEncoder(ImageEncoder):
         logits = self.last_logits
         if logits is None:
             raise RuntimeError("prior_loss() requires a preceding forward() call in training mode")
-        self.last_logits = None
         if angles_deg is None:
             target = torch.zeros(logits.shape[0], dtype=torch.long, device=logits.device)
         else:

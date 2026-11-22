@@ -1,7 +1,9 @@
 import json
+
 import pytest
 from ase import Atoms
 from ase.io import read, write
+
 from ouroboros.geometry.splits import assign_split, split_dataset
 
 
@@ -25,7 +27,9 @@ def test_equivalence_stereo_and_order():
     assert assign_split('CCO') == assign_split('OCC')
     assert assign_split('N[C@H](C)O') == assign_split('N[C@@H](C)O')
     for split in ('train', 'val', 'test'):
-        assert {r['id'] for r in result[split]['manifest']} == {r['id'] for r in reverse[split]['manifest']}
+        res_ids = {r['id'] for r in result[split]['manifest']}
+        rev_ids = {r['id'] for r in reverse[split]['manifest']}
+        assert res_ids == rev_ids
         assert len(result[split]['frames']) == 2*len(result[split]['manifest'])
     assert sum(len(x['frames']) for x in result.values()) == len(frames)
     assert 'split' not in frames[0].info
@@ -57,8 +61,10 @@ def test_export_associations(tmp_path):
     for name in ('train', 'val', 'test'):
         path = tmp_path / 'out' / f'{name}.extxyz'
         data = read(path, index=':') if path.stat().st_size else []
-        manifest = [json.loads(s) for s in path.with_suffix('.manifest.jsonl').read_text().splitlines()]
+        man_lines = path.with_suffix('.manifest.jsonl').read_text().splitlines()
+        manifest = [json.loads(s) for s in man_lines]
         for row in manifest:
-            for old, new in zip(row['input_frame_indices'], row['output_frame_indices'], strict=True):
+            pairs = zip(row['input_frame_indices'], row['output_frame_indices'], strict=True)
+            for old, new in pairs:
                 assert str(data[new].info['source_id']) == row['id']
                 assert data[new].info['mace_energy'] == frames[old].info['mace_energy']

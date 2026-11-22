@@ -1,6 +1,8 @@
 from types import SimpleNamespace
+
 import pytest
 from rdkit import Chem
+
 from ouroboros.geometry.eligibility import EligibilityPolicy, calculator_elements
 
 
@@ -27,15 +29,17 @@ def test_capabilities_and_implicit_hydrogen():
     calc = SimpleNamespace(z_table=SimpleNamespace(zs=[6, 8]))
     assert calculator_elements(calc) == {'C', 'O'}
     assert EligibilityPolicy().reasons(Chem.MolFromSmiles('CO'), calc) == ['unsupported_elements:H']
-    assert EligibilityPolicy().reasons(Chem.MolFromSmiles('CO'), object()) == ['unknown_calculator_elements']
+    reasons_unknown = EligibilityPolicy().reasons(Chem.MolFromSmiles('CO'), object())
+    assert reasons_unknown == ['unknown_calculator_elements']
     ensemble = SimpleNamespace(models=[SimpleNamespace(atomic_numbers=[1, 6, 8]),
                                        SimpleNamespace(atomic_numbers=[1, 6])])
     assert calculator_elements(ensemble) == {'H', 'C'}
 
 
 def test_unsupported_skips_embedding_and_calculator(monkeypatch):
-    from scripts import image_to_forcefield as ff
     from ase.calculators.calculator import Calculator
+
+    from scripts import image_to_forcefield as ff
     class Toy(Calculator):
         supported_elements = {'H', 'C', 'O'}
         def calculate(self, *args, **kwargs):
@@ -44,6 +48,7 @@ def test_unsupported_skips_embedding_and_calculator(monkeypatch):
         raise AssertionError('ineligible embedding')
     monkeypatch.setattr(ff, 'embed', forbidden)
     args = SimpleNamespace(relax=False, geometry_eligibility=True)
-    frames, rec = ff.process(dict(id='1', source_image='x', smiles='CCl'), args, Toy(), 'toy', set())
+    row = dict(id='1', source_image='x', smiles='CCl')
+    frames, rec = ff.process(row, args, Toy(), 'toy', set())
     assert frames == [] and rec['status'] == 'geometry_ineligible'
     assert rec['eligibility_reasons'] == ['unsupported_elements:Cl']

@@ -40,7 +40,7 @@ New in this change (scaffold, no results):
 | Read a structure from a paper or patent figure | figure image | standardized SMILES, InChIKey, molfile, status | Keylab/OCSR-Benchmarks (dev-test `subset100`, `frozen-test-v2`) |
 | Molecule context for protocol QA | figures in a protocol or paper | context JSONL / prompt block for YLM | LAB-Bench ProtocolQA, end-to-end through [labbench-posttrain](https://github.com/yaniguan/labbench-posttrain) |
 | Step debugging: right reagent? | reagent drawing or label | InChIKey to compare with the protocol step | BioProBench error correction (via labbench-posttrain); OCSR part: no label set yet |
-| Read notebook sketches | photo of a hand-drawn structure | SMILES, or `review` | not measured yet (DECIMER hand-drawn is listed in [ROADMAP_SOTA.md](ROADMAP_SOTA.md)) |
+| Read notebook sketches | photo of a hand-drawn structure | SMILES, or `review` | DECIMER Hand-drawn 200-image subset: 4.5% exact for v2 A+C beam 5 ([handdrawn-decimer/](../benchmarks/handdrawn-decimer/)) |
 
 OCSR is only one input in the LAB-Bench and BioProBench rows. Those scores measure the whole agent, not Ouroboros alone.
 
@@ -53,7 +53,12 @@ OCSR is only one input in the LAB-Bench and BioProBench rows. Those scores measu
 | M3 | Distill teacher into one fast student | PMC train + teacher pseudo-labels on unlabeled figures, leakage-gated | teacher = A + C, beam 5, TTA; student = one arm, greedy | validation exact match vs teacher; img/s | gap to teacher is TBD and agreed before the run |
 | M4 | Run next to the robot | same validation set | int8 / fp16 quantization; edge export | exact-match drop vs fp32; latency per image on device | numbers recorded on a Jetson Orin-class box |
 
-Results for M1-M4: not run yet.
+Progress on M1–M4:
+
+- **M1 (Ouroboros side done; YLM import open in #77):** `ouroboros.molecule_context/v1` schema frozen, `read_context_jsonl()` rejects `gold`, and `prompt_block()` emits SMILES only on `status=ok`.
+- **M2 (completed in #79):** Gate limits (`min_margin=0.05`, `max_disagreement=0.0`) locked on `PMC val` (`92.19%` precision at `19.94%` coverage) and scored once on `frozen-test-v2` (`97.78%` precision, `88/90`, `30.00%` coverage; [benchmarks/selective-gate/](../benchmarks/selective-gate/)).
+- **M3 (tooling ready; GPU student training open in #80):** `predict_real.py --unlabeled`, `molecule_context --manifest-out --source-shards`, and `prepare_real_finetune.py` wired in `lab/edge_plan.py`.
+- **M4 (quantizer + CPU check landed; Jetson run open in #81):** `lab/quantize.py` measured `40.08%` (`fp32`) vs `39.88%` (`int8-dynamic`, `-0.21 pp`) on `PMC val` ([benchmarks/quantize-cpu/](../benchmarks/quantize-cpu/)).
 
 ## Distillation and edge path
 
@@ -90,10 +95,9 @@ Single-GPU plan (one H200 or B200 kept busy, with this repo's calls batched into
 - Stereo is weak (18.4-20.4% for the A + C ensemble on stereo figures). A wrong enantiomer looks valid. Keep `review` / `rejected` rows out of the reasoner.
 - Dev-test is optimistic and scoring parity with published work is unverified ([standardize.py](../ouroboros/eval/standardize.py)).
 
-## Next steps
+## Remaining steps
 
-1. Wire the molecule context JSONL into YLM (M1).
-2. Add an unlabeled-image mode to `predict_real.py` (needed for M3).
-3. Choose confidence gate limits on PMC validation (M2).
-4. Distill the A + C teacher into a greedy single-arm student (M3).
-5. Quantize the student and measure it on a Jetson Orin Nano Super (M4).
+1. Import `read_context_jsonl` / `prompt_block` inside the `YLM` repository (M1, #77).
+2. Agree on the target student-vs-teacher gap and run GPU student distillation (M3, #80).
+3. Quantize the distilled student and measure latency/accuracy on a Jetson Orin Nano Super (M4, #81).
+4. Record single-GPU `lab/grpo_verifier.py` throughput and peak VRAM alongside a sleeping rollout engine (#82).

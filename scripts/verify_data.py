@@ -32,10 +32,10 @@ def _save(name: str, obj: dict) -> None:
     obj = {
         **obj,
         "date": time.strftime("%Y-%m-%d"),
-        "host": platform.node(),
+        "platform": platform.system(),
         "cpus": __import__("os").cpu_count(),
     }
-    (OUT / f"{name}.json").write_text(json.dumps(obj, indent=1))
+    (OUT / f"{name}.json").write_text(json.dumps(obj, indent=1), encoding="utf-8")
     print(json.dumps(obj, indent=1))
 
 
@@ -130,7 +130,9 @@ def cmd_sheet(a):
     from ouroboros.data.loader import ShardDataset
 
     ds = ShardDataset(a.root / "shards", "train")
-    idx = random.Random(a.seed).sample(range(len(ds)), 64)
+    if len(ds) == 0:
+        raise ValueError("no samples in train shards")
+    idx = random.Random(a.seed).sample(range(len(ds)), min(64, len(ds)))
     tile = 192
     sheet = Image.new("L", (8 * tile, 8 * tile), 255)
     draw = ImageDraw.Draw(sheet)
@@ -171,6 +173,8 @@ def cmd_render_speed(a):
 
     rows = _manifest(a.root, "train")[: a.n]
     mols = [Chem.MolFromSmiles(r["smiles"]) for r in rows]
+    if not mols:
+        raise ValueError("no molecules in train manifest")
     rng = random.Random(0)
     render(mols[0], sample_style(rng), size=384)  # warm-up (font loading)
     t0 = time.perf_counter()
@@ -190,15 +194,18 @@ def cmd_loader_speed(a):
     from ouroboros.data.loader import ResumableSampler, ShardDataset, collate
 
     ds = ShardDataset(a.root / "shards", "train")
-    dl = torch.utils.data.DataLoader(
-        ds,
+    if len(ds) == 0:
+        raise ValueError("no samples in train shards")
+    dl_kwargs = dict(
         batch_size=64,
         sampler=ResumableSampler(len(ds), seed=0),
         num_workers=a.workers,
         collate_fn=collate,
         persistent_workers=False,
-        prefetch_factor=4,
     )
+    if a.workers > 0:
+        dl_kwargs["prefetch_factor"] = 4
+    dl = torch.utils.data.DataLoader(ds, **dl_kwargs)
     it = iter(dl)
     for _ in range(a.workers * 2):  # warm-up: spawn workers, fill prefetch queues
         next(it)

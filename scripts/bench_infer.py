@@ -30,18 +30,29 @@ THRESHOLDS = [0.5, 0.7, 0.8, 0.85, 0.9, 0.95, 0.98]
 
 
 def cpu_name():
-    for line in open("/proc/cpuinfo"):
-        if line.startswith("model name"):
-            return line.split(":", 1)[1].strip()
-    return platform.processor()
+    cpuinfo = Path("/proc/cpuinfo")
+    if cpuinfo.is_file():
+        with open(cpuinfo, encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                if line.startswith("model name"):
+                    return line.split(":", 1)[1].strip()
+    return platform.processor() or platform.machine()
+
+
+def _load_avg():
+    return os.getloadavg() if hasattr(os, "getloadavg") else None
 
 
 def q(xs):
+    if not xs:
+        return {"p50": None, "p95": None, "max": None}
     return {"p50": float(np.percentile(xs, 50)), "p95": float(np.percentile(xs, 95)),
             "max": max(xs)}
 
 
 def selective(rows, tau):
+    if not rows:
+        return {"coverage": 0.0, "precision": None}
     acc = [r for r in rows if r["valid"] and r["confidence"] >= tau]
     precision = sum(r["correct"] for r in acc) / len(acc) if acc else None
     return {"coverage": len(acc) / len(rows), "precision": precision}
@@ -57,13 +68,16 @@ def main():
     args = ap.parse_args()
     base = Path(args.manifest).parent
     rows = []
-    for r in csv.DictReader(open(args.manifest)):
-        gold = standardize(r["smiles"])
-        if gold.valid:
-            rows.append({"path": base / r["image"], "gold": gold.smiles, "source": r["source"]})
+    with open(args.manifest, encoding="utf-8", newline="") as mf:
+        for r in csv.DictReader(mf):
+            gold = standardize(r["smiles"])
+            if gold.valid:
+                rows.append({"path": base / r["image"], "gold": gold.smiles, "source": r["source"]})
     rows = rows[:args.n] if args.n else rows
+    if not rows:
+        ap.error("no valid rows in manifest")
     rep = {"cpu": cpu_name(), "logical_cpus": os.cpu_count(), "threads": args.threads,
-           "load_avg_start": os.getloadavg(), "n_images": len(rows), "variants": {}}
+           "load_avg_start": _load_avg(), "n_images": len(rows), "variants": {}}
     preds = {}
     for name in args.variants:
         ckpt, int8 = VARIANTS[name]
@@ -94,12 +108,12 @@ def main():
             v["same_smiles_as_A_fp32"] = float(np.mean(same))
         rep["variants"][name] = v
         print(name, json.dumps({k: v[k] for k in ("latency_ms", "exact", "valid")}), flush=True)
-    rep["load_avg_end"] = os.getloadavg()
+    rep["load_avg_end"] = _load_avg()
     text = json.dumps(rep, indent=2)
     print(text)
     if args.out:
         os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
-        with open(args.out, "w") as fh:
+        with open(args.out, "w", encoding="utf-8") as fh:
             fh.write(text + "\n")
 
 

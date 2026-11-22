@@ -14,6 +14,7 @@ dependencies = [
     "torch",
     "escnn",
     "rdkit",
+    "ase",
     "mace-torch",
     "webdataset",
     "pyyaml",
@@ -23,7 +24,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "ruff"]
+api = ["fastapi", "uvicorn"]
+data = ["pyarrow"]
+dev = ["pytest", "ruff", "nbformat", "fastapi", "httpx", "pyarrow"]
 demo = ["jupyterlab>=4,<5"]
 # Hugging Face export/upload (scripts/export_hf_release.py falls back to .bin without safetensors)
 hf = ["safetensors", "huggingface_hub"]
@@ -32,9 +35,10 @@ hf = ["safetensors", "huggingface_hub"]
 "ouroboros" = ["weights.json"]
 "ouroboros.demo" = ["index.html"]
 "ouroboros.ui" = ["index.html"]
+"lab.configs" = ["*.json"]
 
 [tool.setuptools.packages.find]
-include = ["ouroboros*"]
+include = ["ouroboros*", "lab*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -51,9 +55,9 @@ filterwarnings = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
-# archived run evidence is kept byte-for-byte, so it is not linted
-extend-exclude = ["notebooks"]
+target-version = "py311"
+# archived run evidence and generator-synced Colab notebooks are checked separately in pytest
+extend-exclude = ["notebooks", "colab"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP"]
@@ -63,3 +67,4 @@ ignore = ["E731"]
 # notebook generators embed notebook source lines verbatim
 "scripts/make_colab_nbs.py" = ["E501"]
 "scripts/make_finetune_v2_nb.py" = ["E501"]
+"scripts/make_real_pmc_nb.py" = ["E501"]

@@ -83,8 +83,8 @@ Run configuration recorded in the checkpoint:
 
 ## Evaluation
 
-Held-out real test set: the seeded `Keylab/OCSR-Benchmarks` subset (100 images each from ACS, UOB
-and USPTO; 298 scoreable after label parsing), never used for training or selection.
+Real-figure evaluation: the 300-image `frozen-test-v2` holdout (100 images each from ACS, UOB and
+USPTO, scored once per release; see `DATA.md`) and the 298-image `subset100` dev-test sample.
 Exact match = canonical SMILES equality after the repository's RDKit standardization, **full
 stereochemistry included**; 95% CI = percentile bootstrap over images. Greedy unless stated.
 

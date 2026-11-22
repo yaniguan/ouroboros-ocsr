@@ -1,5 +1,7 @@
 """CPU smoke coverage and deterministic profiling summary checks."""
+import importlib.util
 import json
+from pathlib import Path
 
 import pytest
 import torch
@@ -8,8 +10,6 @@ import yaml
 from ouroboros.data import build
 from ouroboros.decode.tokenizer import SmilesTokenizer
 from ouroboros.train.trainer import Trainer
-import importlib.util
-from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -32,11 +32,10 @@ def test_phase_summary():
 
 
 def test_gpu_csv():
-    text = ('timestamp, utilization.gpu [%], utilization.memory [%], memory.used [MiB], power.draw [W]\n'
-            '2026/10/30 12:00:00, 20, 10, 123, 50\n'
-            'timestamp, utilization.gpu [%], utilization.memory [%], memory.used [MiB], power.draw [W]\n'
-            '2026/10/30 12:00:01, 80 %, 30, 456, [N/A]\n'
-            'partial\n2026/10/30, [N/A], [Not Supported], 1, 1\n')
+    hdr = 'timestamp, utilization.gpu [%], utilization.memory [%], memory.used [MiB], power.draw [W]\n'  # noqa: E501
+    text = (hdr + '2026/10/30 12:00:00, 20, 10, 123, 50\n'
+            + hdr + '2026/10/30 12:00:01, 80 %, 30, 456, [N/A]\n'
+            + 'partial\n2026/10/30, [N/A], [Not Supported], 1, 1\n')
     assert profile_train.parse_nvidia_smi_csv(text) == {
         'gpu': {'mean': 50, 'max': 80}, 'memory': {'mean': 20, 'max': 30}}
     assert profile_train.parse_nvidia_smi_csv('') is None
@@ -83,7 +82,8 @@ def test_cpu_profiles(tiny_dataset, tmp_path, monkeypatch):
         assert train['device'] == 'cpu'
         assert train['peak_memory'] is None and train['gpu_util'] is None
         assert train['img_per_s'] > 0 and train['tokens_per_s'] > 0
-        assert set(train['phases']) == {'data_loading', 'host_to_device', 'forward', 'backward', 'optimizer'}
+        expected_phases = {'data_loading', 'host_to_device', 'forward', 'backward', 'optimizer'}
+        assert set(train['phases']) == expected_phases
         assert (out / 'trace_tiny.json').is_file()
         assert (out / 'keyavg_tiny.txt').read_text()
         assert json.loads((out / 'train_tiny.json').read_text()) == train
