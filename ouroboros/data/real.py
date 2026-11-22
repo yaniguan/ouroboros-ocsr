@@ -166,64 +166,71 @@ def ingest(
     written: Counter = Counter()
     for split in SPLITS:
         split_rows = [r for r in rows if r["split"] == split]
-        for old in out_dir.glob(f"{split}-*.idx.json"):
+        for old in (*out_dir.glob(f"{split}-*.idx.json"), *out_dir.glob(f"{split}-*.tar")):
             old.unlink()
         if not split_rows:
             continue
         tar = None
         n_in_shard = shard_idx = 0
-        for idx, r in enumerate(split_rows):
-            std = standardize(r["smiles"])
-            reason = None if std.valid else f"label_{std.reason}"
-            img = None
-            if reason is None:
-                try:
-                    with Image.open(r["image_path"]) as im:
-                        orig_size = im.size
-                        img = fit_to_canvas(im, size, ink_crop=ink_crop,
-                                            ink_threshold=ink_threshold, ink_margin=ink_margin)
-                except (OSError, ValueError) as e:
-                    reason = f"image_unreadable:{type(e).__name__}"
-            if reason is not None:
-                reasons[reason] += 1
-                failures.append(
-                    {
-                        "row": r["row"],
-                        "id": r.get("id"),
-                        "image": r["image"],
-                        "raw_smiles": r["smiles"],
-                        "split": split,
-                        "reason": reason,
-                    }
-                )
-                continue
-            if tar is None or n_in_shard >= shard_size:
-                if tar is not None:
-                    tar.close()
-                tar = tarfile.open(
-                    out_dir / f"{split}-{shard_idx:06d}.tar", "w", format=tarfile.USTAR_FORMAT
-                )
-                shard_idx += 1
-                n_in_shard = 0
-            key = f"{prefix}_{split}_{idx:08d}".replace(".", "-")
-            meta = {
-                "smiles": std.smiles,
-                "raw_smiles": r["smiles"],
-                "source": r["source"],
-                "id": r.get("id"),
-                "real": 1,
-                "orig_size": list(orig_size),
-            }
-            for extra in EXTRA_COLUMNS:  # optional provenance / label-quality columns
-                if r.get(extra) not in (None, ""):
-                    meta[extra] = r[extra]
-            _add(tar, f"{key}.png", encode_png(img))
-            _add(tar, f"{key}.json", json.dumps(meta).encode())
-            n_in_shard += 1
-            written[split] += 1
-        if tar is not None:
-            tar.close()
-    with open(out_dir / "ingest_failures.jsonl", "w") as f:
+        try:
+            for idx, r in enumerate(split_rows):
+                std = standardize(r["smiles"])
+                reason = None if std.valid else f"label_{std.reason}"
+                img = None
+                if reason is None:
+                    try:
+                        with Image.open(r["image_path"]) as im:
+                            orig_size = im.size
+                            img = fit_to_canvas(
+                                im,
+                                size,
+                                ink_crop=ink_crop,
+                                ink_threshold=ink_threshold,
+                                ink_margin=ink_margin,
+                            )
+                    except (OSError, ValueError, Image.DecompressionBombError) as e:
+                        reason = f"image_unreadable:{type(e).__name__}"
+                if reason is not None:
+                    reasons[reason] += 1
+                    failures.append(
+                        {
+                            "row": r["row"],
+                            "id": r.get("id"),
+                            "image": r["image"],
+                            "raw_smiles": r["smiles"],
+                            "split": split,
+                            "reason": reason,
+                        }
+                    )
+                    continue
+                if tar is None or n_in_shard >= shard_size:
+                    if tar is not None:
+                        tar.close()
+                    tar = tarfile.open(
+                        out_dir / f"{split}-{shard_idx:06d}.tar", "w", format=tarfile.USTAR_FORMAT
+                    )
+                    shard_idx += 1
+                    n_in_shard = 0
+                key = f"{prefix}_{split}_{idx:08d}".replace(".", "-")
+                meta = {
+                    "smiles": std.smiles,
+                    "raw_smiles": r["smiles"],
+                    "source": r["source"],
+                    "id": r.get("id"),
+                    "real": 1,
+                    "orig_size": list(orig_size),
+                }
+                for extra in EXTRA_COLUMNS:  # optional provenance / label-quality columns
+                    if r.get(extra) not in (None, ""):
+                        meta[extra] = r[extra]
+                _add(tar, f"{key}.png", encode_png(img))
+                _add(tar, f"{key}.json", json.dumps(meta).encode())
+                n_in_shard += 1
+                written[split] += 1
+        finally:
+            if tar is not None:
+                tar.close()
+    with open(out_dir / "ingest_failures.jsonl", "w", encoding="utf-8") as f:
         for fl in failures:
             f.write(json.dumps(fl) + "\n")
     stats = {
@@ -235,5 +242,5 @@ def ingest(
         "label_parse_rate": 1.0
         - sum(v for k, v in reasons.items() if k.startswith("label_")) / max(1, len(rows)),
     }
-    (out_dir / "ingest_stats.json").write_text(json.dumps(stats, indent=1))
+    (out_dir / "ingest_stats.json").write_text(json.dumps(stats, indent=1), encoding="utf-8")
     return stats

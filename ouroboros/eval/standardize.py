@@ -1,8 +1,8 @@
 """Standardization used for ALL scoring (predictions and references alike).
 
 Intended to match the protocol of arXiv:2608.09100 ("Real Data Closes Synthetic-to-Real Gap in
-OCSR"). Verification status of each rule (the full text could not be read from the development
-sandbox; the status below comes from search-engine snippets of the paper):
+OCSR"). Rule comparison against published paper details (exact RDKit calls are not specified in
+the paper summary):
 
 ====================================================================  ==========================
 Rule                                                                   Status vs. paper
@@ -98,12 +98,16 @@ def leakage_key(std: Std) -> str | None:
     """Standard InChIKey, or a namespaced canonical-label digest for pseudo-atoms.
 
     This fallback is only for dataset overlap detection, never an InChI metric.
-    Canonical labels include stereo and alias identities; the first 14 characters
-    of a labelled key are a digest prefix, not an InChI connectivity layer.
+    For labelled molecules, ``key[:14]`` hashes the stereo-free constitution (matching
+    the 14-character connectivity prefix rule of InChIKey), while the full 27-character
+    key appends the stereo-specific digest so exact stereoisomers stay distinguishable.
     """
     if not std.valid:
         return None
     if any(a.GetAtomicNum() == 0 for a in std.mol.GetAtoms()):
         import hashlib
-        return 'L' + hashlib.sha256(std.smiles.encode()).hexdigest()
+
+        flat_h = hashlib.sha256((flat_smiles(std) or "").encode()).hexdigest()[:13]
+        iso_h = hashlib.sha256((std.smiles or "").encode()).hexdigest()[:12]
+        return f"L{flat_h}-{iso_h}"
     return standard_inchikey(std)

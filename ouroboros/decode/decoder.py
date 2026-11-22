@@ -164,7 +164,9 @@ class SmilesDecoder(nn.Module):
         """Greedy decoding with static self-attention KV buffers and cached cross-attention K/V.
         Returns ids [B, L] (no BOS)."""
         B = memory.shape[0]
-        max_len = min(max_len or self.c.max_len, self.c.max_len)
+        if max_len is not None and max_len < 2:
+            raise ValueError(f"max_len must be >= 2, got {max_len}")
+        max_len = min(self.c.max_len if max_len is None else max_len, self.c.max_len)
         max_steps = max(max_len - 1, 1)
         caches = [{"max_len": max_steps} for _ in self.layers]
         cross_kvs = self._precompute_cross_kv(memory)
@@ -208,7 +210,9 @@ class SmilesDecoder(nn.Module):
         B, K = memory.shape[0], beam_size
         if K < 1:
             raise ValueError(f"beam_size must be >= 1, got {K}")
-        max_len = min(max_len or self.c.max_len, self.c.max_len)
+        if max_len is not None and max_len < 2:
+            raise ValueError(f"max_len must be >= 2, got {max_len}")
+        max_len = min(self.c.max_len if max_len is None else max_len, self.c.max_len)
         max_steps = max(max_len - 1, 1)
         dev = memory.device
         cross_kvs = self._precompute_cross_kv(memory, repeat=K)

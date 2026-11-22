@@ -245,4 +245,11 @@ def _steerable(enc_cfg: dict, d_model: int, image_size: int) -> ImageEncoder:
     return SteerableEncoder(SteerableConfig(d_model=d_model, image_size=image_size, **kw))
 
 
-__all__ = ["SteerableEncoder", "SteerableConfig", "ExportedSteerableEncoder"]
+__all__ = [
+    "BlurPool2x2",
+    "ExportedSteerableEncoder",
+    "ResBlock",
+    "SteerableConfig",
+    "SteerableEncoder",
+    "_ensure_escnn_2d_shim",
+]

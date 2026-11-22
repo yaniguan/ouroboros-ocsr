@@ -3,8 +3,8 @@
 The shards follow the WebDataset layout (``{key}.png`` + ``{key}.json`` per sample), so they
 also stream with ``webdataset.WebDataset``. For training we instead index the tar members once
 (offsets cached in ``{shard}.idx.json``) and read samples by random access. That makes the data
-order a pure function of (seed, epoch, position), so a resumed run consumes exactly the samples
-the uninterrupted run would have (Phase 2 resume test).
+order a pure function of (seed, epoch, position), so a resumed run consumes the exact same
+samples an uninterrupted run would have.
 
 Image convention: ``ink = 1 - gray / 255`` in [0, 1], background = 0. Zero background means
 rotating an image with zero fill introduces no artificial border.
@@ -17,6 +17,7 @@ import json
 import math
 import os
 import tarfile
+import threading
 from pathlib import Path
 
 import numpy as np
@@ -36,14 +37,14 @@ def index_shard(path: str | Path) -> list[dict]:
     digest = file_sha256(path)
     if idx_path.exists():
         try:
-            cached = json.loads(idx_path.read_text())
+            cached = json.loads(idx_path.read_text(encoding="utf-8"))
             if (
                 isinstance(cached, dict)
                 and cached.get("sha256") == digest
                 and cached.get("entries_sha256") == json_sha256(cached["entries"])
             ):
                 return cached["entries"]
-        except (ValueError, KeyError):
+        except (ValueError, KeyError, OSError):
             pass  # old, interrupted or corrupt index: rebuild from the tar itself
     samples: dict[str, dict] = {}
     with tarfile.open(path, "r:") as tar:
@@ -103,6 +104,7 @@ class ShardDataset(Dataset):
         self.entries: list[tuple[Path, dict]] = []
         self._fh: dict[Path, io.BufferedReader] = {}
         self._fh_pid: int | None = os.getpid()
+        self._fh_lock = threading.Lock()
         self.n_excluded = 0
         for shard in list_shards(root, split):
             for s in index_shard(shard):
@@ -142,24 +144,47 @@ class ShardDataset(Dataset):
         pid = os.getpid()
         if self._fh_pid != pid:
             self._fh, self._fh_pid = {}, pid  # inherited handles belong to the parent
+            self._fh_lock = threading.Lock()
         fh = self._fh.get(shard)
         if fh is None:  # opened lazily per process
-            fh = self._fh[shard] = open(shard, "rb")  # noqa: SIM115
+            with self._fh_lock:
+                fh = self._fh.get(shard)
+                if fh is None:
+                    fh = self._fh[shard] = open(shard, "rb")  # noqa: SIM115
         offset, size = off_size
         if hasattr(os, "pread"):
             data = os.pread(fh.fileno(), size, offset)
         else:  # pragma: no cover - Windows
-            fh.seek(offset)
-            data = fh.read(size)
+            with self._fh_lock:
+                fh.seek(offset)
+                data = fh.read(size)
         if len(data) != size:
             raise OSError(f"short read from {shard} at {offset}: {len(data)} of {size} bytes")
         return data
+
+    def close(self) -> None:
+        with self._fh_lock:
+            for fh in self._fh.values():
+                fh.close()
+            self._fh.clear()
+
+    def __enter__(self) -> ShardDataset:
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self.close()
 
     def __getstate__(self):
         d = self.__dict__.copy()
         d["_fh"] = {}
         d["_fh_pid"] = None
+        d["_fh_lock"] = None
         return d
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        if self._fh_lock is None:
+            self._fh_lock = threading.Lock()
 
     def _meta_of(self, shard: Path, s: dict) -> dict:
         return json.loads(self._read(shard, s["json"]))
@@ -176,8 +201,8 @@ class ShardDataset(Dataset):
             img = postprocess(
                 img, RenderStyle(**meta["style"]), np.random.default_rng(post["seed"])
             )
-        if self.image_size is not None and img.size[0] != self.image_size:
-            img = img.resize((self.image_size, self.image_size), Image.BILINEAR)
+        if self.image_size is not None and img.size != (self.image_size, self.image_size):
+            img = img.resize((self.image_size, self.image_size), Image.Resampling.BILINEAR)
         ink = 1.0 - torch.from_numpy(np.asarray(img, dtype=np.float32)) / 255.0
         smiles = meta["smiles"] if self.labeled else ""
         out = {"image": ink[None], "smiles": smiles, "key": s["key"], "index": i}
@@ -254,13 +279,19 @@ def rotate_images(images: torch.Tensor, angles_deg: torch.Tensor) -> torch.Tenso
         # affine_grid maps output coords -> input coords (normalized, x right, y down). This
         # theta reproduces torch.rot90(k=1) exactly at t = 90 deg (checked in tests), so both
         # branches share one rotation convention.
-        theta = torch.tensor([[c, -s, 0.0], [s, c, 0.0]], dtype=images.dtype, device=images.device)
+        theta = torch.tensor(
+            [[c, -s, 0.0], [s, c, 0.0]], dtype=torch.float32, device=images.device
+        )
         grid = torch.nn.functional.affine_grid(
             theta[None], [1, *images.shape[1:]], align_corners=False
         )
         out[k] = torch.nn.functional.grid_sample(
-            images[k : k + 1], grid, mode="bilinear", padding_mode="zeros", align_corners=False
-        )[0]
+            images[k : k + 1].float(),
+            grid,
+            mode="bilinear",
+            padding_mode="zeros",
+            align_corners=False,
+        )[0].to(images.dtype)
     return out
 
 

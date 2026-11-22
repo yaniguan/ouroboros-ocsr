@@ -72,6 +72,8 @@ def _circle(mask: np.ndarray, pts: np.ndarray):
     hit = np.zeros(x.shape, dtype=bool)
     hit[ok] = mask[y[ok], x[ok]]
     has = hit.any(axis=1)
+    if int(has.sum()) < 4:
+        raise ValueError("plate mask has too few rim intersections to fit a circle")
     last = steps.shape[1] - 1 - np.argmax(hit[:, ::-1], axis=1)
     r = steps[0, last][has]
     edge = np.column_stack([m[0] + r * np.sin(t[has, 0]), m[1] - r * np.cos(t[has, 0])])
@@ -86,6 +88,8 @@ def kp_from_pixels(img: np.ndarray, kind: str) -> Keypoints:
     mask = img > otsu(img)
     ys, xs = np.nonzero(mask)
     pts = np.column_stack([xs, ys]).astype(float)
+    if len(pts) < 4:
+        raise ValueError("plate mask has fewer than 4 foreground pixels")
     if kind == "rect":
         return Keypoints("rect", corners=_rect_corners(pts))
     c, r = _circle(mask, pts)

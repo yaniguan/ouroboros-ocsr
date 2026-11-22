@@ -344,10 +344,17 @@ class Trainer:
         set_rng_state(st["rng"])
         log = self.out / "log.jsonl"
         if log.exists():  # drop log lines written after the checkpoint by the interrupted run
-            keep = [
-                ln for ln in log.read_text().splitlines() if json.loads(ln)["step"] <= self.step
-            ]
-            log.write_text("".join(ln + "\n" for ln in keep))
+            keep = []
+            for ln in log.read_text(encoding="utf-8").splitlines():
+                if not ln.strip():
+                    continue
+                try:
+                    rec = json.loads(ln)
+                except ValueError:
+                    continue
+                if rec.get("step", 0) <= self.step:
+                    keep.append(ln)
+            log.write_text("".join(ln + "\n" for ln in keep), encoding="utf-8")
         print(f"resumed from {self.ckpt_path} at step {self.step}")
 
     def save(self) -> float:

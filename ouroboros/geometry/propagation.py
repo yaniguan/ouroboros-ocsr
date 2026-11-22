@@ -20,20 +20,23 @@ from rdkit import Chem
 from rdkit.Chem.rdMolDescriptors import CalcMolFormula
 
 from ouroboros.eval.standardize import flat_smiles, standardize
+from ouroboros.labels import labelled_smiles, parse_labelled
 
 CATEGORIES = ("correct", "enantiomer", "diastereomer", "constitutional", "invalid")
 
 
 def mirror_smiles(smiles: str) -> str:
     """Enantiomer by inverting every tetrahedral tag (@ <-> @@); E/Z bonds are unchanged."""
-    mol = Chem.MolFromSmiles(smiles)
+    mol = parse_labelled(smiles) if smiles else None
+    if mol is None or mol.GetNumAtoms() == 0:
+        raise ValueError(f"unparsable SMILES: {smiles!r}")
     for a in mol.GetAtoms():
         t = a.GetChiralTag()
         if t == Chem.ChiralType.CHI_TETRAHEDRAL_CW:
             a.SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
         elif t == Chem.ChiralType.CHI_TETRAHEDRAL_CCW:
             a.SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CW)
-    return Chem.MolToSmiles(mol)
+    return labelled_smiles(mol)
 
 
 def categorize(pred: str | None, truth: str) -> str:
@@ -46,12 +49,14 @@ def categorize(pred: str | None, truth: str) -> str:
         return "correct"
     if flat_smiles(p) != flat_smiles(t):
         return "constitutional"
-    mirror = Chem.CanonSmiles(mirror_smiles(t.smiles))
+    mirror = mirror_smiles(t.smiles)
     if mirror != t.smiles and p.smiles == mirror:
         return "enantiomer"
     return "diastereomer"
 
 
 def same_formula(a: str, b: str) -> bool:
-    ma, mb = Chem.MolFromSmiles(a), Chem.MolFromSmiles(b)
-    return ma is not None and mb is not None and CalcMolFormula(ma) == CalcMolFormula(mb)
+    sa, sb = standardize(a), standardize(b)
+    if not (sa.valid and sb.valid):
+        return False
+    return CalcMolFormula(sa.mol) == CalcMolFormula(sb.mol)

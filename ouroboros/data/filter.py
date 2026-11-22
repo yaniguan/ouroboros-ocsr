@@ -1,6 +1,6 @@
 """Molecule standardization and filtering.
 
-Rules (Phase 1 DoD): allowed elements H C N O F P S Cl Br I only, 5-60 heavy atoms, neutral.
+Rules: allowed elements H C N O F P S Cl Br I only, 5-60 heavy atoms, neutral.
 "Neutral" = net formal charge 0 and no radical electrons, evaluated AFTER standardization
 (largest organic fragment + uncharger), so protonated amines / carboxylates from vendor
 libraries are neutralized rather than dropped. Charge-separated neutral groups such as nitro
@@ -13,8 +13,6 @@ from dataclasses import dataclass
 
 from rdkit import Chem
 from rdkit.Chem.MolStandardize import rdMolStandardize
-
-from ouroboros.data.chem import canonical_smiles  # noqa: F401  (re-export convenience)
 
 ALLOWED_ELEMENTS = frozenset({"H", "C", "N", "O", "F", "P", "S", "Cl", "Br", "I"})
 

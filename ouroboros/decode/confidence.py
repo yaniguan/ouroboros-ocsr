@@ -1,26 +1,40 @@
 """Check score gaps and agreement between predictions."""
+
+from __future__ import annotations
+
 import math
+
 from ouroboros.eval.standardize import standardize
 
 
-def confidence(pred, candidates, source_predictions=(), *, min_margin=None,
-               max_disagreement=None):
+def confidence(
+    pred: str | None,
+    candidates,
+    source_predictions=(),
+    *,
+    min_margin: float | None = None,
+    max_disagreement: float | None = None,
+) -> dict:
     if min_margin is not None and (not math.isfinite(min_margin) or min_margin < 0):
-        raise ValueError('min_margin must be finite and nonnegative')
+        raise ValueError("min_margin must be finite and nonnegative")
     if max_disagreement is not None and not 0 <= max_disagreement <= 1:
-        raise ValueError('max_disagreement must be in [0, 1]')
+        raise ValueError("max_disagreement must be in [0, 1]")
     selected = standardize(pred)
-    scores = {}
+    scores: dict[str, float] = {}
     nonfinite = False
     for candidate in candidates:
         if isinstance(candidate, dict):
-            smi = candidate['smiles']
-            score = candidate.get('score')
+            smi = candidate["smiles"]
+            score = candidate.get("score")
         else:
             smi, score = candidate
         std = standardize(smi)
-        if score is None or not math.isfinite(score):
+        if score is None or math.isnan(score) or score == math.inf:
             nonfinite = True
+            continue
+        if score == -math.inf:
+            if std.valid and std.smiles == selected.smiles:
+                nonfinite = True
             continue
         if std.valid:
             scores[std.smiles] = max(score, scores.get(std.smiles, -math.inf))
@@ -31,22 +45,28 @@ def confidence(pred, candidates, source_predictions=(), *, min_margin=None,
     sources = [standardize(s) for s in source_predictions]
     disagreement = None
     if sources:
-        disagreement = sum(not s.valid or s.smiles != selected.smiles for s in sources) / len(sources)
+        disagreement = sum(
+            not s.valid or s.smiles != selected.smiles for s in sources
+        ) / len(sources)
     reasons = []
     if not selected.valid:
-        reasons.append('invalid_prediction')
+        reasons.append("invalid_prediction")
     if min_margin is not None:
         if margin is None:
-            reasons.append('unknown_margin')
+            reasons.append("unknown_margin")
         elif margin < min_margin:
-            reasons.append('low_margin')
+            reasons.append("low_margin")
     if max_disagreement is not None:
         if disagreement is None:
-            reasons.append('unknown_disagreement')
+            reasons.append("unknown_disagreement")
         elif disagreement > max_disagreement:
-            reasons.append('source_disagreement')
-    return dict(accepted=not reasons, rejection_reason=';'.join(reasons),
-                margin=margin, disagreement=disagreement)
+            reasons.append("source_disagreement")
+    return dict(
+        accepted=not reasons,
+        rejection_reason=";".join(reasons),
+        margin=margin,
+        disagreement=disagreement,
+    )
 
 
 def selective_report(records, margins, max_disagreement=None):

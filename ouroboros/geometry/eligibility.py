@@ -1,5 +1,7 @@
 """Optional molecule checks before creating geometry labels."""
+
 from dataclasses import dataclass
+
 from rdkit import Chem
 
 

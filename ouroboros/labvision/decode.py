@@ -71,25 +71,30 @@ def decode_rect(img: np.ndarray, kp: Keypoints, spec: RectSpec) -> Decode:
     q = np.asarray(kp.corners, float)
     c = q.mean(axis=0)
     q = q[np.argsort(np.arctan2(q[:, 1] - c[1], q[:, 0] - c[0]))]  # clockwise in the image
-    e = np.linalg.norm(np.roll(q, -1, axis=0) - q, axis=1)  # e[k] = |q[k] q[k+1]|
-    a, b = e[0] + e[2], e[1] + e[3]  # shift s makes edges (s, s + 2) the long 12-column edges
-    all4 = max(a, b) / min(a, b) < SIDE_RATIO_MIN
-    shifts = [s for s in range(4) if all4 or (a > b) == (s % 2 == 0)]
     w, h = spec.width, spec.height
     # The A1 corner is chamfered: its mask extreme lies on the chamfer edge, not the corner.
     canon = np.array([[spec.chamfer / 2] * 2, [w, 0], [w, h], [0, h]], float)
-    hs = [fit_homography(canon, np.roll(q, -s, axis=0)) for s in shifts]
+    hs: list[tuple[np.ndarray, bool]] = []
+    for is_mirror, corners in ((False, q), (True, q[::-1])):
+        e = np.linalg.norm(np.roll(corners, -1, axis=0) - corners, axis=1)
+        a, b = e[0] + e[2], e[1] + e[3]
+        all4 = max(a, b) / max(min(a, b), 1e-9) < SIDE_RATIO_MIN
+        shifts = [s for s in range(4) if all4 or (a > b) == (s % 2 == 0)]
+        for s in shifts:
+            hs.append((fit_homography(canon, np.roll(corners, -s, axis=0)), is_mirror))
     mark = np.asarray(spec.dot_xy) + _disk(0.5 * spec.dot_r)
     around = np.asarray(spec.dot_xy) + _ring(1.5 * spec.dot_r, 1.8 * spec.dot_r)
     sets = []
-    for H in hs:
+    for H, _ in hs:
         p, s = apply_h(H, mark), apply_h(H, around)
         sets.append(_contrast(bilinear(img, p[:, 0], p[:, 1]), bilinear(img, s[:, 0], s[:, 1])))
     best, margin = _pick(sets)
-    H = hs[best]
+    H, is_mirror = hs[best]
+    mirrored = bool(is_mirror and margin >= MARGIN_MIN)
+    ambiguous = bool(mirrored or margin < MARGIN_MIN)
     p0, p1 = apply_h(H, [[w / 2, h / 2], [w / 2 + 1, h / 2]])
     theta0 = float(np.degrees(np.arctan2(p1[1] - p0[1], p1[0] - p0[0])) % 360)
-    return Decode("rect", H, theta0, margin < MARGIN_MIN, False, margin)
+    return Decode("rect", H, theta0, ambiguous, mirrored, margin)
 
 
 def lattice_phase(polar: np.ndarray, k: int) -> float:
@@ -109,7 +114,7 @@ def decode_circ(img: np.ndarray, kp: Keypoints, spec: CircSpec) -> Decode:
     polar = polar_unwrap(img, c, r, 64, 720)
     rho = (np.arange(64) + 0.5) / 64
     fine = 2 * np.pi / 36
-    # only the inner ring has a 6-fold lattice; other radii add only nuisance energy at k=6
+    # only the inner ring has a 6-fold lattice; other rings only add noise at 6-fold symmetry
     phi6 = lattice_phase(polar[np.abs(rho - spec.radii[0]) < 0.05], 6)
     phi36 = lattice_phase(polar[np.abs(rho - spec.radii[-1]) < 0.05], 36)
     theta = np.mod(phi36 + fine * np.round((phi6 - phi36) / fine), np.pi / 3)  # theta0 mod 60

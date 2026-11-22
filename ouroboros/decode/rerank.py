@@ -71,7 +71,8 @@ def ensemble_rank(
             own.setdefault(smiles, []).append(lp)
     best: dict[str, Candidate] = {}
     for smiles, lps in own.items():
-        lps = list(rescored.get(smiles) or lps)
+        raw = rescored.get(smiles)
+        lps = [float(x) for x in raw] if raw is not None and len(raw) > 0 else lps
         score = sum(normalized(smiles, lp, length_penalty) for lp in lps) / len(lps)
         key = canon_fn(smiles) or smiles
         if key not in best or score > best[key][1]:
