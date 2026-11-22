@@ -4,14 +4,15 @@
     verify = make_verifier(ckpt="checkpoints/ouroboros-A.pt", max_batch_size=16)
     rows = verify(["fig1.png", "fig2.png"])  # one dict per input; never drops rows
 
-Also exposes ``lab.grpo_verifier:make_verifier`` as a ``module:function`` factory for
-``scripts/profile_gpu.py`` (wraps preprocess, encode, decode, and score in NVTX ranges).
+Also exposes ``lab.grpo_verifier:make_verifier`` as a ``module:function`` factory with
+NVTX ranges (``ocsr_verifier/{preprocess,encode,decode,score}``) for GPU profiling.
 """
 
 from __future__ import annotations
 
 import argparse
 import contextlib
+import copy
 import json
 import math
 import time
@@ -65,7 +66,7 @@ class OCSRVerifier:
             model, cfg = load_checkpoint(ckpt, device=self.device)
             image_size = cfg.get("data", {}).get("image_size", 384)
         else:
-            model = model.to(self.device).eval()
+            model = copy.deepcopy(model).to(self.device).eval()
             if hasattr(model.encoder, "export"):
                 model.encoder = model.encoder.export().to(self.device)
 
@@ -264,33 +265,37 @@ def benchmark_batch_sizes(
         torch.cuda.synchronize(verifier.device)
 
     rows: list[dict] = []
-    for bs in batch_sizes:
-        verifier.max_batch_size = bs
-        inputs = [blank for _ in range(bs)]
-        if verifier.device.type == "cuda":
-            torch.cuda.reset_peak_memory_stats(verifier.device)
-            torch.cuda.synchronize(verifier.device)
-        t0 = time.perf_counter()
-        for _ in range(repeats):
-            _ = verifier.verify_batch(inputs)
-        if verifier.device.type == "cuda":
-            torch.cuda.synchronize(verifier.device)
-        elapsed = time.perf_counter() - t0
-        total_imgs = bs * repeats
-        peak_mb = (
-            round(torch.cuda.max_memory_allocated(verifier.device) / (1024 * 1024), 2)
-            if verifier.device.type == "cuda"
-            else None
-        )
-        rows.append(
-            {
-                "batch_size": bs,
-                "device": str(verifier.device),
-                "img_per_s": round(total_imgs / max(elapsed, 1e-9), 2),
-                "ms_per_image": round(1000.0 * elapsed / max(total_imgs, 1), 2),
-                "peak_cuda_mb": peak_mb,
-            }
-        )
+    prev_max = verifier.max_batch_size
+    try:
+        for bs in batch_sizes:
+            verifier.max_batch_size = bs
+            inputs = [blank for _ in range(bs)]
+            if verifier.device.type == "cuda":
+                torch.cuda.reset_peak_memory_stats(verifier.device)
+                torch.cuda.synchronize(verifier.device)
+            t0 = time.perf_counter()
+            for _ in range(repeats):
+                _ = verifier.verify_batch(inputs)
+            if verifier.device.type == "cuda":
+                torch.cuda.synchronize(verifier.device)
+            elapsed = time.perf_counter() - t0
+            total_imgs = bs * repeats
+            peak_mb = (
+                round(torch.cuda.max_memory_allocated(verifier.device) / (1024 * 1024), 2)
+                if verifier.device.type == "cuda"
+                else None
+            )
+            rows.append(
+                {
+                    "batch_size": bs,
+                    "device": str(verifier.device),
+                    "img_per_s": round(total_imgs / max(elapsed, 1e-9), 2),
+                    "ms_per_image": round(1000.0 * elapsed / max(total_imgs, 1), 2),
+                    "peak_cuda_mb": peak_mb,
+                }
+            )
+    finally:
+        verifier.max_batch_size = prev_max
     return rows
 
 

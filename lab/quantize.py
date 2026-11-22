@@ -24,6 +24,7 @@ from ouroboros.data.loader import ShardDataset
 from ouroboros.decode.tokenizer import SmilesTokenizer
 from ouroboros.eval.metrics import aggregate, score_pair
 from ouroboros.eval.standardize import standardize
+from ouroboros.hf import EXPORTED_ENCODER_TYPES, inference_state
 from ouroboros.model import OCSRModel, build_model, load_model_state
 
 METHODS = ("none", "fp16", "int8-dynamic")
@@ -106,33 +107,33 @@ def compare_on_shards(
     fp32_model, state = load_fp32_model(ckpt_path, dev)
     quant_model = quantize_model(fp32_model, method).to(dev)
     img_size = state.get("config", {}).get("data", {}).get("image_size", 384)
-    ds = ShardDataset(shards_dir, split, image_size=img_size, max_samples=max_samples)
-    if len(ds) == 0:
-        raise ValueError(f"no samples in {shards_dir}:{split}")
+    with ShardDataset(shards_dir, split, image_size=img_size, max_samples=max_samples) as ds:
+        if len(ds) == 0:
+            raise ValueError(f"no samples in {shards_dir}:{split}")
 
-    golds = [ds.meta(i)["smiles"] for i in range(len(ds))]
-    fp32_preds, fp32_s = _decode_shards(
-        fp32_model, ds, device=dev, dtype=torch.float32, batch_size=batch_size
-    )
-    q_preds, q_s = _decode_shards(
-        quant_model,
-        ds,
-        device=dev,
-        dtype=input_dtype_for(method),
-        batch_size=batch_size,
-    )
+        golds = [ds.meta(i)["smiles"] for i in range(len(ds))]
+        fp32_preds, fp32_s = _decode_shards(
+            fp32_model, ds, device=dev, dtype=torch.float32, batch_size=batch_size
+        )
+        q_preds, q_s = _decode_shards(
+            quant_model,
+            ds,
+            device=dev,
+            dtype=input_dtype_for(method),
+            batch_size=batch_size,
+        )
+        n = len(ds)
 
     fp32_agg = aggregate([score_pair(p, g) for p, g in zip(fp32_preds, golds, strict=True)])
     q_agg = aggregate([score_pair(p, g) for p, g in zip(q_preds, golds, strict=True)])
-    same_raw = sum(a == b for a, b in zip(fp32_preds, q_preds, strict=True)) / len(ds)
+    same_raw = sum(a == b for a, b in zip(fp32_preds, q_preds, strict=True)) / n
     same_std = (
         sum(
             standardize(a).smiles == standardize(b).smiles
             for a, b in zip(fp32_preds, q_preds, strict=True)
         )
-        / len(ds)
+        / n
     )
-    n = len(ds)
     return {
         "checkpoint": checkpoint_label or Path(ckpt_path).name,
         "split": split,
@@ -171,21 +172,28 @@ def save_checkpoint_variant(
     if method not in METHODS:
         raise ValueError(f"unknown method {method!r}; choose from {METHODS}")
     model, state = load_fp32_model(ckpt_path, "cpu")
+    cfg = {
+        "model": copy.deepcopy(state["config"]["model"]),
+        "data": {"image_size": state["config"].get("data", {}).get("image_size", 384)},
+    }
+    enc_type = cfg["model"]["encoder"]["type"]
+    if enc_type in EXPORTED_ENCODER_TYPES:
+        cfg["model"]["encoder"]["type"] = EXPORTED_ENCODER_TYPES[enc_type]
     dst = Path(out_path)
     dst.parent.mkdir(parents=True, exist_ok=True)
     if method == "fp16":
         model = model.half()
         payload = {
-            "config": state["config"],
-            "vocab": state["vocab"],
-            "model": model.state_dict(),
+            "config": cfg,
+            "vocab": list(state["vocab"]),
+            "model": inference_state(model.state_dict()),
             "quantization": {"method": "fp16"},
         }
     else:
         payload = {
-            "config": state["config"],
-            "vocab": state["vocab"],
-            "model": model.state_dict(),
+            "config": cfg,
+            "vocab": list(state["vocab"]),
+            "model": inference_state(model.state_dict()),
             "quantization": {
                 "method": method,
                 "apply_on_load": method == "int8-dynamic",
@@ -204,6 +212,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--split", default="val")
     ap.add_argument("--batch-size", type=int, default=16)
     ap.add_argument("--max-samples", type=int, default=None)
+    ap.add_argument("--device", default="cpu", help="device for shard comparison (default: cpu)")
     ap.add_argument("--threads", type=int, default=None)
     ap.add_argument("--checkpoint-label", default=None)
     ap.add_argument("--report", help="write JSON validation comparison here")
@@ -224,6 +233,7 @@ def main(argv: list[str] | None = None) -> int:
             method=a.method,
             batch_size=a.batch_size,
             max_samples=a.max_samples,
+            device=a.device,
             checkpoint_label=a.checkpoint_label,
         )
         if out_info:

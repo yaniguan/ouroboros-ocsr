@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -23,9 +24,9 @@ ARMS = ("A", "B", "C")
 DECODING = ("greedy", "beam")
 QUANT = ("none", "fp16", "int8-dynamic")
 DEVICES = ("cpu", "jetson-orin-nano-super", "jetson-agx-orin-64gb", "gpu-24gb")
-TTA = ("pad", "sharpen")  # same views as scripts/predict_real.py
+TTA = ("pad", "sharpen")  # same views as ouroboros/decode/ensemble.py
 # Repo rule (DATA.md): test sets are never used to select checkpoints or limits.
-TEST_SET_MARKERS = ("subset100", "frozen", "dev-test", "test")
+TEST_SET_TOKENS = frozenset({"subset100", "frozen", "dev", "test"})
 
 
 class PlanError(ValueError):
@@ -33,8 +34,20 @@ class PlanError(ValueError):
 
 
 def load_config(path: str | Path) -> dict:
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
+
+
+def _is_num(val) -> bool:
+    return isinstance(val, int | float) and not isinstance(val, bool)
+
+
+def _looks_like_test_set(shards: str, split: str) -> bool:
+    if split.strip().lower() == "test":
+        return True
+    leaf = Path(shards).name.lower()
+    tokens = {t for t in re.split(r"[^a-z0-9]+", leaf) if t}
+    return bool(tokens & TEST_SET_TOKENS)
 
 
 def validate(cfg: dict) -> dict:
@@ -44,7 +57,8 @@ def validate(cfg: dict) -> dict:
     sel, q, tgt = cfg.get("selection", {}), cfg.get("quantize", {}), cfg.get("target", {})
     if not t.get("checkpoints"):
         errs.append("teacher.checkpoints: need at least one checkpoint")
-    if not isinstance(t.get("beam", 1), int) or t.get("beam", 1) < 1:
+    beam_val = t.get("beam", 1)
+    if isinstance(beam_val, bool) or not isinstance(beam_val, int) or beam_val < 1:
         errs.append("teacher.beam: must be an integer >= 1")
     bad_tta = [v for v in t.get("tta", []) if v not in TTA]
     if bad_tta:
@@ -53,16 +67,21 @@ def validate(cfg: dict) -> dict:
         errs.append(f"student.arm: must be one of {list(ARMS)}")
     if s.get("decoding", "greedy") not in DECODING:
         errs.append(f"student.decoding: must be one of {list(DECODING)}")
+    if not isinstance(s.get("config"), str) or not s.get("config", "").strip():
+        errs.append("student.config: need a non-empty config path")
     m = pl.get("min_margin")
-    if m is not None and (not isinstance(m, int | float) or not math.isfinite(m) or m < 0):
+    if m is not None and (not _is_num(m) or not math.isfinite(m) or m < 0):
         errs.append("pseudo_labels.min_margin: must be finite and >= 0")
     d = pl.get("max_disagreement")
-    if d is not None and (not isinstance(d, int | float) or not 0 <= d <= 1):
+    if d is not None and (not _is_num(d) or not 0 <= d <= 1):
         errs.append("pseudo_labels.max_disagreement: must be in [0, 1]")
     for key, block in (("pseudo_labels", pl), ("selection", sel)):
-        where = f"{block.get('shards', '')}:{block.get('split', '')}".lower()
-        if any(mark in where for mark in TEST_SET_MARKERS):
-            errs.append(f"{key}: uses a test set ({where}); use train/val data only")
+        sh, sp = block.get("shards"), block.get("split")
+        if not isinstance(sh, str) or not sh.strip() or not isinstance(sp, str) or not sp.strip():
+            errs.append(f"{key}: shards and split must be non-empty strings")
+            continue
+        if _looks_like_test_set(sh, sp):
+            errs.append(f"{key}: uses a test set ({sh}:{sp}); use train/val data only")
     if not cfg.get("leakage_eval_sets"):
         errs.append("leakage_eval_sets: list the eval sets the pseudo-labels must not overlap")
     if q.get("method", "none") not in QUANT:
@@ -88,14 +107,32 @@ def plan(cfg: dict) -> list[dict]:
         gate += f" --max-disagreement {pl['max_disagreement']}"
     student_ckpt = f"{run}/student/ckpt/best-step-<N>.pt"
     pseudo = f"{run}/pseudo"
-    roots = ",".join([*s.get("real_roots", []), f"{pseudo}/shards"])
+    real_roots = list(s.get("real_roots") or [sel["shards"]])
+    primary_real = real_roots[0]
+    extra_real = [*real_roots[1:], f"{pseudo}/shards"]
+    synth_root = s.get("synthetic_root", "data/synth-aug/shards")
     beam = "" if s.get("decoding", "greedy") == "greedy" else " --beam 5"
+    if s.get("init"):
+        extra_arg = f" --extra-real-root {' '.join(extra_real)}" if extra_real else ""
+        train_cmd = (
+            f"python scripts/prepare_real_finetune.py --ckpt {s['init']} --config {s['config']} "
+            f"--synthetic-root {synth_root} --real-root {primary_real}{extra_arg} "
+            f"--out-dir {run}/student_cfg "
+            f"&& python -m ouroboros.train --config {run}/student_cfg/finetune.yaml "
+            f"--out {run}/student"
+        )
+    else:
+        roots_csv = ",".join([primary_real, *extra_real])
+        train_cmd = (
+            f"python -m ouroboros.train --config {s['config']} --out {run}/student "
+            f"--set data.real_roots=[{roots_csv}]"
+        )
     steps = [
         dict(name="choose gate limits on validation", status="exists",
              cmd=f"python scripts/predict_real.py {ckpts} --beam {t.get('beam', 1)}{tta} "
                  f"--shards {sel['shards']} --split {sel['split']} --out {run}/val_teacher.csv "
                  f"--nbest-out {run}/val_teacher.jsonl && python scripts/eval_selective.py "
-                 f"{run}/val_teacher.jsonl --margins 0 0.2 0.5"),
+                 f"{run}/val_teacher.jsonl --margins 0 0.03 0.05 0.08 0.10 0.15 0.20"),
         dict(name="teacher pseudo-labels on unlabeled figures", status="exists",
              cmd=f"python scripts/predict_real.py {ckpts} --beam {t.get('beam', 1)}{tta}{gate} "
                  f"--unlabeled --shards {pl['shards']} --split {pl['split']} "
@@ -103,6 +140,7 @@ def plan(cfg: dict) -> list[dict]:
         dict(name="keep usable rows -> pseudo-label manifest -> shards", status="exists",
              cmd=f"python -m lab.molecule_context {run}/teacher.csv --out {run}/teacher.jsonl "
                  f"--manifest-out {pseudo}/manifest.csv "
+                 f"--source-shards {pl['shards']}:{pl['split']} "
                  f"&& python scripts/ingest_real.py --manifest {pseudo}/manifest.csv "
                  f"--out {pseudo}/shards"),
         dict(name="leakage gate vs all eval sets", status="exists",
@@ -110,9 +148,7 @@ def plan(cfg: dict) -> list[dict]:
                  + " ".join(cfg["leakage_eval_sets"])
                  + f" --train pseudo={pseudo}/manifest.csv --fail-on-connectivity"),
         dict(name=f"train student arm {s['arm']}", status="exists",
-             cmd=f"python -m ouroboros.train --config {s['config']} --out {run}/student "
-                 f"--set train.init_checkpoint={s.get('init', '')} "
-                 f"data.real_roots=[{roots}]"),
+             cmd=train_cmd),
         dict(name="score student on validation", status="exists",
              cmd=f"python scripts/predict_real.py --ckpt {student_ckpt}{beam} "
                  f"--shards {sel['shards']} --split {sel['split']} --out {run}/val_student.csv "

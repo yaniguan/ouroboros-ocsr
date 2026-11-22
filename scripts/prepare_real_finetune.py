@@ -49,6 +49,12 @@ def main(argv=None) -> None:
     ap.add_argument("--config", default="configs/finetune-real-pmc.yaml")
     ap.add_argument("--synthetic-root", required=True)
     ap.add_argument("--real-root", required=True, help="ingested real shards (train + val)")
+    ap.add_argument(
+        "--extra-real-root",
+        nargs="*",
+        default=[],
+        help="additional real/pseudo-labeled train shard roots",
+    )
     ap.add_argument("--exclude-keys", default=None)
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--set", nargs="*", default=[], help="dotted overrides, e.g. train.lr=1e-5")
@@ -65,7 +71,8 @@ def main(argv=None) -> None:
     counts: Counter = Counter()
     n_synth = label_tokens(a.synthetic_root, "train", counts)
     n_synth += label_tokens(a.synthetic_root, "val", counts)
-    n_real = label_tokens(a.real_root, "train", counts)
+    all_real_roots = [str(a.real_root), *(str(r) for r in a.extra_real_root)]
+    n_real = sum(label_tokens(r, "train", counts) for r in all_real_roots)
     added = tok.extend(t for t, _ in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0])))
     vocab_path = out / "vocab.json"
     tok.save(vocab_path)
@@ -76,7 +83,7 @@ def main(argv=None) -> None:
     cfg["data"].update(
         vocab=str(vocab_path),
         synthetic_root=str(a.synthetic_root),
-        real_roots=[str(a.real_root)],
+        real_roots=all_real_roots,
         image_size=state["config"]["data"]["image_size"],
     )
     if a.exclude_keys is not None:
@@ -89,19 +96,22 @@ def main(argv=None) -> None:
     for ov in a.set:
         k, v = ov.split("=", 1)
         set_dotted(cfg, k, _scalar(v))
-    n_val = len(ShardDataset(cfg["validation"]["root"], "val"))
+    with ShardDataset(cfg["validation"]["root"], "val") as val_ds:
+        n_val = len(val_ds)
     cfg["validation"]["samples"] = min(int(cfg["validation"]["samples"]), n_val)
     if cfg["validation"]["samples"] < 1:
         raise SystemExit("no real validation rows")
     # every training label must fit the decoder
-    for root, split in ((a.synthetic_root, "train"), (a.real_root, "train")):
-        ds = ShardDataset(root, split)
-        for i in range(len(ds)):
-            label = ds.meta(i)["smiles"]
-            if len(tok.encode(label)) - 1 > max_len:
-                raise SystemExit(f"label longer than max_len={max_len} in {root}:{split}: {label}")
+    for root, split in ((a.synthetic_root, "train"), *((r, "train") for r in all_real_roots)):
+        with ShardDataset(root, split) as ds:
+            for i in range(len(ds)):
+                label = ds.meta(i)["smiles"]
+                if len(tok.encode(label)) - 1 > max_len:
+                    raise SystemExit(
+                        f"label longer than max_len={max_len} in {root}:{split}: {label}"
+                    )
     cfg_path = out / "finetune.yaml"
-    cfg_path.write_text(yaml.safe_dump(cfg, sort_keys=False))
+    cfg_path.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")
     summary = {
         "config": str(cfg_path),
         "vocab": str(vocab_path),
