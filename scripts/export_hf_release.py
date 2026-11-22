@@ -69,7 +69,7 @@ def symmetry_group(enc_cfg: dict, encoder) -> str:
     if enc_cfg["type"] == "baseline" or n is None:
         return "none: ordinary CNN with absolute token positions (not rotation-equivariant)"
     group = f"C{n} rotations only, no reflections"
-    if enc_cfg["type"] == "canonicalize":
+    if enc_cfg["type"] in ("canonicalized", "canonicalize"):
         group += " (C_N-equivariant orientation net + canonicalization)"
     return group
 
