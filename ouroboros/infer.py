@@ -15,10 +15,12 @@ log-probability) under the same model; ``low_confidence`` is set when it is belo
 """
 
 import argparse
+import copy
 import io
 import json
 import math
 import os
+import pickle
 import threading
 import time
 from pathlib import Path
@@ -45,24 +47,55 @@ class InputError(ValueError):
     """Bad request: the caller should fix the input."""
 
 
-def load_checkpoint(path, device="cpu"):
-    """Trusted checkpoint (pickle) -> eval model, config.
+def load_checkpoint(path, device="cpu", *, allow_unsafe_pickle: bool = True):
+    """Load an inference or training checkpoint -> (eval model, config).
 
-    Steerable encoders are swapped for their pure-PyTorch export."""
-    state = torch.load(path, map_location="cpu", weights_only=False)
+    Tries safe ``weights_only=True`` loading first and falls back to ``weights_only=False``
+    only when ``allow_unsafe_pickle=True`` (for training checkpoints with RNG state).
+    Steerable encoders are swapped for their pure-PyTorch export.
+    """
+    try:
+        state = torch.load(path, map_location="cpu", weights_only=True)
+    except (pickle.UnpicklingError, RuntimeError):
+        if not allow_unsafe_pickle:
+            raise
+        state = torch.load(path, map_location="cpu", weights_only=False)
     model = build_model(state["config"], SmilesTokenizer(state["vocab"]))
-    load_model_state(model, state["model"])
+    quant = state.get("quantization", {})
+    weights = state["model"]
+    has_fp16_weights = quant.get("method") == "fp16" or (
+        bool(weights)
+        and all(
+            not v.is_floating_point() or v.dtype == torch.float16 for v in weights.values()
+        )
+        and any(v.dtype == torch.float16 for v in weights.values())
+    )
+    if has_fp16_weights:
+        model = model.half()
+    load_model_state(model, weights)
     model.to(device).eval()
     if hasattr(model.encoder, "export"):
-        model.encoder = model.encoder.export().to(device)
+        exported = model.encoder.export()
+        if has_fp16_weights:
+            exported = exported.half()
+        model.encoder = exported.to(device)
+    if quant.get("apply_on_load") and torch.device(device).type == "cpu" and not has_fp16_weights:
+        model.decoder = torch.ao.quantization.quantize_dynamic(
+            model.decoder, {torch.nn.Linear}, dtype=torch.qint8
+        )
     return model, state["config"]
 
 
 def open_image(image) -> Image.Image:
     if isinstance(image, Image.Image):
+        if image.width * image.height > MAX_PIXELS:
+            raise InputError(f"image larger than {MAX_PIXELS} pixels")
         return image
     if isinstance(image, (str, Path)):
-        image = Path(image).read_bytes()
+        p = Path(image)
+        if p.stat().st_size > MAX_BYTES:
+            raise InputError(f"image larger than {MAX_BYTES} bytes")
+        image = p.read_bytes()
     if not isinstance(image, (bytes, bytearray)) or not image:
         raise InputError("image must be a nonempty path, bytes or PIL image")
     if len(image) > MAX_BYTES:
@@ -87,8 +120,18 @@ class OCSRPredictor:
         if model is None:
             model, cfg = load_checkpoint(ckpt)
             image_size = cfg.get("data", {}).get("image_size", 384)
+        elif int8:
+            model = copy.deepcopy(model).eval()
+        else:
+            model = model.eval()
         self.model = model
-        if int8:
+        param = next(self.model.parameters())
+        is_already_int8 = any(
+            isinstance(m, torch.ao.nn.quantized.dynamic.Linear)
+            for m in self.model.decoder.modules()
+        )
+        can_int8 = param.device.type == "cpu" and param.dtype == torch.float32
+        if int8 and can_int8 and not is_already_int8:
             self.model.decoder = torch.ao.quantization.quantize_dynamic(
                 self.model.decoder, {torch.nn.Linear}, dtype=torch.qint8)
         self.image_size = image_size or 384
@@ -104,7 +147,8 @@ class OCSRPredictor:
     def predict(self, image, *, ink_crop: bool = False) -> dict:
         t0 = time.perf_counter()
         img = open_image(image)
-        x = self.to_tensor(img, ink_crop=ink_crop)
+        param = next(self.model.parameters())
+        x = self.to_tensor(img, ink_crop=ink_crop).to(device=param.device, dtype=param.dtype)
         t1 = time.perf_counter()
         m, tok = self.model, self.model.tokenizer
         enc = m.encoder(x)
@@ -114,7 +158,7 @@ class OCSRPredictor:
             ids = ids[:ids.index(tok.eos_id) + 1]
         smiles = tok.decode(ids)
         t2 = time.perf_counter()
-        seq = torch.tensor([[tok.bos_id, *ids]])
+        seq = torch.tensor([[tok.bos_id, *ids]], dtype=torch.long, device=param.device)
         logp = float(m.decoder.score(seq, enc.tokens, enc.padding_mask)[0]) / max(len(ids), 1)
         confidence = math.exp(logp)
         std = standardize(smiles)
@@ -140,10 +184,17 @@ class OCSRPredictor:
 def create_app(predictor: OCSRPredictor | None = None):
     """Small FastAPI app: POST /predict with the raw image bytes as the request body."""
     from fastapi import FastAPI, HTTPException, Request
+    from starlette.concurrency import run_in_threadpool
 
     app = FastAPI(title="Ouroboros OCSR CPU API")
     state = {"predictor": predictor}
     lock = threading.Lock()  # one request at a time: parallel torch calls fight over cores
+
+    def _sync_predict(payload: bytes) -> dict:
+        with lock:
+            if state["predictor"] is None:
+                state["predictor"] = OCSRPredictor(os.environ.get("OUROBOROS_CKPT", DEFAULT_CKPT))
+            return state["predictor"].predict(payload)
 
     @app.get("/health")
     def health():
@@ -151,12 +202,16 @@ def create_app(predictor: OCSRPredictor | None = None):
 
     @app.post("/predict")
     async def predict(request: Request):
-        if state["predictor"] is None:
-            state["predictor"] = OCSRPredictor(os.environ.get("OUROBOROS_CKPT", DEFAULT_CKPT))
-        body = await request.body()
+        cl = request.headers.get("content-length")
+        if cl and cl.isdigit() and int(cl) > MAX_BYTES:
+            raise HTTPException(status_code=413, detail=f"image larger than {MAX_BYTES} bytes")
+        buf = bytearray()
+        async for chunk in request.stream():
+            buf.extend(chunk)
+            if len(buf) > MAX_BYTES:
+                raise HTTPException(status_code=413, detail=f"image larger than {MAX_BYTES} bytes")
         try:
-            with lock:
-                return state["predictor"].predict(bytes(body))
+            return await run_in_threadpool(_sync_predict, bytes(buf))
         except InputError as err:
             raise HTTPException(status_code=422, detail=str(err)) from err
 

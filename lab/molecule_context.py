@@ -82,7 +82,12 @@ class MoleculeContext:
 def _as_bool(text: str | None) -> bool | None:
     if text is None or str(text).strip() == "":
         return None
-    return str(text).strip().lower() in ("true", "1", "yes")
+    low = str(text).strip().lower()
+    if low in ("true", "1", "yes"):
+        return True
+    if low in ("false", "0", "no"):
+        return False
+    raise ValueError(f"invalid boolean value: {text!r}")
 
 
 def _as_float(text: str | None) -> float | None:
@@ -93,7 +98,7 @@ def _as_float(text: str | None) -> float | None:
 
 def _stereo_counts(mol: Chem.Mol) -> tuple[int, int]:
     specified = unassigned = 0
-    for info in Chem.FindPotentialStereo(mol):
+    for info in Chem.FindPotentialStereo(Chem.Mol(mol)):
         if info.specified == Chem.StereoSpecified.Specified:
             specified += 1
         else:
@@ -152,7 +157,7 @@ def from_prediction(row: dict, *, with_molfile: bool = False) -> MoleculeContext
 
 
 def read_predictions(path: str | Path, *, with_molfile: bool = False) -> list[MoleculeContext]:
-    with open(path, newline="") as f:
+    with open(path, encoding="utf-8", newline="") as f:
         return [from_prediction(r, with_molfile=with_molfile) for r in csv.DictReader(f)]
 
 
@@ -195,11 +200,41 @@ def read_context_jsonl(path: str | Path) -> list[MoleculeContext]:
     return [from_json_dict(json.loads(line)) for line in text.splitlines() if line.strip()]
 
 
+def _extract_shard_pngs(
+    source_shards: str, wanted_ids: set[str], out_dir: Path
+) -> dict[str, str]:
+    """Extract raw PNG bytes for ``wanted_ids`` from ``shards_dir[:split]``."""
+    import os
+    import re
+
+    from ouroboros.data.loader import ShardDataset
+
+    drive, rest = os.path.splitdrive(source_shards)
+    parts = rest.split(":", 1)
+    root = Path(drive + parts[0])
+    split = parts[1] if len(parts) > 1 else "train"
+    images_dir = out_dir / "images"
+    images_dir.mkdir(parents=True, exist_ok=True)
+    extracted: dict[str, str] = {}
+    with ShardDataset(root, split, labeled=False) as ds:
+        for i, (shard, entry) in enumerate(ds.entries):
+            meta = ds.meta(i)
+            rid = str(meta.get("id") if meta.get("id") not in (None, "") else i)
+            if rid not in wanted_ids:
+                continue
+            safe = re.sub(r"[^A-Za-z0-9._-]+", "_", rid).strip("._") or f"row_{i}"
+            rel = f"images/{safe}.png"
+            (out_dir / rel).write_bytes(ds._read(shard, entry["png"]))
+            extracted[rid] = rel
+    return extracted
+
+
 def write_pseudo_manifest(
     contexts: list[MoleculeContext],
     out_path: str | Path,
     *,
     image_template: str = "images/{id}.png",
+    source_shards: str | None = None,
     source: str = "pseudo",
     split: str = "train",
 ) -> int:
@@ -207,6 +242,11 @@ def write_pseudo_manifest(
     dst = Path(out_path)
     dst.parent.mkdir(parents=True, exist_ok=True)
     kept = [c for c in contexts if c.status == "ok" and c.smiles]
+    extracted = (
+        _extract_shard_pngs(source_shards, {c.id for c in kept}, dst.parent)
+        if source_shards and kept
+        else {}
+    )
     with open(dst, "w", encoding="utf-8", newline="\n") as f:
         w = csv.DictWriter(
             f,
@@ -215,9 +255,12 @@ def write_pseudo_manifest(
         )
         w.writeheader()
         for c in kept:
+            if source_shards and c.id not in extracted:
+                raise FileNotFoundError(f"id {c.id!r} not found in {source_shards}")
+            img_path = extracted.get(c.id) or image_template.format(id=c.id, subset=c.subset)
             w.writerow(
                 {
-                    "image": image_template.format(id=c.id, subset=c.subset),
+                    "image": img_path,
                     "smiles": c.smiles,
                     "source": c.subset or source,
                     "split": split,
@@ -255,16 +298,26 @@ def main(argv: list[str] | None = None) -> int:
         default="images/{id}.png",
         help="image path template for --manifest-out (default: images/{id}.png)",
     )
+    p.add_argument(
+        "--source-shards",
+        default=None,
+        help="optional shards_dir[:split] to extract status=ok PNGs next to --manifest-out",
+    )
     a = p.parse_args(argv)
     contexts = read_predictions(a.predictions, with_molfile=a.molfile)
     text = "".join(c.to_json() + "\n" for c in contexts)
     if a.out:
         Path(a.out).parent.mkdir(parents=True, exist_ok=True)
-        Path(a.out).write_text(text)
+        Path(a.out).write_text(text, encoding="utf-8")
     else:
         sys.stdout.write(text)
     if a.manifest_out:
-        write_pseudo_manifest(contexts, a.manifest_out, image_template=a.image_template)
+        write_pseudo_manifest(
+            contexts,
+            a.manifest_out,
+            image_template=a.image_template,
+            source_shards=a.source_shards,
+        )
     counts = {s: sum(c.status == s for c in contexts) for s in STATUSES}
     print(json.dumps({"rows": len(contexts), **counts}), file=sys.stderr)
     if a.prompt:

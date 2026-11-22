@@ -21,7 +21,8 @@
     "decoding": "greedy",
     "config": "configs/finetune-real-pmc.yaml",
     "init": "checkpoints/finetune-v2-A.pt",
-    "real_roots": ["/content/data/real/pmc"]
+    "synthetic_root": "data/synth-aug/shards",
+    "real_roots": ["real/pmc"]
   },
   "selection": {
     "shards": "real/pmc",
