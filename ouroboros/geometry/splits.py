@@ -29,6 +29,29 @@ def assign_split(smiles, fractions=(.8, .1, .1), seed=0):
     return NAMES[2]
 
 
+def _posix(value) -> str:
+    return str(value).replace('\\', '/')
+
+
+def write_extxyz(target, frames, *, append: bool = False) -> None:
+    """Write ASE extxyz frames while escaping backslashes in string metadata.
+
+    ASE's extxyz reader unescapes ``\\\\`` -> ``\\`` (and strips single ``\\``),
+    whereas ``ase.io.write`` writes raw backslashes. Escaping on shallow copies
+    keeps ``(Z)``-alkene SMILES (``F/C=C\\F``) intact when read back.
+    """
+    from ase.io import write
+
+    escaped = []
+    for atoms in frames:
+        copy = atoms.copy()
+        for k, v in list(copy.info.items()):
+            if isinstance(v, str) and '\\' in v:
+                copy.info[k] = v.replace('\\', '\\\\')
+        escaped.append(copy)
+    write(target, escaped, format='extxyz', append=append)
+
+
 def split_dataset(frames, records, fractions=(.8, .1, .1), seed=0):
     """Match frames to manifest records and split them by molecule.
 
@@ -44,20 +67,22 @@ def split_dataset(frames, records, fractions=(.8, .1, .1), seed=0):
             output['skipped']['manifest'].append(dict(row))
             continue
         name = assign_split(row.get('smiles'), fractions, seed)
-        rec = dict(row, split=name, connectivity_key=connectivity_key(row.get('smiles')),
+        src_img = _posix(row['source_image'])
+        rec = dict(row, source_image=src_img, split=name,
+                   connectivity_key=connectivity_key(row.get('smiles')),
                    input_frame_indices=[], output_frame_indices=[])
         written = [c for c in row.get('conformers', []) if c.get('written', True)]
         if len(written) != row['n_frames']:
             raise ValueError('manifest n_frames disagrees with written conformers')
         for conf in written:
-            key = (str(row['source_image']), str(row['id']), int(conf['conf_id']))
+            key = (src_img, str(row['id']), int(conf['conf_id']))
             if key in expected:
                 raise ValueError(f'ambiguous manifest association: {key}')
             expected[key] = (name, rec)
         output[name]['manifest'].append(rec)
     for index, atoms in enumerate(frames):
         try:
-            key = (str(atoms.info['source_image']), str(atoms.info['source_id']),
+            key = (_posix(atoms.info['source_image']), str(atoms.info['source_id']),
                    int(atoms.info['conf_id']))
         except KeyError as exc:
             raise ValueError('frame lacks manifest association') from exc
@@ -68,7 +93,10 @@ def split_dataset(frames, records, fractions=(.8, .1, .1), seed=0):
         rec['input_frame_indices'].append(index)
         rec['output_frame_indices'].append(len(output[name]['frames']))
         frame = atoms.copy()
-        frame.info.update(split=name, connectivity_key=rec['connectivity_key'])
+        frame.info.update(source_image=rec['source_image'], split=name,
+                          connectivity_key=rec['connectivity_key'])
+        if rec.get('smiles'):
+            frame.info['smiles'] = rec['smiles']
         output[name]['frames'].append(frame)
     if joined != set(expected):
         raise ValueError('manifest references missing frames')
