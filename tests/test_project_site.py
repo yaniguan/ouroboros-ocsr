@@ -69,3 +69,74 @@ def test_site_and_ui_plain_english_no_cjk():
     for path in targets:
         text = path.read_text(encoding="utf-8")
         assert not cjk.search(text), f"Non-English CJK characters found in {path}"
+
+
+def test_ui_html_metric_bindings_and_browser_lab_smiles_parser():
+    import shutil
+    import subprocess
+
+    ui_html = (ROOT / "ouroboros" / "ui" / "index.html").read_text(encoding="utf-8")
+    assert "stereo_elem_acc_strict" in ui_html
+    assert "agg.stereo_accuracy" not in ui_html
+    assert 'id="ocsrRef" class="mono" value=""' in ui_html
+
+    node = shutil.which("node")
+    if node is None:
+        return
+    js_driver = """
+    const fs = require('fs');
+    const vm = require('vm');
+    const src = fs.readFileSync('site/lab/lab.js', 'utf8');
+    // Extract runCustomClientSmiles + helpers inside a minimal DOM stub
+    const noop = () => ({
+      addEventListener(){},
+      classList:{ toggle(){}, remove(){} },
+      style:{},
+      querySelectorAll(){ return []; },
+    });
+    const ctx = {
+      window: { addEventListener(){} },
+      document: {
+        readyState: 'loading',
+        documentElement: { dataset: {} },
+        addEventListener(){},
+        getElementById: noop,
+        querySelector: noop,
+        querySelectorAll(){ return []; },
+      },
+      localStorage: { getItem(){ return null; }, setItem(){} },
+      fetch: async () => ({ ok: false, status: 404 }),
+      requestAnimationFrame(){},
+      URL: { createObjectURL(){}, revokeObjectURL(){} },
+      Blob: class {},
+      console,
+    };
+    const exposed = src.replace(
+      'function runCustomClientSmiles(rawSmiles) {',
+      'globalThis.__runCustom = runCustomClientSmiles; function runCustomClientSmiles(rawSmiles) {'
+    );
+    vm.runInNewContext(exposed, ctx);
+    const bad = ctx.__runCustom('Invalid Molecule!');
+    const furan = ctx.__runCustom('c1ccoc1');
+    const lactic = ctx.__runCustom('CC(O)C(=O)O');
+    const ion = ctx.__runCustom('[NH4+]');
+    const rad = ctx.__runCustom('[CH2]C');
+    console.log(JSON.stringify({
+      bad: bad.overall_status,
+      badG1: bad.gates[0].status,
+      furan: furan.overall_status,
+      furanFormula: furan.formula,
+      furanGates: furan.gates.length,
+      lacticG3: lactic.gates[2].status,
+      ionG2: ion.gates[1].status,
+      radG2: rad.gates[1].status,
+    }));
+    """
+    out = json.loads(
+        subprocess.check_output([node, "-e", js_driver], cwd=str(ROOT), text=True, encoding="utf-8")
+    )
+    assert out["bad"] == "fail" and out["badG1"] == "fail"
+    assert out["furan"] == "pass" and "C4H4O" in out["furanFormula"] and out["furanGates"] == 10
+    assert out["lacticG3"] == "warn"
+    assert out["ionG2"] == "fail"
+    assert out["radG2"] == "fail"

@@ -47,7 +47,21 @@ class LabHandler(BaseHTTPRequestHandler):
     def _json(self, status: int, value: dict):
         self._send(status, json.dumps(value, allow_nan=False).encode(), "application/json")
 
+    def _check_local_headers(self) -> bool:
+        local_hosts = {"127.0.0.1", "localhost", "::1", "[::1]", "testserver"}
+        host_hdr = (self.headers.get("Host") or "").split(":")[0].strip().lower()
+        if host_hdr and host_hdr not in local_hosts:
+            self._json(403, {"error": "Invalid Host header."})
+            return False
+        origin = self.headers.get("Origin")
+        if origin and (urlsplit(origin).hostname or "").lower() not in local_hosts:
+            self._json(403, {"error": "Cross-origin requests are not allowed."})
+            return False
+        return True
+
     def do_GET(self):
+        if not self._check_local_headers():
+            return
         path = urlsplit(self.path).path
         if path == self.server.prefix:
             self._send(200, Path(__file__).with_name("index.html").read_bytes(), "text/html")
@@ -57,6 +71,8 @@ class LabHandler(BaseHTTPRequestHandler):
             self._json(404, {"error": "Use the session URL printed by the demo launcher."})
 
     def do_POST(self):
+        if not self._check_local_headers():
+            return
         path = urlsplit(self.path).path
         routes = {self.server.prefix + "evaluate", self.server.prefix + "model"}
         if path not in routes:

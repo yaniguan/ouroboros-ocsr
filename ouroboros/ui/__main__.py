@@ -91,7 +91,26 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             return raw[len(prefix) :]
         return None
 
+    def _check_local_headers(self) -> bool:
+        local_hosts = {"127.0.0.1", "localhost", "::1", "[::1]", "testserver"}
+        srv_addr = getattr(self.server, "server_address", ("127.0.0.1", 0))
+        srv_host = str(srv_addr[0])
+        if srv_host in ("127.0.0.1", "::1", "localhost"):
+            host_hdr = (self.headers.get("Host") or "").split(":")[0].strip().lower()
+            if host_hdr and host_hdr not in local_hosts:
+                self._send_json(403, {"error": "Invalid Host header."})
+                return False
+            origin = self.headers.get("Origin")
+            if origin:
+                orig_host = (urlsplit(origin).hostname or "").lower()
+                if orig_host not in local_hosts:
+                    self._send_json(403, {"error": "Cross-origin requests are not allowed."})
+                    return False
+        return True
+
     def do_GET(self) -> None:
+        if not self._check_local_headers():
+            return
         route = self._route()
         if route is None:
             self._send_json(404, {"error": "Wrong session URL."})
@@ -111,6 +130,8 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
         self._send_json(404, {"error": f"Unknown GET route: {route}"})
 
     def do_POST(self) -> None:
+        if not self._check_local_headers():
+            return
         route = self._route()
         if route is None:
             self._send_json(404, {"error": "Wrong session URL."})

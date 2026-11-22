@@ -185,8 +185,12 @@ def test_image_reader_dataset_builder_and_batch_score(engine):
     )
     assert ff_res["total_inputs"] == 3
     assert ff_res["accepted_molecules"] == 2
+    assert ff_res["rejected_molecules"] == 1
     assert ff_res["total_frames_written"] >= 2
     assert "mace_forces" in ff_res["extxyz_preview"]
+
+    with pytest.raises(ValueError, match="Benchmark file not found"):
+        engine.load_repo_benchmark("../benchmarks-extra/escape.json")
 
     eval_res = engine.run_batch_evaluation(
         {
@@ -255,3 +259,16 @@ def test_http_handler_in_memory(engine):
     assert send("/wb-test/api/compliance3d", {"smiles": "CCO"}, "text/plain")[0] == 415
     assert send("/wrong-prefix/api/health")[0] == 404
     assert send("/wb-test/api/unknown", {"x": 1})[0] == 404
+
+    # DNS-rebinding / cross-origin POST protection
+    evil_req = b"GET /wb-test/api/health HTTP/1.0\r\nHost: evil.example.com\r\n\r\n"
+    conn = MemConn(evil_req)
+    WorkbenchHandler(conn, ("127.0.0.1", 8787), server)
+    assert int(conn.outgoing.getvalue().split()[1]) == 403
+
+
+def test_ring_cis_trans_stereo_count_in_compliance():
+    res = audit_3d_physical_compliance("O[C@H]1CC[C@@H](O)CC1", potential="mmff94s", n_conf=1)
+    assert res["ok"] is True
+    gate_by_id = {g["id"]: g for g in res["gates"]}
+    assert gate_by_id["G3_STEREO_SPECIFICATION"]["metric"] == "2 labeled"

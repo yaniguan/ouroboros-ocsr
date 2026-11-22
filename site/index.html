@@ -97,7 +97,7 @@
             <span>229 ms</span>
             <span class="sub">p50 · int8 decoder</span>
           </div>
-          <p>Sub-second single-thread CPU inference (<code>ouroboros.infer</code>) with token-probability gating and only +0.21 pp accuracy drop on PMC val.</p>
+          <p>Sub-second single-thread CPU inference (<code>ouroboros.infer</code>) with token-probability gating and only 0.21 pp accuracy drop on PMC val.</p>
         </a>
         <a class="metric-card" href="#research">
           <span class="small-label">Literature ¹³C NMR</span>
@@ -280,7 +280,7 @@
             </label>
             <label class="ctrl-group">
               <input type="checkbox" id="gate-expand-aliases" checked>
-              <span><code>--expand-aliases</code> (Boc, OMe, Ph…)</span>
+              <span>Pre-expand aliases via <code>image_to_forcefield --expand-aliases</code></span>
             </label>
           </div>
 
@@ -525,18 +525,18 @@ python -m ouroboros.ui --port 8787</pre>
 
           <div class="gates-panel">
             <h3>Ten built-in 3D chemistry &amp; symmetry checks</h3>
-            <p>Verified on every generated conformer in the 3D Lab and <code>image_to_forcefield.py</code>:</p>
+            <p>Verified in the 3D Lab (<code>ouroboros.ui.compliance</code>), with chemistry &amp; steric/stereo gates enforced in <code>image_to_forcefield.py</code>:</p>
             <ul class="gate-pills">
-              <li>1. Valence &amp; single molecule</li>
-              <li>2. Element &amp; zero net charge</li>
+              <li>1. Valid single-molecule SMILES</li>
+              <li>2. 10-element neutral closed shell</li>
               <li>3. Assigned R/S &amp; E/Z stereo</li>
-              <li>4. ETKDGv3 3D embedding</li>
-              <li>5. Interatomic clash &gt; 0.60 Å</li>
-              <li>6. CIP chirality kept on relax</li>
-              <li>7. SE(3) energy invariance</li>
-              <li>8. SO(3) force equivariance</li>
-              <li>9. Zero net force &amp; torque</li>
-              <li>10. Conservative F = -∇E</li>
+              <li>4. ETKDGv3 3D conformer generated</li>
+              <li>5. No atom collisions (&ge; 0.75 Å)</li>
+              <li>6. Covalent bond lengths &amp; angles</li>
+              <li>7. 3D chirality preserved on relax</li>
+              <li>8. Relaxed to low energy (fmax)</li>
+              <li>9. SE(3) &amp; SO(3) invariance + net F/τ</li>
+              <li>10. Mirror symmetry &amp; F = &minus;&nabla;E</li>
             </ul>
           </div>
         </div>

@@ -200,15 +200,12 @@
       ctx.font = '500 11px ui-monospace, SFMono-Regular, Menlo, monospace';
       ctx.fillText(`384px inscribed canvas${inkCrop ? ' · --ink-crop on' : ''}`, 12, h - 10);
 
-      // Update C8 cyclic-shift bars and feature error
+      // Update C8 cyclic-shift bars and feature error (defined on C8 45° multiples, matching RotationLab)
       const step45 = deg / 45;
-      const nearest45 = Math.round(step45) * 45;
-      const dist45 = Math.abs(deg - nearest45);
-      let errStr = '3.1 × 10⁻¹⁶';
+      let errStr = '— (defined on 45° C8 grid)';
       if (deg % 360 === 0) errStr = '3.1 × 10⁻¹⁶ (exact)';
       else if (deg % 90 === 0) errStr = '8.1 × 10⁻⁷ (exact C4 grid)';
       else if (deg % 45 === 0) errStr = '2.4 × 10⁻³ (C8 steerable grid)';
-      else errStr = `${(0.012 + 0.0018 * dist45).toFixed(3)} (bilinear raster)`;
       if (errOut) errOut.textContent = errStr;
 
       if (armCOut) armCOut.textContent = mol.smiles;
@@ -535,7 +532,8 @@
 
       const cx = w / 2;
       const cy = h / 2;
-      const flagged = noise >= 1.8;
+      const marginSigma = Math.max(0.4, 9.4 - noise * 3.6);
+      const flagged = marginSigma < 3.0;
       hitPoints = [];
 
       ctx.save();
@@ -652,10 +650,10 @@
       if (readout) {
         const code = wellLabel(target, kind, order);
         const lat = kind === 'rect' ? '2.6 ms' : '9.0 ms';
-        const margin = Math.max(0.03, 0.88 - noise * 0.39).toFixed(2);
+        const margin = `${marginSigma.toFixed(1)} σ`;
         readout.innerHTML =
           `<strong>Well #${target} → <code>${code}</code></strong> (${order}) · ` +
-          `symmetry margin <code>${margin}</code> · median CPU <code>${lat}</code> · ` +
+          `symmetry margin <code>${margin}</code> (min 3.0 σ) · median CPU <code>${lat}</code> · ` +
           (flagged
             ? `<span class="pill-badge warn">ambiguous (flagged, never guessed)</span>`
             : `<span class="pill-badge ok">decoded cleanly</span>`);

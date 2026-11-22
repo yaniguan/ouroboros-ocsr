@@ -25,6 +25,7 @@ from ouroboros.data.real import fit_to_canvas
 from ouroboros.data.render import RenderStyle, encode_png, render
 from ouroboros.data.rgroups import ABBREVIATIONS, expand_aliases, substitute
 from ouroboros.decode.confidence import confidence, selective_report
+from ouroboros.decode.ensemble import predict_batch
 from ouroboros.decode.tokenizer import SmilesTokenizer
 from ouroboros.demo.rotation import EXAMPLES, _heatmap, relative_error
 from ouroboros.eval.metrics import aggregate, bootstrap_ci, score_pair
@@ -34,6 +35,7 @@ from ouroboros.geometry.displacements import displaced_conformers
 from ouroboros.geometry.eligibility import EligibilityPolicy
 from ouroboros.geometry.propagation import categorize, mirror_smiles, same_formula
 from ouroboros.geometry.splits import assign_split, connectivity_key
+from ouroboros.infer import open_image
 from ouroboros.labels import labelled_smiles, parse_labelled
 from ouroboros.model import OCSRModel, build_model, load_model_state
 from ouroboros.ui.compliance import (
@@ -44,7 +46,6 @@ from ouroboros.ui.compliance import (
     get_3d_calculator,
     png_data_url,
 )
-from scripts.predict_real import predict_batch
 
 ROOT = Path(__file__).resolve().parents[2]
 CKPT_DIR = ROOT / "checkpoints"
@@ -59,8 +60,8 @@ def _url_to_pil(data_url: str) -> Image.Image:
     raw = data_url.strip()
     if "," in raw and raw.startswith("data:"):
         raw = raw.split(",", 1)[1]
-    with Image.open(io.BytesIO(base64.b64decode(raw))) as im:
-        return im.convert("L")
+    img = open_image(base64.b64decode(raw, validate=True))
+    return img.convert("L")
 
 
 def _has_alias_atoms(smiles: str) -> bool:
@@ -185,7 +186,8 @@ class WorkbenchEngine:
     def _load_probe(self, arch: str, order: int) -> tuple[OCSRModel, dict]:
         key = (arch, int(order))
         if key not in self._probes:
-            self._probes[key] = _build_small_probe_model(arch, int(order), size=128)
+            m, cfg = _build_small_probe_model(arch, int(order), size=128)
+            self._probes[key] = (m.to(self.device).eval(), cfg)
         return self._probes[key]
 
     def status(self) -> dict[str, Any]:
@@ -296,11 +298,13 @@ class WorkbenchEngine:
         gate = confidence(pred_smi, ranked, src_preds, min_margin=min_margin)
 
         expanded_smi = None
+        expansion_error = None
         if do_expand and _has_alias_atoms(pred_smi):
             try:
                 expanded_smi = Chem.MolToSmiles(expand_aliases(pred_smi))
-            except ValueError:
+            except ValueError as exc:
                 expanded_smi = None
+                expansion_error = str(exc)
 
         ref_valid = bool(ref_smiles and standardize(ref_smiles).valid)
         candidates = []
@@ -341,6 +345,7 @@ class WorkbenchEngine:
             "processed_image": _pil_to_url(proc_img),
             "predicted_smiles": pred_smi,
             "expanded_smiles": expanded_smi,
+            "expansion_error": expansion_error,
             "standardized_smiles": std_best.smiles if std_best.valid else None,
             "predicted_depiction": png_data_url(std_best.mol, size=260) if std_best.valid else None,
             "confidence_gate": gate,
@@ -813,9 +818,11 @@ class WorkbenchEngine:
             ase_write(extxyz_buf, frames, format="extxyz")
         manifest_jsonl = "\n".join(json.dumps(r) for r in rows) + "\n"
 
+        accepted_count = sum(1 for r in rows if r["status"] == "ok")
         return {
             "total_inputs": len(smiles_list),
-            "accepted_molecules": sum(1 for r in rows if r["status"] == "ok"),
+            "accepted_molecules": accepted_count,
+            "rejected_molecules": len(rows) - accepted_count,
             "total_frames_written": len(frames),
             "rows": rows,
             "extxyz_preview": extxyz_buf.getvalue(),
@@ -942,7 +949,7 @@ class WorkbenchEngine:
     def load_repo_benchmark(self, rel_path: str) -> dict[str, Any]:
         clean = rel_path.strip().lstrip("/\\")
         target = (BENCH_DIR / clean).resolve()
-        if not str(target).startswith(str(BENCH_DIR.resolve())) or not target.is_file():
+        if not target.is_relative_to(BENCH_DIR.resolve()) or not target.is_file():
             raise ValueError(f"Benchmark file not found in benchmarks/: {rel_path!r}")
         if target.suffix.lower() != ".json":
             raise ValueError("Only .json benchmark files are supported.")
