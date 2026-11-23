@@ -44,6 +44,19 @@ Scored once with `scripts/predict_real.py --ckpt A-selected.pt --ckpt C-selected
 | `has_stereo` | 57 | 1.75% | `[0.00%, 5.26%]` | 14.04% | 1.75% | 98.25% | 0.5516 |
 | `no_stereo` | 243 | 57.20% | `[51.03%, 63.37%]` | 57.61% | 60.91% | 100.00% | 0.8100 |
 
+### 3. MolScribe protocol parity (`molscribe_parity_report.json`, `n = 300`)
+
+Re-scoring the **exact same** `AC-ensemble-beam5-ttapad-preds.csv` file (`scripts/eval_predictions.py ... --protocol both`) under the MolScribe / MolNexTR evaluation rules (`arXiv:2205.14311`: monovalent abbreviations expanded, generic R-groups collapsed to `*`, tetrahedral `@/@@` kept, double-bond `E/Z` stripped):
+
+| Subset | `n` | Strict Ouroboros exact | MolScribe-protocol exact | MolScribe 95% CI | MolScribe flat |
+|---|---:|---:|---:|---|---:|
+| **ALL** | 300 | 46.67% | **48.00%** | `[42.00%, 53.33%]` | 49.33% |
+| ACS | 100 | 30.00% | **33.00%** | `[24.00%, 42.00%]` | 35.00% |
+| UOB | 100 | 85.00% | **86.00%** | `[79.00%, 92.00%]` | 87.00% |
+| USPTO | 100 | 25.00% | **25.00%** | `[16.00%, 33.00%]` | 26.00% |
+| `has_stereo` | 57 | 1.75% | **8.77%** | `[1.75%, 15.79%]` | 14.04% |
+| `no_stereo` | 243 | 57.20% | **57.20%** | `[51.03%, 63.37%]` | 57.61% |
+
 Do not run additional fine-tune v2 decoding variants on this set.
 
 ## Identity and counts

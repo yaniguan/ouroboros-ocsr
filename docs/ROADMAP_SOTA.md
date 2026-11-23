@@ -44,9 +44,13 @@ MolScribe 12.70% (DECIMER.ai paper, Table 6).
 | ACS | 81.9 (MolNexTR) | 7.0 | −74.9 | needs R-group/abbreviation labels (0/20 on `*` molecules) |
 | Hand-drawn | 75.4 (GTR-VL) | 0.0 (released A/B/C), 4.5 (v2 A+C beam 5, `n=200`, CI 2.0–7.5; `benchmarks/handdrawn-decimer/`) | −70.9 (different split; parity unverified) | **Secondary target**: rotation/style robustness is where the C_N steerable encoder should help; needs hand-drawn synthetic training data (`handdrawn_augment`) |
 
-Caveat: our numbers come from a seeded 100-per-source sample of Keylab/OCSR-Benchmarks and the
-standardization in `ouroboros/eval/standardize.py` (parity unverified); a SOTA claim needs the full
-benchmark sets with the MolScribe scoring script.
+Caveat: our numbers come from a seeded 100-per-source sample of Keylab/OCSR-Benchmarks (`subset100`
+and `frozen-test-v2`, 95% CIs ± ~9 pts per source). For direct scoring alignment with MolScribe /
+MolNexTR (`arXiv:2205.14311`), `ouroboros/eval/molscribe_parity.py` (`scripts/eval_predictions.py
+--protocol both`) scores `frozen-test-v2` at **48.0% overall** (`ACS 33.0%`, `UOB 86.0%`, `USPTO
+25.0%`, `has_stereo 8.8%`) vs **46.7% strict Ouroboros** (`ACS 30.0%`, `UOB 85.0%`, `USPTO 25.0%`,
+`has_stereo 1.8%`); see `benchmarks/frozen-test-v2/molscribe_parity_report.json`. A full-dataset
+comparison still requires evaluating all images in each upstream benchmark.
 
 Comparison rule: a published number is only placed next to ours if the benchmark images are the
 same set (not a sample) and the exact-match definition is the same, or the difference is stated.

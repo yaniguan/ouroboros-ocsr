@@ -76,28 +76,28 @@
     <section class="wrap" aria-label="Measured results">
       <div class="metric-grid">
         <a class="metric-card" href="#benchmarks">
-          <span class="small-label">24-Angle Rotation</span>
+          <span class="small-label">Rotated Real &amp; Synthetic</span>
           <div class="metric-big">
-            <span>65.8%</span>
-            <span class="sub">vs 25.4% plain CNN</span>
+            <span>39.0%</span>
+            <span class="sub">vs 1.0% CNN @ 90°</span>
           </div>
-          <p>C8 steerable encoder matches 360°-augmented CNN (65.7%) with 25% fewer parameters and zero rotated training images.</p>
+          <p>On rotated real UOB scans (90°/180°/270°), pure-PyTorch C8 holds 39.0% (vs 33.3% rot-aug B, 1.0% A @ 90°); 65.8% across 24 synthetic angles.</p>
         </a>
         <a class="metric-card" href="#benchmarks">
           <span class="small-label">Untouched Holdout (v2)</span>
           <div class="metric-big">
-            <span>46.7%</span>
-            <span class="sub">· 85.0% UOB</span>
+            <span>48.0%</span>
+            <span class="sub">MolScribe · 46.7% strict</span>
           </div>
-          <p>Single-shot <code>frozen-test-v2</code> (n = 300) with validation-locked decoding; 54.0% on the 298-image dev-test set.</p>
+          <p>Single-shot <code>frozen-test-v2</code> (n = 300, 86.0% UOB under MolScribe parity; 46.7% strict full-stereo); 54.0% on dev-test.</p>
         </a>
         <a class="metric-card" href="#functions">
-          <span class="small-label">CPU Inference API</span>
+          <span class="small-label">CPU Latency &amp; Gate Modes</span>
           <div class="metric-big">
             <span>229 ms</span>
-            <span class="sub">p50 · int8 decoder</span>
+            <span class="sub">1-arm · ~9.5× gated</span>
           </div>
-          <p>Sub-second single-thread CPU inference (<code>ouroboros.infer</code>) with token-probability gating and only 0.21 pp accuracy drop on PMC val.</p>
+          <p>Single-arm int8 greedy runs in 229–429 ms; 4-pass A+C beam-5 + pad TTA gate hits 97.8% precision at 30% cov (UOB 70%, ACS/USPTO 10%, ~9.5× CPU time).</p>
         </a>
         <a class="metric-card" href="#research">
           <span class="small-label">Literature ¹³C NMR</span>
@@ -143,9 +143,9 @@
             <code>ouroboros.infer · lab.quantize</code>
           </article>
           <article class="func-card">
-            <span class="small-label">Lab Reasoner &amp; RL</span>
+            <span class="small-label">Optional Lab Peripheral · RL</span>
             <h3>Context JSONL &amp; GRPO Verifier</h3>
-            <p>Frozen <code>molecule_context/v1</code> schema (<code>ok</code> vs <code>ask a human</code>, zero <code>gold</code> leakage) plus batched NVTX GRPO reward hooks.</p>
+            <p>Optional lab-agent bridge: frozen <code>molecule_context/v1</code> schema (<code>ok</code> vs <code>ask a human</code>) plus batched NVTX GRPO reward hooks.</p>
             <code>lab.molecule_context · lab.grpo_verifier</code>
           </article>
           <article class="func-card">
@@ -155,9 +155,9 @@
             <code>scripts/image_to_forcefield.py</code>
           </article>
           <article class="func-card">
-            <span class="small-label">Plate Camera Geometry</span>
+            <span class="small-label">Optional Lab Peripheral · Camera</span>
             <h3>96-Well Plate Finder</h3>
-            <p>Finds any well on rotated 8×12 rectangular plates (homography + chamfer) and 5-ring circular plates (SO(2) Fourier phase + notch).</p>
+            <p>Standalone classical computer-vision helper (Otsu/homography + Fourier phase) for benchtop plate cameras, separate from the neural OCSR model.</p>
             <code>ouroboros.labvision</code>
           </article>
           <article class="func-card">
@@ -393,7 +393,8 @@
               <label class="ctrl-group" for="core-view-select">
                 <span>View</span>
                 <select id="core-view-select" aria-label="Select OCSR benchmark view">
-                  <option value="rot_exact">24-angle rotation · Exact match (with stereo)</option>
+                  <option value="rot_real_uob">Rotated real UOB figures · 8 angles (0°–315°)</option>
+                  <option value="rot_exact">24-angle synthetic rotation · Exact match (with stereo)</option>
                   <option value="frozen_vs_dev">Real figures · frozen-test-v2 holdout vs subset100 dev-test</option>
                   <option value="real_subsets">Real dev-test breakdown · ALL, UOB, ACS, USPTO</option>
                   <option value="rot_stereo">24-angle rotation · Stereo-only subset</option>

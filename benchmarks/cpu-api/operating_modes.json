@@ -1,0 +1,93 @@
+{
+  "cpu": "AMD64 Family 26 Model 96 Stepping 0, AuthenticAMD",
+  "logical_cpus": 8,
+  "threads": 1,
+  "n_images": 20,
+  "dataset": "Keylab/OCSR-Benchmarks UOB prefix (seed=0 dev-test)",
+  "frozen_test_v2_reference_accuracy": {
+    "A_C_beam5_ttapad_ungated_exact": 0.4667,
+    "A_C_beam5_ttapad_selective_precision": 0.9778,
+    "selective_coverage_by_subset": {
+      "ALL": 0.3,
+      "UOB": 0.7,
+      "ACS": 0.1,
+      "USPTO": 0.1
+    }
+  },
+  "modes": {
+    "A_int8_greedy": {
+      "description": "Single arm A, int8 decoder, greedy (1 encoder pass)",
+      "encoder_passes": 1,
+      "beam": 1,
+      "tta": [],
+      "wall_ms": {
+        "p50": 429.2,
+        "p95": 530.5,
+        "mean": 438.1
+      },
+      "cpu_ms": {
+        "p50": 421.9,
+        "p95": 532.8,
+        "mean": 432.0
+      },
+      "relative_wall_p50": 1.0
+    },
+    "C_pure_int8_greedy": {
+      "description": "Single arm C-pure (C8 steerable, zero escnn), int8 decoder, greedy",
+      "encoder_passes": 1,
+      "beam": 1,
+      "tta": [],
+      "wall_ms": {
+        "p50": 488.5,
+        "p95": 624.7,
+        "mean": 504.9
+      },
+      "cpu_ms": {
+        "p50": 484.4,
+        "p95": 626.6,
+        "mean": 499.2
+      },
+      "relative_wall_p50": 1.14
+    },
+    "AC_int8_beam5": {
+      "description": "A + C-pure ensemble, int8 decoder, beam 5 + RDKit validity rerank",
+      "encoder_passes": 2,
+      "beam": 5,
+      "tta": [],
+      "wall_ms": {
+        "p50": 1687.9,
+        "p95": 2151.1,
+        "mean": 1737.7
+      },
+      "cpu_ms": {
+        "p50": 1656.2,
+        "p95": 2152.3,
+        "mean": 1723.4
+      },
+      "relative_wall_p50": 3.93
+    },
+    "AC_int8_beam5_ttapad_gated": {
+      "description": "A + C-pure ensemble, int8 decoder, beam 5 + pad TTA + selective gate",
+      "encoder_passes": 4,
+      "beam": 5,
+      "tta": [
+        "pad"
+      ],
+      "gate": {
+        "min_margin": 0.05,
+        "max_disagreement": 0.0
+      },
+      "wall_ms": {
+        "p50": 4074.1,
+        "p95": 4885.5,
+        "mean": 4124.5
+      },
+      "cpu_ms": {
+        "p50": 3960.9,
+        "p95": 4764.8,
+        "mean": 4068.0
+      },
+      "relative_wall_p50": 9.49
+    }
+  }
+}

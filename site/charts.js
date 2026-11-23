@@ -84,20 +84,21 @@
       return fallback;
     }
 
-    function renderRotationSweep(metricKey, yLabel, yMax, yMin, desc) {
+    function renderRotationSweep(metricKey, yLabel, yMax, yMin, desc, sweepOverride) {
       const pal = palette();
       const showCI = metricKey === 'exact' && ciInput && ciInput.checked;
       if (ciWrap) ciWrap.style.display = metricKey === 'exact' ? 'inline-flex' : 'none';
       caption.textContent = desc;
 
-      const sweep = data.rotation_sweep;
+      const sweep = sweepOverride || data.rotation_sweep;
+      const maxAng = sweep.angles[sweep.angles.length - 1] || 345;
       const models = sweep.models.map(m => ({ ...m, color: modelColor(m.id, m.color, pal) }));
       renderLegend(models);
 
       const width = host.getBoundingClientRect().width || 1000;
       const fs = width < 560 ? 20 : 15;
       const plot = { x: 84, y: 22, w: 888, h: 374 };
-      const sx = ang => plot.x + (ang / 345) * plot.w;
+      const sx = ang => plot.x + (ang / maxAng) * plot.w;
       const sy = val => plot.y + plot.h - ((val - yMin) / (yMax - yMin)) * plot.h;
 
       const svg = el('svg', { viewBox: '0 0 1000 468', role: 'img', 'aria-label': desc });
@@ -110,7 +111,8 @@
         svg.append(el('line', { x1: plot.x, y1: yy, x2: plot.x + plot.w, y2: yy, stroke: pal.grid, 'stroke-width': 1 }));
         svg.append(el('text', { x: plot.x - 12, y: yy, fill: pal.muted, 'font-size': fs, 'text-anchor': 'end', 'dominant-baseline': 'middle' }, `${yv}%`));
       }
-      for (const xv of [0, 45, 90, 135, 180, 225, 270, 315, 345]) {
+      const xTicks = maxAng === 315 ? [0, 45, 90, 135, 180, 225, 270, 315] : [0, 45, 90, 135, 180, 225, 270, 315, 345];
+      for (const xv of xTicks) {
         const xx = sx(xv);
         svg.append(el('line', { x1: xx, y1: plot.y + plot.h, x2: xx, y2: plot.y + plot.h + 5, stroke: pal.axis }));
         svg.append(el('text', { x: xx, y: plot.y + plot.h + 24, fill: pal.muted, 'font-size': fs, 'text-anchor': 'middle' }, `${xv}°`));
@@ -160,7 +162,8 @@
         if (!tip) return;
         const box = svg.getBoundingClientRect();
         const svgX = ((ev.clientX - box.left) / box.width) * 1000;
-        const idx = Math.max(0, Math.min(23, Math.round(((svgX - plot.x) / plot.w) * 23)));
+        const nPts = Math.max(1, sweep.angles.length - 1);
+        const idx = Math.max(0, Math.min(nPts, Math.round(((svgX - plot.x) / plot.w) * nPts)));
         const ang = sweep.angles[idx];
         const xPos = sx(ang);
         vLine.setAttribute('x1', String(xPos));
@@ -303,6 +306,15 @@
           80,
           0,
           '24-angle synthetic rotation sweep (n = 2,000 molecules per angle, 15° steps). Arm C (65.8% mean) matches 360°-augmented Arm B (65.7%) with 25% fewer parameters and zero rotated training images.'
+        );
+      } else if (v === 'rot_real_uob' && data.rotated_real_uob) {
+        renderRotationSweep(
+          'exact',
+          'Real UOB exact match (%)',
+          60,
+          0,
+          'Rotated real UOB figures (n = 100 scanned structures, 45° steps). Pure-PyTorch C8 steerable C-pure holds 39.0% across 0°, 90°, 180°, and 270° (37.5% 8-angle mean, zero rotated training images), beating both plain CNN A (1.0% at 90°/270°) and 360°-augmented CNN B (33.3% on 90°/180°/270°).',
+          data.rotated_real_uob
         );
       } else if (v === 'frozen_vs_dev') {
         renderFrozenVsDev();

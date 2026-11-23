@@ -29,3 +29,8 @@ Summary in [`frozen_test_v2_gated_summary.json`](frozen_test_v2_gated_summary.js
 | USPTO | 100 | 25.00% | 10 | 10.00% | 10 | **100.00%** |
 
 Passing the gated CSV through `lab/molecule_context.py` yields `85` `status=ok` rows (`28.33%` coverage, **`97.65%` exact precision**, `83/85`), `5` `review` rows (`pseudo_atoms` / `unassigned_stereo`), `209` `rejected` rows, and `1` `invalid` row.
+
+## 3. Coverage skew & CPU latency cost (`operating_modes.json`)
+
+- **Coverage is concentrated on clean achiral molecules:** `70/90` accepted predictions (`77.8%` of accepted items) come from `UOB` (`70.0%` subset coverage), whereas harder `ACS` journal figures (`R`-groups/abbreviations) and `USPTO` patent structures (long sequences + stereo) each have **`10.0%` coverage** (`90%` routed to human review).
+- **Compute trade-off vs. single-arm `int8` greedy API:** the `97.78%` selective gate runs 2 models × 2 TTA views (`4` encoder passes + `20` beams + cross-rescoring), which takes **`~9.5x` the single-thread CPU wall time** of single-arm `A` `int8` greedy (`4,074 ms` vs `429 ms` p50 on local Windows CPU; see [`benchmarks/cpu-api/operating_modes.json`](../cpu-api/operating_modes.json)). Distilling this ensemble teacher into a single greedy student is tracked in [`lab/edge_plan.py`](../../lab/edge_plan.py) (`#80`).

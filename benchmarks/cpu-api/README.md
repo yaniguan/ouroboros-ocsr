@@ -42,3 +42,14 @@ Accepted predictions are much more often right than the 18% base rate, but the f
 ```bash
 python scripts/bench_infer.py --manifest real_data/subset100/manifest.csv --out benchmarks/cpu-api/bench.json
 ```
+
+## Operating-mode latency scaling (`operating_modes.json`)
+
+Single-thread CPU latency across all four repository decoding modes on a 20-image `UOB` prefix (`scripts/bench_operating_modes.py`, uncontended local CPU):
+
+| Operating mode | Encoder passes | Beam / TTA | Wall p50 / p95 (ms) | Relative p50 | Typical role |
+|---|---:|---|---:|---:|---|
+| **`A_int8_greedy`** | 1 | greedy | `429 / 531` (`229` on Xeon) | **`1.00x`** | Sub-second REST API (`ouroboros.infer`) |
+| **`C_pure_int8_greedy`** | 1 | greedy (zero `escnn`) | `489 / 625` | **`1.14x`** | Rotation-robust single-model CPU inference |
+| **`AC_int8_beam5`** | 2 | beam 5 + validity | `1688 / 2151` | **`3.93x`** | Offline batch accuracy without TTA |
+| **`AC_int8_beam5_ttapad_gated`** | 4 | beam 5 + `pad` TTA + gate | `4074 / 4886` | **`9.49x`** | High-precision (`97.8%` @ `30%` cov) selective teacher |
