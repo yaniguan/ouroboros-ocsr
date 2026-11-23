@@ -41,28 +41,65 @@ MACE_ELEMENTS = frozenset({"H", "C", "N", "O", "F", "P", "S", "Cl", "Br", "I"})
 ANI2X_ELEMENTS = frozenset({"H", "C", "N", "O", "F", "S", "Cl"})
 
 PRESET_MOLECULES: dict[str, list[dict[str, str]]] = {
-    "Everyday chiral molecules": [
+    "Bio & therapeutic molecules": [
         {
             "name": "L-Alanine (amino acid)",
             "smiles": "N[C@@H](C)C(=O)O",
-            "note": "Small chiral molecule; fast to relax in 3D.",
+            "note": "Small chiral amino acid; fast to relax in 3D.",
         },
         {
             "name": "(S)-Ibuprofen (pain reliever)",
             "smiles": "CC(C)Cc1ccc([C@@H](C)C(=O)O)cc1",
-            "note": "Has one chiral carbon center.",
+            "note": "Chiral propionic acid anti-inflammatory.",
         },
         {
             "name": "(E)-Resveratrol (double-bond geometry)",
             "smiles": "Oc1ccc(/C=C/c2cc(O)cc(O)c2)cc1",
             "note": "Tests trans (E) double-bond shape.",
         },
+        {
+            "name": "Caffeine (purine alkaloid)",
+            "smiles": "Cn1cnc2c1c(=O)n(C)c(=O)n2C",
+            "note": "Fused xanthine ring system.",
+        },
+        {
+            "name": "Adenosine (nucleoside)",
+            "smiles": "Nc1ncnc2c1ncn2[C@@H]1O[C@H](CO)[C@@H](O)[C@H]1O",
+            "note": "Four ribose stereocenters attached to adenine.",
+        },
     ],
-    "Tight 3D ring cages": [
+    "Battery electrolyte solvents & additives": [
+        {
+            "name": "Ethylene carbonate · EC",
+            "smiles": "O=C1OCCO1",
+            "note": "High-dielectric cyclic carbonate Li-ion solvent.",
+        },
+        {
+            "name": "(R)-Fluoroethylene carbonate · FEC",
+            "smiles": "O=C1OC[C@H](F)O1",
+            "note": "Chiral fluorinated SEI-forming additive.",
+        },
+        {
+            "name": "Vinylene carbonate · VC",
+            "smiles": "O=c1occo1",
+            "note": "Unsaturated cyclic carbonate SEI additive.",
+        },
+        {
+            "name": "1,2-Dimethoxyethane · DME",
+            "smiles": "COCCOC",
+            "note": "Low-viscosity glyme ether solvent.",
+        },
+        {
+            "name": "TTE fluorinated ether (LHCE diluent)",
+            "smiles": "FC(F)C(F)(F)OCC(F)(F)F",
+            "note": "Hydrofluoroether diluent for localized high-concentration electrolytes.",
+        },
+    ],
+    "Tight 3D ring cages & shorthands": [
         {
             "name": "BCP cage (bicyclo[1.1.1]pentane)",
             "smiles": "CNC(=O)C12CC(C1)C2",
-            "note": "Compact 3D cage with tight angles.",
+            "note": "Compact 3D cage with tight bridgehead angles.",
         },
         {
             "name": "Cubane amide (cube-shaped carbon cage)",
@@ -70,36 +107,14 @@ PRESET_MOLECULES: dict[str, list[dict[str, str]]] = {
             "note": "Carbon atoms arranged at 90-degree corners of a cube.",
         },
         {
-            "name": "Phenyl-SF5 (6-bond sulfur)",
-            "smiles": "Fc1ccccc1S(F)(F)(F)(F)F",
-            "note": "Sulfur bonded to five fluorines and one carbon.",
-        },
-    ],
-    "Edge cases & rule breakers": [
-        {
-            "name": "Unlabeled lactic acid (warns on rule 3)",
-            "smiles": "CC(O)C(=O)O",
-            "note": "Chiral carbon is missing @ or @@.",
+            "name": "Spiro-oxetane benzamide",
+            "smiles": "O=C(NC1CC2(C1)COC2)c1ccccc1",
+            "note": "Orthogonal spirocyclic bioisostere.",
         },
         {
             "name": "Boc & Ph shorthand ([Boc], [Ph])",
             "smiles": "[Boc]NCc1ccc([Ph])cc1",
             "note": "Expands common chemistry shorthand groups before building 3D.",
-        },
-        {
-            "name": "Sodium acetate salt (fails rule 1)",
-            "smiles": "CC(=O)[O-].[Na+]",
-            "note": "Two separate charged ions instead of one neutral molecule.",
-        },
-        {
-            "name": "Benzyl radical (fails rule 2)",
-            "smiles": "[CH2]c1ccccc1",
-            "note": "Has an unpaired electron.",
-        },
-        {
-            "name": "Boron ester (fails rule 2 on MACE)",
-            "smiles": "CC1(C)OB(c2ccc(F)cc2)OC1(C)C",
-            "note": "MACE-OFF23 does not support boron (B).",
         },
     ],
 }
@@ -277,6 +292,16 @@ def _stereo_info(mol_no_h: Chem.Mol) -> dict[str, Any]:
                 unassigned_tet += 1
             elif item.type == Chem.StereoType.Bond_Double:
                 unassigned_db += 1
+    if 0 < unassigned_tet + unassigned_db <= 10:
+        from rdkit.Chem.EnumerateStereoisomers import (
+            EnumerateStereoisomers,
+            StereoEnumerationOptions,
+        )
+
+        opts = StereoEnumerationOptions(tryEmbedding=True, unique=True, maxIsomers=2)
+        if len(list(EnumerateStereoisomers(Chem.Mol(m), options=opts))) <= 1:
+            unassigned_tet = 0
+            unassigned_db = 0
     return {
         "chiral_centers": centers,
         "stereo_bonds": bonds,

@@ -64,7 +64,8 @@ select = ["E", "F", "W", "I", "B", "UP"]
 ignore = ["E731"]
 
 [tool.ruff.lint.per-file-ignores]
-# notebook generators embed notebook source lines verbatim
+# notebook and SMILES catalog generators embed literal source/SMILES lines
+"scripts/build_molecule_catalog.py" = ["E501"]
 "scripts/make_colab_nbs.py" = ["E501"]
 "scripts/make_finetune_v2_nb.py" = ["E501"]
 "scripts/make_real_pmc_nb.py" = ["E501"]

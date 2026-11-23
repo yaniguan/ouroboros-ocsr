@@ -62,7 +62,7 @@ for angle in (0, 90, 180):
 ```
 
 Want a UI?
-- **No install (GitHub Pages):** open [https://yaniguan.github.io/ouroboros-ocsr/lab/](https://yaniguan.github.io/ouroboros-ocsr/lab/) directly in any browser to inspect 3D conformers, 10 physics checks, C8 steerable feature maps, and custom SMILES.
+- **No install (GitHub Pages):** open [https://yaniguan.github.io/ouroboros-ocsr/lab/](https://yaniguan.github.io/ouroboros-ocsr/lab/) directly in any browser to explore 500 built-in bio & electrolyte 3D molecules, fetch live 3D conformers from PubChem or ChEMBL, and run 10 physics & symmetry checks.
 - **Full local Python server:** `python -m ouroboros.ui --port 8787` opens the local web app with live PyTorch OCSR decoding and MACE-OFF23 relaxation ([guide](docs/physics-workbench.md)).
 - `python -m ouroboros.demo --checkpoint checkpoints/ouroboros-C.pt` opens the small 2D rotation demo ([guide](docs/rotation-demo.md)).
 
