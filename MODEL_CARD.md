@@ -52,10 +52,8 @@ Known limits: one seed, synthetic rendering, no human-verified real holdout, unm
 counts, hardware-dependent speed, stereo errors, no beam search or calibrated confidence.
 Consistency alone is not correctness. No state-of-the-art or real-document claim is made.
 
-## Distribution
+## Distribution and licensing
 
-Project code and project-produced inference weights are distributed under the included MIT
-license. Source datasets and dependencies retain their own terms; see [DATA.md](DATA.md).
-No MACE weights or third-party dataset archives are bundled. Official exports support
-`torch.load(..., weights_only=True)` and the downloader verifies SHA256. The demo also accepts
-trusted legacy training checkpoints; only load files from sources you trust.
+- **Source code & `v0.1.0-alpha` synthetic pilot weights (`ouroboros-A.pt`, `ouroboros-B.pt`, `ouroboros-C.pt`, `ouroboros-C-pure.pt`):** distributed under the repository **MIT** license. `ouroboros-C-pure.pt` (`SHA256: eddc1a38dde4e53df21b162a7ff5a313ff60544d258867a47eaa501cb611bc2d`) expands the `C8` steerable filter bases into pure-PyTorch `Conv2d` weights (`torch.load(..., weights_only=True)` safe, zero `escnn` / `gfortran` required at inference).
+- **Real-data fine-tune v2 weights (`finetune-v2`):** trained on `VERDICT-PMC` real figures (`CC-BY-NC-4.0`) plus synthetic R-group structures. Any checkpoints derived from `VERDICT-PMC` carry **CC-BY-NC-4.0 (non-commercial)** terms and are never distributed under `MIT`.
+- **3D force-field weights:** MACE-OFF23 weights (downloaded on demand by `mace-torch`) are governed by the Academic Software License (ASL, non-commercial); see [DATA.md](DATA.md). No MACE weights or third-party dataset archives are bundled. The demo also accepts trusted legacy training checkpoints; only load files from sources you trust.

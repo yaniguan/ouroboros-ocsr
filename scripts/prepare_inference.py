@@ -1,9 +1,13 @@
-"""Restore upstream lie-learn tables omitted from its macOS source-built wheel.
+"""Verify pure-PyTorch inference dependencies, and optionally restore macOS lie-learn tables.
 
-Run after requirements-inference.txt, using the same virtualenv interpreter.
-Only missing files are installed; downloads use pinned upstream content and SHA256.
+Pure-PyTorch inference (requirements-inference.txt) needs no Fortran compiler, escnn, or lie-learn.
+If escnn/lie-learn are installed (e.g. via requirements-escnn.txt on macOS for training), this
+script also checks and restores any omitted upstream SO(3) tables using pinned SHA256 digests.
 """
 
+from __future__ import annotations
+
+import argparse
 import hashlib
 import importlib.util
 import sys
@@ -20,11 +24,27 @@ BASE = (
 )
 
 
-def main():
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument(
+        "--require-escnn",
+        action="store_true",
+        help="fail if escnn/lie-learn training dependencies are not installed",
+    )
+    args = ap.parse_args(argv)
+
+    import rdkit  # noqa: F401
+    import torch  # noqa: F401
+
     spec = importlib.util.find_spec("lie_learn")
-    if spec is None or spec.origin is None:
-        raise RuntimeError("Install requirements-inference.txt first")
-    if sys.platform == "darwin":
+    escnn_spec = importlib.util.find_spec("escnn")
+    if escnn_spec is None:
+        if args.require_escnn:
+            raise RuntimeError("escnn is not installed; install requirements-escnn.txt first")
+        print("Pure-PyTorch inference dependencies ready (zero escnn / zero gfortran needed)")
+        return 0
+
+    if spec is not None and spec.origin is not None and sys.platform == "darwin":
         directory = Path(spec.origin).parent / "representations/SO3/pinchon_hoggan"
         for name, expected in TABLES.items():
             destination = directory / name
@@ -38,11 +58,16 @@ def main():
                 raise RuntimeError(f"Upstream table checksum mismatch: {name}")
             destination.write_bytes(data)
             print(f"Installed verified upstream table: {name}")
+
+    from ouroboros.encoder.steerable import _ensure_escnn_2d_shim
+
+    _ensure_escnn_2d_shim()
     from escnn import gspaces
 
     gspaces.rot2dOnR2(N=4)
-    print("Inference dependencies ready")
+    print("Inference + escnn training dependencies ready")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

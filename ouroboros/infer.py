@@ -60,7 +60,9 @@ def load_checkpoint(
     only when ``allow_unsafe_pickle=True`` (for training checkpoints with RNG state).
     Steerable encoders are swapped for their pure-PyTorch export.
     """
-    p = Path(path)
+    from ouroboros.weights import resolve_checkpoint_path
+
+    p = resolve_checkpoint_path(path)
     if p.is_dir():
         from ouroboros.hf import CONFIG_FILE, load_pretrained
 
