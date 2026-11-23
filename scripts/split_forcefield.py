@@ -3,9 +3,9 @@ import argparse
 import json
 from pathlib import Path
 
-from ase.io import read, write
+from ase.io import read
 
-from ouroboros.geometry.splits import split_dataset
+from ouroboros.geometry.splits import split_dataset, write_extxyz
 
 
 def main(argv=None):
@@ -25,7 +25,7 @@ def main(argv=None):
     for name, data in result.items():
         path = a.out_dir / f'{name}.extxyz'
         if data['frames']:
-            write(path, data['frames'], format='extxyz')
+            write_extxyz(path, data['frames'])
         elif name != 'skipped':
             path.write_text('')
         (a.out_dir / f'{name}.manifest.jsonl').write_text(''.join(

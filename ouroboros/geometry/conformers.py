@@ -20,12 +20,45 @@ from rdkit.Chem import AllChem
 FMAX = 0.05  # eV/Å convergence threshold
 
 
+@dataclass
+class EmbeddedConformer:
+    smiles: str
+    positions: np.ndarray  # [n_atoms, 3] Å (first conformer)
+    atomic_numbers: np.ndarray  # [n_atoms] int64
+    symbols: list[str]
+    stereo_ok: bool
+    all_positions: list[np.ndarray] = field(default_factory=list)
+
+
 def embed_conformers(smiles: str, n_conf: int = 10, seed: int = 0) -> Chem.Mol:
     """Add hydrogens and embed ``n_conf`` ETKDGv3 conformers. Raises ValueError on failure."""
     mol, reason = embed(smiles, n_conf, seed)
     if mol is None:
         raise ValueError(f"{reason}: {smiles!r}")
     return mol
+
+
+def embed_smiles(
+    smiles: str, num_confs: int = 1, seed: int = 0, timeout_seconds: int = 30
+) -> EmbeddedConformer | None:
+    """Embed ``smiles`` and return 3D coordinates, atomic numbers, and 3D stereo verification."""
+    mol, _ = embed(smiles, n_conf=num_confs, seed=seed, timeout_seconds=timeout_seconds)
+    if mol is None:
+        return None
+    confs = list(mol.GetConformers())
+    flags = stereo_preserved(mol, smiles)
+    chosen = next((i for i, ok in enumerate(flags) if ok), 0)
+    all_pos = [np.asarray(c.GetPositions(), dtype=np.float64) for c in confs]
+    z_arr = np.array([a.GetAtomicNum() for a in mol.GetAtoms()], dtype=np.int64)
+    syms = [a.GetSymbol() for a in mol.GetAtoms()]
+    return EmbeddedConformer(
+        smiles=smiles,
+        positions=all_pos[chosen],
+        atomic_numbers=z_arr,
+        symbols=syms,
+        stereo_ok=bool(flags[chosen]),
+        all_positions=all_pos,
+    )
 
 
 def embed(
@@ -45,6 +78,10 @@ def embed(
     mol = Chem.MolFromSmiles(smiles)
     if mol is None or mol.GetNumAtoms() == 0:
         return None, "unparsable"
+    if any(a.GetAtomicNum() == 0 for a in mol.GetAtoms()):
+        return None, "pseudo_atoms"
+    if len(Chem.GetMolFrags(mol)) > 1:
+        return None, "multi_fragment"
     mol = Chem.AddHs(mol)
     params = AllChem.ETKDGv3()
     params.randomSeed = seed

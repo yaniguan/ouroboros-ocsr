@@ -15,7 +15,6 @@ from typing import Any
 import numpy as np
 import torch
 from ase import Atoms
-from ase.io import write as ase_write
 from PIL import Image, ImageOps
 from rdkit import Chem
 
@@ -34,7 +33,7 @@ from ouroboros.geometry.conformers import embed, mirror_positions, relax
 from ouroboros.geometry.displacements import displaced_conformers
 from ouroboros.geometry.eligibility import EligibilityPolicy
 from ouroboros.geometry.propagation import categorize, mirror_smiles, same_formula
-from ouroboros.geometry.splits import assign_split, connectivity_key
+from ouroboros.geometry.splits import assign_split, connectivity_key, write_extxyz
 from ouroboros.infer import open_image
 from ouroboros.labels import labelled_smiles, parse_labelled
 from ouroboros.model import OCSRModel, build_model, load_model_state
@@ -726,11 +725,15 @@ class WorkbenchEngine:
         policy = EligibilityPolicy(supported_elements=MACE_ELEMENTS)
 
         for idx, raw_smi in enumerate(smiles_list):
+            mol_id = f"mol_{idx:03d}"
+            src_img = f"ui/{mol_id}"
             rec: dict[str, Any] = {
-                "id": f"mol_{idx:03d}",
+                "id": mol_id,
+                "source_image": src_img,
                 "input_smiles": raw_smi,
                 "status": "ok",
                 "n_frames": 0,
+                "conformers": [],
             }
             w_smi = raw_smi
             if do_expand and _has_alias_atoms(raw_smi):
@@ -787,18 +790,23 @@ class WorkbenchEngine:
                 at.calc = calc
                 e_ev = float(at.get_potential_energy())
                 f_ev = np.asarray(at.get_forces(), dtype=np.float64)
+                cid = int(conf.GetId())
                 out_frame = Atoms(symbols=symbols, positions=pos)
                 out_frame.info.update(
                     smiles=std.smiles,
                     inchikey=ik,
+                    source_image=src_img,
                     source_id=rec["id"],
-                    conf_id=int(conf.GetId()),
+                    conf_id=cid,
                     potential=calc_name,
                     mace_energy=e_ev,
                 )
                 out_frame.arrays["mace_forces"] = f_ev
                 frames.append(out_frame)
                 energies.append(e_ev)
+                rec["conformers"].append(
+                    {"conf_id": cid, "energy": e_ev, "stereo_ok": True, "written": True}
+                )
 
             seen_ik.add(ik)
             rec.update(
@@ -815,7 +823,7 @@ class WorkbenchEngine:
 
         extxyz_buf = io.StringIO()
         if frames:
-            ase_write(extxyz_buf, frames, format="extxyz")
+            write_extxyz(extxyz_buf, frames)
         manifest_jsonl = "\n".join(json.dumps(r) for r in rows) + "\n"
 
         accepted_count = sum(1 for r in rows if r["status"] == "ok")

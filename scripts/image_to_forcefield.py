@@ -91,7 +91,8 @@ def rows_from_csv(path: Path, smiles_col: str | None, id_col: str, image_col: st
             image = r.get(image_col) if image_col else _first(r, IMAGE_COLS)
             if not image:  # predict_real.py CSVs identify the image by (subset, id)
                 image = f"{r['subset']}/{rid}" if r.get("subset") else f"{path.name}#{rid}"
-            yield {"id": rid, "smiles": r.get(col) or "", "source_image": image,
+            yield {"id": rid, "smiles": r.get(col) or "",
+                   "source_image": str(image).replace("\\", "/"),
                    "accepted": r.get("accepted"), "rejection_reason": r.get("rejection_reason", "")}
 
 
@@ -141,7 +142,7 @@ def rows_from_images(paths: list[Path], model_path: Path, beam: int, batch_size:
             else:
                 preds = [p for p, _ in predict_batch([model], images, beam, [], True)]
         for p, smi in zip(batch, preds, strict=True):
-            yield {"id": Path(p).stem, "smiles": smi, "source_image": str(p)}
+            yield {"id": Path(p).stem, "smiles": smi, "source_image": Path(p).as_posix()}
 
 
 # ----------------------------------------------------------------------------- chemistry
@@ -226,9 +227,10 @@ def passes(c: dict, do_relax: bool) -> bool:
 
 
 def _prepare_row(row: dict, a, calc, mace_name: str | None, seen: set[str]):
+    src_img = str(row["source_image"]).replace("\\", "/")
     rec = {
         "id": row["id"],
-        "source_image": row["source_image"],
+        "source_image": src_img,
         "input_smiles": row["smiles"],
         "smiles": None,
         "inchikey": None,
@@ -252,7 +254,7 @@ def _prepare_row(row: dict, a, calc, mace_name: str | None, seen: set[str]):
 
         rec["recognized_smiles"] = std.smiles
         try:
-            expanded = expand_aliases(row["smiles"])
+            expanded = expand_aliases(std.smiles)
         except ValueError as error:
             return None, rec | {"status": str(error)}
         rec["expanded_smiles"] = Chem.MolToSmiles(expanded)
@@ -349,7 +351,7 @@ def _assemble_frames(
         atoms.info.update(
             smiles=std.smiles,
             inchikey=rec["inchikey"] or "",
-            source_image=row["source_image"],
+            source_image=rec["source_image"],
             source_id=str(row["id"]),
             conf_id=c["conf_id"],
             mace_model=mace_name or "none",
@@ -489,13 +491,23 @@ def _iter_row_chunks(rows, a):
     when ``--dedupe-inchikey`` is enabled so deduplication matches sequential streaming."""
     target = max(getattr(a, "embed_workers", 1) * 4, getattr(a, "calc_batch_size", 1), 8)
     dedupe = getattr(a, "dedupe_inchikey", False)
+    do_expand = getattr(a, "expand_aliases", False)
     chunk: list[dict] = []
     chunk_keys: set[str] = set()
     for row in rows:
         key = None
         if dedupe and row.get("smiles"):
             std = standardize(row["smiles"])
-            if std.valid:
+            if std.valid and do_expand and any(
+                at.GetAtomicNum() == 0 for at in std.mol.GetAtoms()
+            ):
+                from ouroboros.data.rgroups import expand_aliases
+
+                try:
+                    std = standardize(Chem.MolToSmiles(expand_aliases(std.smiles)))
+                except ValueError:
+                    std = None
+            if std is not None and std.valid:
                 key = standard_inchikey(std)
         if key and key in chunk_keys and chunk:
             yield chunk
@@ -618,7 +630,7 @@ def main(argv=None) -> dict:
         ap.error("--images needs --model")
     if a.n_conf < 1 or a.beam < 1:
         ap.error("--n-conf and --beam must be positive")
-    from ase.io import write
+    from ouroboros.geometry.splits import write_extxyz
 
     manifest = a.manifest or a.out.with_name(a.out.stem + ".manifest.jsonl")
     a.out.parent.mkdir(parents=True, exist_ok=True)
@@ -642,13 +654,13 @@ def main(argv=None) -> dict:
                     counts[status] = counts.get(status, 0) + 1
                     mf.write(json.dumps(rec) + "\n")
                 if chunk_frames:
-                    write(a.out, chunk_frames, format="extxyz", append=True)
+                    write_extxyz(a.out, chunk_frames, append=True)
                 mf.flush()
         else:
             for row in rows:
                 frames, rec = process(row, a, calc, mace_name, seen)
                 if frames:
-                    write(a.out, frames, format="extxyz", append=True)
+                    write_extxyz(a.out, frames, append=True)
                 n_frames += len(frames)
                 status = rec["status"].split(":")[0]
                 counts[status] = counts.get(status, 0) + 1
