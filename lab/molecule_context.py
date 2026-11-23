@@ -173,10 +173,17 @@ def from_json_dict(data: dict) -> MoleculeContext:
     status = data.get("status")
     if status not in STATUSES:
         raise ValueError(f"invalid status {status!r}; expected one of {STATUSES}")
+    usable = data.get("usable")
+    if not isinstance(usable, bool):
+        raise ValueError(f"usable must be a bool, got {usable!r}")
+    if usable != (status == "ok"):
+        raise ValueError(f"usable={usable} disagrees with status={status!r}")
+    if status == "ok" and not data.get("smiles"):
+        raise ValueError("status='ok' record must carry a non-empty smiles")
     return MoleculeContext(
         id=str(data["id"]),
         status=status,
-        usable=bool(data["usable"]),
+        usable=usable,
         pred_raw=str(data.get("pred_raw") or ""),
         subset=str(data.get("subset") or ""),
         smiles=data.get("smiles"),
@@ -216,6 +223,7 @@ def _extract_shard_pngs(
     images_dir = out_dir / "images"
     images_dir.mkdir(parents=True, exist_ok=True)
     extracted: dict[str, str] = {}
+    used_rel: set[str] = set()
     with ShardDataset(root, split, labeled=False) as ds:
         for i, (shard, entry) in enumerate(ds.entries):
             meta = ds.meta(i)
@@ -224,6 +232,9 @@ def _extract_shard_pngs(
                 continue
             safe = re.sub(r"[^A-Za-z0-9._-]+", "_", rid).strip("._") or f"row_{i}"
             rel = f"images/{safe}.png"
+            if rel in used_rel:
+                rel = f"images/{safe}_{i}.png"
+            used_rel.add(rel)
             (out_dir / rel).write_bytes(ds._read(shard, entry["png"]))
             extracted[rid] = rel
     return extracted
