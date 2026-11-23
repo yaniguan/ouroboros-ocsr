@@ -92,7 +92,20 @@ Want a UI?
 
 | Model (locked on `PMC val`) | All (`n=300`) | ACS | UOB | USPTO | `has_stereo` (`n=57`) | `no_stereo` (`n=243`) | Source |
 |---|---|---|---|---|---|---|---|
-| **A + C ensemble, beam 5 + `pad` TTA** | **46.7%** (CI 40.7–51.7) | **30%** | **85%** | **25%** | **1.8%** | **57.2%** | [`benchmarks/frozen-test-v2/AC-ensemble-beam5-ttapad-report.md`](benchmarks/frozen-test-v2/AC-ensemble-beam5-ttapad-report.md) |
+| **A + C ensemble, beam 5 + `pad` TTA (strict Ouroboros)** | **46.7%** (CI 40.7–51.7) | **30%** | **85%** | **25%** | **1.8%** | **57.2%** | [`benchmarks/frozen-test-v2/AC-ensemble-beam5-ttapad-report.md`](benchmarks/frozen-test-v2/AC-ensemble-beam5-ttapad-report.md) |
+| **Same predictions under MolScribe parity (`arXiv:2205.14311`)** | **48.0%** (CI 42.0–53.3) | **33%** | **86%** | **25%** | **8.8%** | **57.2%** | [`benchmarks/frozen-test-v2/molscribe_parity_report.json`](benchmarks/frozen-test-v2/molscribe_parity_report.json) |
+
+**Rotated real scanned figures (`UOB` dev-test, `n=100`, 8 angles `0°–315°`):** direct check of where the `C8` prior wins on real document scans ([`benchmarks/rotated-real-uob/`](benchmarks/rotated-real-uob/)).
+
+| Arm (`v0.1.0-alpha`, `int8` greedy) | `0°` upright | `90° / 180° / 270°` mean | Off-grid (`45°..315°`) mean | 8-angle mean |
+|---|---:|---:|---:|---:|
+| **`C_pure` (pure-PyTorch `C8`, 0 rotated train imgs)** | `39.0%` | **`39.0%`** (`39%` at `90°`, `180°`, `270°`) | `36.0%` | **`37.5%`** |
+| **`B` (CNN + 360° rot aug, `2.5x` enc params)** | `39.0%` | `33.3%` | `39.2%` | `37.0%` |
+| **`A` (plain CNN, 0 rotated train imgs)** | `41.0%` | `10.0%` (`1%` at `90°` & `270°`) | `2.5%` | `10.1%` |
+
+**Selective confidence gate & CPU latency scaling (`frozen-test-v2` & `operating_modes.json`):**
+- **Selective precision vs. subset coverage ([`benchmarks/selective-gate/`](benchmarks/selective-gate/)):** locking `min_margin=0.05, max_disagreement=0.0` on `PMC val` yields **`97.8%` exact precision (`88/90`)** at **`30.0%` overall coverage** — concentrated on clean achiral `UOB` (`70.0%` coverage) vs **`10.0%` coverage** on `ACS` and `USPTO` (`90%` routed to human review).
+- **CPU latency by decoding mode ([`benchmarks/cpu-api/`](benchmarks/cpu-api/)):** single-arm `A` `int8` greedy runs in `229 ms` p50 on Xeon (`429 ms` local CPU, `1.0x`), pure-PyTorch `C_pure` `int8` greedy in `489 ms` (`1.14x`), `A+C` beam 5 in `1,688 ms` (`3.9x`), and the 4-pass `A+C` beam 5 + `pad` TTA selective gate in `4,074 ms` (`9.5x`).
 
 **Dev-test set (`subset100`):** 298 figures (ACS 100, UOB 100, USPTO 98; 49 `has_stereo`, 249 `no_stereo`). Exact match with stereochemistry.
 
@@ -107,7 +120,7 @@ Made by [`colab/finetune_v2.ipynb`](colab/finetune_v2.ipynb) (real-data fine-tun
 
 The Quickstart above downloads the synthetic `v0.1.0-alpha` checkpoint, not the unreleased fine-tuned v2 weights behind the 54.0% model. Synthetic rotation results for the `v0.1.0-alpha` checkpoints: [`docs/v0-results.md`](docs/v0-results.md) and [`benchmarks/v0.1.0-alpha/`](benchmarks/v0.1.0-alpha/).
 
-Published systems report higher numbers on the full benchmark sets with their own scoring; our sample is small (95% CIs of about ±10 points per source) and scoring parity is not verified.
+Published systems report higher numbers on the full upstream benchmark sets (USPTO 5,719, UOB 5,740, ACS 331); our evaluation subsets are 100-per-source seeded samples (95% CIs of about ±9 points per source), and [`ouroboros/eval/molscribe_parity.py`](ouroboros/eval/molscribe_parity.py) (`scripts/eval_predictions.py --protocol both`) reports both strict Ouroboros and MolScribe-compatible exact match side by side.
 
 ## How it works
 
@@ -131,15 +144,18 @@ Published systems report higher numbers on the full benchmark sets with their ow
 ## Repo layout
 
 ```
-ouroboros/    package: data/ (rendering, real data), encoder/, decode/, eval/, geometry/, train/, demo/, ui/
-scripts/      predict, evaluate, build data, profile, export weights
-configs/      training configs (pilot-{A,B,C}-200k.yaml, ...)
-colab/        GPU notebooks (fine-tune v2, real-data fine-tunes)
-notebooks/    setup, data, training, geometry, rotation demo
-benchmarks/   measured results, one folder per experiment
-site/         project website (https://yaniguan.github.io/ouroboros-ocsr/)
-docs/         results, release notes, research plan, roadmap
-tests/        pytest suite
+# Core OCSR & 3D physical verification
+ouroboros/          core package: data/, encoder/ (incl. stereo_head), decode/ (incl. rerank_3d),
+                    eval/ (Ouroboros + MolScribe parity), geometry/, train/, demo/, ui/, infer.py
+scripts/            predict, evaluate, build data, profile, benchmark rotation & latency, export weights
+configs/            training & parameter-matched configs (pilot-*, param-matched-{A,B,C,Cplus}.yaml)
+colab/              GPU notebooks (fine-tune v2, real-data fine-tunes)
+benchmarks/         measured receipts, one folder per experiment
+site/               project website & Browser 3D Lab (https://yaniguan.github.io/ouroboros-ocsr/)
+
+# Optional lab-automation peripherals (separate from core OCSR)
+lab/                optional agent context JSONL, quantization helpers, GRPO reward hook, edge_plan
+ouroboros/labvision standalone classical 96-well plate camera finder (Otsu/homography + Fourier phase)
 ```
 
 ## Limitations / status

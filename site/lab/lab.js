@@ -614,25 +614,28 @@
         threshold: '3D R/S and E/Z match input SMILES',
       },
       {
-        title: '8. Relaxed to low energy',
+        title: '8. Relaxed to low strain (browser preview)',
         status: !canEmbed ? 'fail' : fmax < 0.25 ? 'pass' : 'warn',
-        metric: !canEmbed ? '—' : `fmax ${fmax.toFixed(4)} eV/Å`,
-        detail: !canEmbed ? 'Not relaxed.' : `Spring-Pauli preview energy E = ${sym.base.E.toFixed(4)} eV.`,
-        threshold: 'Finite energy and small residual force',
+        metric: !canEmbed ? '—' : `fmax ${fmax.toFixed(4)} arb. u./Å`,
+        detail: !canEmbed ? 'Not relaxed.' : `Spring-VSEPR geometric strain index = ${sym.base.E.toFixed(4)} arb. u. (heuristic browser layout, not QM/MMFF94s eV).`,
+        threshold: 'Finite spring strain and small residual gradient',
       },
       {
         title: '9. 3D rotation & shift invariance',
         status: canEmbed ? 'pass' : 'fail',
-        metric: canEmbed ? `ΔE ${fmtNum(sym.se3_energy_abs_err_ev)} eV` : '—',
-        detail: canEmbed ? `Rotated force diff ${fmtNum(sym.so3_force_max_err_ev_a)} eV/Å · net force ${fmtNum(sym.net_force_norm_ev_a)} eV/Å.` : 'Not evaluated.',
-        threshold: 'SE(3) ΔE & SO(3) force diff < 1e-4; net F < 1e-3',
+        metric: canEmbed ? `ΔE ${fmtNum(sym.se3_energy_abs_err_ev)} arb. u.` : '—',
+        detail: canEmbed ? `Rotated gradient diff ${fmtNum(sym.so3_force_max_err_ev_a)} arb. u./Å · net force ${fmtNum(sym.net_force_norm_ev_a)} arb. u./Å.` : 'Not evaluated.',
+        threshold: 'SE(3) ΔE & SO(3) gradient diff < 1e-4; net F < 1e-3',
       },
       {
         title: '10. Mirror symmetry & F = −∇E',
         status: canEmbed ? 'pass' : 'fail',
-        metric: canEmbed ? `slope ${fmtNum(sym.conservative_grad_fd_err_ev_a)} eV/Å` : '—',
-        detail: canEmbed ? 'Analytical forces match central finite differences on pairwise potential.' : 'Not evaluated.',
-        threshold: 'Parity ΔE < 1e-4 eV; |F + ∂E/∂x| < 2e-3 eV/Å',
+        metric: canEmbed ? `slope ${fmtNum(sym.conservative_grad_fd_err_ev_a)} arb. u./Å` : '—',
+        detail: canEmbed
+          ? 'Analytical gradients match central finite differences on pairwise spring potential.'
+            + (specifiedCenters > 0 ? ' Note: achiral 3D potentials give ΔE = 0 between (R) and (S) enantiomers.' : '')
+          : 'Not evaluated.',
+        threshold: 'Parity ΔE < 1e-4; |F + ∂E/∂x| < 2e-3',
       },
     ];
 
@@ -817,17 +820,25 @@
       : 'Check failed';
 
     document.getElementById('molTitle').textContent = labelOverride || (res.formula ? `${res.formula} · ${Number(res.molecular_weight || 0).toFixed(1)} Da` : '3D Structure');
+    const isHeuristicSpring = Boolean(res.live_browser && !res.public_db);
+    const eUnit = isHeuristicSpring ? 'arb. u.' : 'eV';
+    const fUnit = isHeuristicSpring ? 'arb. u./Å' : 'eV/Å';
+    const eHeader = document.getElementById('confEnergyHeader');
+    if (eHeader) eHeader.textContent = isHeuristicSpring ? 'Strain (arb. u.)' : 'Energy (eV)';
+
     document.getElementById('depictBox').innerHTML = res.depiction_2d
       ? `<img src="${res.depiction_2d}" alt="2D structure">`
       : `<span style="font-size:11px;color:#64748b;">Live 3D</span>`;
     document.getElementById('cleanSmiles').textContent = res.standardized_smiles || res.input_smiles || '';
-    document.getElementById('mirrorNote').textContent = res.mirror_relation ? `3D mirror: ${res.mirror_relation}` : '';
+    const mirStr = String(res.mirror_relation || '');
+    const parityCaveat = mirStr.includes('enantiomer') ? ' · achiral 3D ΔE = 0 on (R)/(S)' : '';
+    document.getElementById('mirrorNote').textContent = mirStr ? `3D mirror: ${mirStr}${parityCaveat}` : '';
 
     const eq = res.equivariance_metrics || {};
-    document.getElementById('statSe3').textContent = eq.se3_energy_abs_err_ev !== undefined ? `${fmtNum(eq.se3_energy_abs_err_ev)} eV` : '—';
-    document.getElementById('statSo3').textContent = eq.so3_force_max_err_ev_a !== undefined ? `${fmtNum(eq.so3_force_max_err_ev_a)} eV/Å` : '—';
-    document.getElementById('statNetF').textContent = eq.net_force_norm_ev_a !== undefined ? `${fmtNum(eq.net_force_norm_ev_a)} eV/Å` : '—';
-    document.getElementById('statGrad').textContent = eq.conservative_grad_fd_err_ev_a !== undefined ? `${fmtNum(eq.conservative_grad_fd_err_ev_a)} eV/Å` : '—';
+    document.getElementById('statSe3').textContent = eq.se3_energy_abs_err_ev !== undefined ? `${fmtNum(eq.se3_energy_abs_err_ev)} ${eUnit}` : '—';
+    document.getElementById('statSo3').textContent = eq.so3_force_max_err_ev_a !== undefined ? `${fmtNum(eq.so3_force_max_err_ev_a)} ${fUnit}` : '—';
+    document.getElementById('statNetF').textContent = eq.net_force_norm_ev_a !== undefined ? `${fmtNum(eq.net_force_norm_ev_a)} ${fUnit}` : '—';
+    document.getElementById('statGrad').textContent = eq.conservative_grad_fd_err_ev_a !== undefined ? `${fmtNum(eq.conservative_grad_fd_err_ev_a)} ${fUnit}` : '—';
 
     const listEl = document.getElementById('gatesList');
     listEl.innerHTML = gates.map(g => `

@@ -258,6 +258,81 @@ def _pct(x) -> str:
     return "–" if x is None or x != x else f"{x:.2%}"
 
 
+def build_molscribe_groups(
+    items: Sequence[Item],
+    ouro_scores: Sequence[PairScore | None],
+    n_boot: int = 1000,
+    seed: int = 0,
+) -> list[dict]:
+    """Compute per-subset metrics under the MolScribe protocol (tetrahedral kept, E/Z stripped)."""
+    from ouroboros.eval.molscribe_parity import aggregate_molscribe, score_molscribe_pair
+
+    ms_scores = []
+    for it in items:
+        try:
+            ms_scores.append(score_molscribe_pair(it.pred, it.gold or ""))
+        except ValueError:
+            ms_scores.append(None)
+
+    members = list(zip(items, ms_scores, ouro_scores, strict=True))
+    kinds = sorted({it.kind for it in items}, key=lambda k: (k is None, k or ""))
+    has_subsets = any(it.subset is not None for it in items)
+    out = []
+
+    def _agg(sub_members):
+        valid_ms = [ms for _, ms, _ in sub_members if ms is not None]
+        return aggregate_molscribe(valid_ms, n_boot=n_boot, seed=seed)
+
+    for kind in kinds:
+        in_kind = [m for m in members if m[0].kind == kind]
+        out.append({"subset": ALL, "kind": kind, **_agg(in_kind)})
+        if has_subsets:
+            for subset in sorted({it.subset for it, _, _ in in_kind}):
+                sub = [m for m in in_kind if m[0].subset == subset]
+                out.append({"subset": subset, "kind": kind, **_agg(sub)})
+        has_st = [m for m in in_kind if m[2] is not None and m[2].stereo_total > 0]
+        no_st = [m for m in in_kind if m[2] is not None and m[2].stereo_total == 0]
+        out.append({"subset": HAS_STEREO, "kind": kind, **_agg(has_st)})
+        out.append({"subset": NO_STEREO, "kind": kind, **_agg(no_st)})
+    return out
+
+
+def _molscribe_markdown_section(ms_groups: list[dict], show_kind: bool) -> list[str]:
+    head = (
+        ["subset"]
+        + (["kind"] if show_kind else [])
+        + ["n", "MolScribe exact", "95% CI", "MolScribe flat", "valid", "mean Tanimoto"]
+    )
+    lines = [
+        "",
+        (
+            "## MolScribe Protocol Parity "
+            "(`arXiv:2205.14311`: tetrahedral kept, `E/Z` stripped, R-groups -> `*`)"
+        ),
+        "",
+        "| " + " | ".join(head) + " |",
+        "|" + "---|" * len(head),
+    ]
+    for g in ms_groups:
+        if g["n"]:
+            lo, hi = g["exact_ci95"]
+            cells = [
+                str(g["n"]),
+                _pct(g["exact"]),
+                f"[{_pct(lo)}, {_pct(hi)}]",
+                _pct(g["exact_flat"]),
+                _pct(g["valid"]),
+                f"{g['tanimoto']:.4f}",
+            ]
+        else:
+            cells = ["0"] + ["–"] * 5
+        name = f"**{g['subset']}**" if g["subset"] == ALL else g["subset"]
+        lines.append(
+            "| " + " | ".join([name] + ([str(g["kind"])] if show_kind else []) + cells) + " |"
+        )
+    return lines
+
+
 def report_markdown(report: dict, title: str = "OCSR predictions") -> str:
     show_kind = any(g["kind"] is not None for g in report["groups"])
     head = ["subset"] + (["kind"] if show_kind else []) + [
@@ -312,6 +387,8 @@ def report_markdown(report: dict, title: str = "OCSR predictions") -> str:
     lines.append(f"CI: percentile bootstrap over items, {report['n_boot']} resamples.")
     lines += ["", "Metrics:", ""]
     lines += [f"- `{k}`: {v}" for k, v in report["metrics"].items()]
+    if "molscribe_groups" in report:
+        lines += _molscribe_markdown_section(report["molscribe_groups"], show_kind)
     if report["footnote"]:
         lines += ["", f"_{report['footnote']}_"]
     return "\n".join(lines) + "\n"
@@ -332,6 +409,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument("--n-boot", type=int, default=1000)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--workers", type=int, default=1)
+    ap.add_argument(
+        "--protocol",
+        choices=("ouroboros", "molscribe", "both"),
+        default="ouroboros",
+        help="scoring standardization: strict Ouroboros, MolScribe (arXiv:2205.14311), or both",
+    )
     ap.add_argument("--skip-unlabeled", action="store_true",
                     help="count rows with an empty gold as unlabeled and skip them "
                          "(default: refuse them)")
@@ -347,11 +430,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     items, unlabeled = split_unlabeled(to_items(records, cols, where), skip=a.skip_unlabeled)
     scores = score_items(items, workers=a.workers)
     report = build_report(items, scores, n_boot=a.n_boot, seed=a.seed)
+    extra_proto = {}
+    if a.protocol in ("molscribe", "both"):
+        extra_proto["protocol"] = a.protocol
+        extra_proto["molscribe_groups"] = build_molscribe_groups(
+            items, scores, n_boot=a.n_boot, seed=a.seed
+        )
     report = {
         "input": str(a.predictions),
         "columns": cols,
         "where": [f"{c}={v}" for c, v in where],
         "unlabeled": {"n": len(unlabeled), "ids": unlabeled[:MAX_LISTED_IDS]},
+        **extra_proto,
         **report,
     }
     md = report_markdown(report, a.title or f"OCSR predictions: {Path(a.predictions).name}")

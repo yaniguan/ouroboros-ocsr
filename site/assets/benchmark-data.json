@@ -1024,5 +1024,331 @@
       "recovery_mmff": 73.3,
       "recovery_mace": 66.7
     }
+  },
+  "rotated_real_uob": {
+    "angles": [
+      0,
+      45,
+      90,
+      135,
+      180,
+      225,
+      270,
+      315
+    ],
+    "models": [
+      {
+        "id": "C",
+        "name": "Arm C-pure \u00b7 Pure-PyTorch C8 steerable (0 rotated train imgs)",
+        "color": "#b5d88e",
+        "width": 3.4,
+        "dash": [],
+        "exact": [
+          39.0,
+          36.0,
+          39.0,
+          36.0,
+          39.0,
+          36.0,
+          39.0,
+          36.0
+        ],
+        "exact_ci": [
+          [
+            29.0,
+            49.0
+          ],
+          [
+            26.0,
+            46.0
+          ],
+          [
+            29.0,
+            49.0
+          ],
+          [
+            26.0,
+            46.0
+          ],
+          [
+            29.0,
+            49.0
+          ],
+          [
+            26.0,
+            46.0
+          ],
+          [
+            29.0,
+            49.0
+          ],
+          [
+            26.0,
+            46.0
+          ]
+        ],
+        "tanimoto": [
+          68.72,
+          67.0,
+          68.72,
+          67.0,
+          68.72,
+          67.0,
+          68.72,
+          67.0
+        ]
+      },
+      {
+        "id": "B",
+        "name": "Arm B \u00b7 CNN + 360\u00b0 rotation aug (2.5x enc params)",
+        "color": "#91b6df",
+        "width": 2.3,
+        "dash": [
+          7,
+          5
+        ],
+        "exact": [
+          39.0,
+          36.0,
+          34.0,
+          47.0,
+          34.0,
+          35.0,
+          32.0,
+          39.0
+        ],
+        "exact_ci": [
+          [
+            29.0,
+            49.0
+          ],
+          [
+            26.98,
+            46.0
+          ],
+          [
+            25.0,
+            44.0
+          ],
+          [
+            37.0,
+            57.0
+          ],
+          [
+            25.0,
+            44.0
+          ],
+          [
+            26.0,
+            44.02
+          ],
+          [
+            23.0,
+            42.0
+          ],
+          [
+            30.0,
+            49.0
+          ]
+        ],
+        "tanimoto": [
+          65.37,
+          63.11,
+          62.22,
+          70.68,
+          64.72,
+          63.91,
+          59.93,
+          67.55
+        ]
+      },
+      {
+        "id": "A",
+        "name": "Arm A \u00b7 Plain CNN baseline (0 rotated train imgs)",
+        "color": "#d97757",
+        "width": 2.3,
+        "dash": [],
+        "exact": [
+          41.0,
+          4.0,
+          1.0,
+          0.0,
+          28.0,
+          4.0,
+          1.0,
+          2.0
+        ],
+        "exact_ci": [
+          [
+            31.0,
+            52.0
+          ],
+          [
+            1.0,
+            8.0
+          ],
+          [
+            0.0,
+            3.0
+          ],
+          [
+            0.0,
+            0.0
+          ],
+          [
+            20.0,
+            37.0
+          ],
+          [
+            1.0,
+            8.0
+          ],
+          [
+            0.0,
+            3.0
+          ],
+          [
+            0.0,
+            5.0
+          ]
+        ],
+        "tanimoto": [
+          66.18,
+          29.29,
+          23.97,
+          25.18,
+          56.88,
+          32.37,
+          26.98,
+          25.39
+        ]
+      }
+    ]
+  },
+  "molscribe_parity": {
+    "ALL": {
+      "n": 300,
+      "exact": 48.0,
+      "ci": [
+        42.0,
+        53.33
+      ]
+    },
+    "ACS": {
+      "n": 100,
+      "exact": 33.0,
+      "ci": [
+        24.0,
+        42.0
+      ]
+    },
+    "UOB": {
+      "n": 100,
+      "exact": 86.0,
+      "ci": [
+        79.0,
+        92.0
+      ]
+    },
+    "USPTO": {
+      "n": 100,
+      "exact": 25.0,
+      "ci": [
+        16.0,
+        33.0
+      ]
+    },
+    "has_stereo": {
+      "n": 57,
+      "exact": 8.77,
+      "ci": [
+        1.75,
+        15.79
+      ]
+    },
+    "no_stereo": {
+      "n": 243,
+      "exact": 57.2,
+      "ci": [
+        51.03,
+        63.37
+      ]
+    }
+  },
+  "operating_modes": {
+    "A_int8_greedy": {
+      "description": "Single arm A, int8 decoder, greedy (1 encoder pass)",
+      "encoder_passes": 1,
+      "beam": 1,
+      "tta": [],
+      "wall_ms": {
+        "p50": 429.2,
+        "p95": 530.5,
+        "mean": 438.1
+      },
+      "cpu_ms": {
+        "p50": 421.9,
+        "p95": 532.8,
+        "mean": 432.0
+      },
+      "relative_wall_p50": 1.0
+    },
+    "C_pure_int8_greedy": {
+      "description": "Single arm C-pure (C8 steerable, zero escnn), int8 decoder, greedy",
+      "encoder_passes": 1,
+      "beam": 1,
+      "tta": [],
+      "wall_ms": {
+        "p50": 488.5,
+        "p95": 624.7,
+        "mean": 504.9
+      },
+      "cpu_ms": {
+        "p50": 484.4,
+        "p95": 626.6,
+        "mean": 499.2
+      },
+      "relative_wall_p50": 1.14
+    },
+    "AC_int8_beam5": {
+      "description": "A + C-pure ensemble, int8 decoder, beam 5 + RDKit validity rerank",
+      "encoder_passes": 2,
+      "beam": 5,
+      "tta": [],
+      "wall_ms": {
+        "p50": 1687.9,
+        "p95": 2151.1,
+        "mean": 1737.7
+      },
+      "cpu_ms": {
+        "p50": 1656.2,
+        "p95": 2152.3,
+        "mean": 1723.4
+      },
+      "relative_wall_p50": 3.93
+    },
+    "AC_int8_beam5_ttapad_gated": {
+      "description": "A + C-pure ensemble, int8 decoder, beam 5 + pad TTA + selective gate",
+      "encoder_passes": 4,
+      "beam": 5,
+      "tta": [
+        "pad"
+      ],
+      "gate": {
+        "min_margin": 0.05,
+        "max_disagreement": 0.0
+      },
+      "wall_ms": {
+        "p50": 4074.1,
+        "p95": 4885.5,
+        "mean": 4124.5
+      },
+      "cpu_ms": {
+        "p50": 3960.9,
+        "p95": 4764.8,
+        "mean": 4068.0
+      },
+      "relative_wall_p50": 9.49
+    }
   }
 }

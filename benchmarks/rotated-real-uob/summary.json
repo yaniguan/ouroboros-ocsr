@@ -1,0 +1,288 @@
+{
+  "dataset": "Keylab/OCSR-Benchmarks UOB (seed=0 dev-test)",
+  "n_images": 100,
+  "angles": [
+    0,
+    45,
+    90,
+    135,
+    180,
+    225,
+    270,
+    315
+  ],
+  "threads": 6,
+  "int8_decoder": true,
+  "arms": {
+    "A": {
+      "checkpoint": "ouroboros-A.pt",
+      "mean_8_angles_exact": 0.1013,
+      "upright_0_exact": 0.41,
+      "rotated_90_180_270_mean_exact": 0.1,
+      "off_grid_45_step_mean_exact": 0.025,
+      "elapsed_seconds": 102.2,
+      "by_angle": {
+        "0": {
+          "angle": 0,
+          "exact": 0.41,
+          "exact_ci95": [
+            0.31,
+            0.52
+          ],
+          "valid": 0.95,
+          "tanimoto": 0.6618
+        },
+        "45": {
+          "angle": 45,
+          "exact": 0.04,
+          "exact_ci95": [
+            0.01,
+            0.08
+          ],
+          "valid": 0.75,
+          "tanimoto": 0.2929
+        },
+        "90": {
+          "angle": 90,
+          "exact": 0.01,
+          "exact_ci95": [
+            0.0,
+            0.03
+          ],
+          "valid": 0.77,
+          "tanimoto": 0.2397
+        },
+        "135": {
+          "angle": 135,
+          "exact": 0.0,
+          "exact_ci95": [
+            0.0,
+            0.0
+          ],
+          "valid": 0.85,
+          "tanimoto": 0.2518
+        },
+        "180": {
+          "angle": 180,
+          "exact": 0.28,
+          "exact_ci95": [
+            0.2,
+            0.37
+          ],
+          "valid": 0.9,
+          "tanimoto": 0.5688
+        },
+        "225": {
+          "angle": 225,
+          "exact": 0.04,
+          "exact_ci95": [
+            0.01,
+            0.08
+          ],
+          "valid": 0.82,
+          "tanimoto": 0.3237
+        },
+        "270": {
+          "angle": 270,
+          "exact": 0.01,
+          "exact_ci95": [
+            0.0,
+            0.03
+          ],
+          "valid": 0.81,
+          "tanimoto": 0.2698
+        },
+        "315": {
+          "angle": 315,
+          "exact": 0.02,
+          "exact_ci95": [
+            0.0,
+            0.05
+          ],
+          "valid": 0.86,
+          "tanimoto": 0.2539
+        }
+      }
+    },
+    "B": {
+      "checkpoint": "ouroboros-B.pt",
+      "mean_8_angles_exact": 0.37,
+      "upright_0_exact": 0.39,
+      "rotated_90_180_270_mean_exact": 0.3333,
+      "off_grid_45_step_mean_exact": 0.3925,
+      "elapsed_seconds": 99.01,
+      "by_angle": {
+        "0": {
+          "angle": 0,
+          "exact": 0.39,
+          "exact_ci95": [
+            0.29,
+            0.49
+          ],
+          "valid": 0.89,
+          "tanimoto": 0.6537
+        },
+        "45": {
+          "angle": 45,
+          "exact": 0.36,
+          "exact_ci95": [
+            0.2698,
+            0.46
+          ],
+          "valid": 0.89,
+          "tanimoto": 0.6311
+        },
+        "90": {
+          "angle": 90,
+          "exact": 0.34,
+          "exact_ci95": [
+            0.25,
+            0.44
+          ],
+          "valid": 0.91,
+          "tanimoto": 0.6222
+        },
+        "135": {
+          "angle": 135,
+          "exact": 0.47,
+          "exact_ci95": [
+            0.37,
+            0.57
+          ],
+          "valid": 0.95,
+          "tanimoto": 0.7068
+        },
+        "180": {
+          "angle": 180,
+          "exact": 0.34,
+          "exact_ci95": [
+            0.25,
+            0.44
+          ],
+          "valid": 0.93,
+          "tanimoto": 0.6472
+        },
+        "225": {
+          "angle": 225,
+          "exact": 0.35,
+          "exact_ci95": [
+            0.26,
+            0.4402
+          ],
+          "valid": 0.92,
+          "tanimoto": 0.6391
+        },
+        "270": {
+          "angle": 270,
+          "exact": 0.32,
+          "exact_ci95": [
+            0.23,
+            0.42
+          ],
+          "valid": 0.88,
+          "tanimoto": 0.5993
+        },
+        "315": {
+          "angle": 315,
+          "exact": 0.39,
+          "exact_ci95": [
+            0.3,
+            0.49
+          ],
+          "valid": 0.94,
+          "tanimoto": 0.6755
+        }
+      }
+    },
+    "C_pure": {
+      "checkpoint": "ouroboros-C-pure.pt",
+      "mean_8_angles_exact": 0.375,
+      "upright_0_exact": 0.39,
+      "rotated_90_180_270_mean_exact": 0.39,
+      "off_grid_45_step_mean_exact": 0.36,
+      "elapsed_seconds": 127.09,
+      "by_angle": {
+        "0": {
+          "angle": 0,
+          "exact": 0.39,
+          "exact_ci95": [
+            0.29,
+            0.49
+          ],
+          "valid": 0.96,
+          "tanimoto": 0.6872
+        },
+        "45": {
+          "angle": 45,
+          "exact": 0.36,
+          "exact_ci95": [
+            0.26,
+            0.46
+          ],
+          "valid": 0.95,
+          "tanimoto": 0.67
+        },
+        "90": {
+          "angle": 90,
+          "exact": 0.39,
+          "exact_ci95": [
+            0.29,
+            0.49
+          ],
+          "valid": 0.96,
+          "tanimoto": 0.6872
+        },
+        "135": {
+          "angle": 135,
+          "exact": 0.36,
+          "exact_ci95": [
+            0.26,
+            0.46
+          ],
+          "valid": 0.95,
+          "tanimoto": 0.67
+        },
+        "180": {
+          "angle": 180,
+          "exact": 0.39,
+          "exact_ci95": [
+            0.29,
+            0.49
+          ],
+          "valid": 0.96,
+          "tanimoto": 0.6872
+        },
+        "225": {
+          "angle": 225,
+          "exact": 0.36,
+          "exact_ci95": [
+            0.26,
+            0.46
+          ],
+          "valid": 0.95,
+          "tanimoto": 0.67
+        },
+        "270": {
+          "angle": 270,
+          "exact": 0.39,
+          "exact_ci95": [
+            0.29,
+            0.49
+          ],
+          "valid": 0.96,
+          "tanimoto": 0.6872
+        },
+        "315": {
+          "angle": 315,
+          "exact": 0.36,
+          "exact_ci95": [
+            0.26,
+            0.46
+          ],
+          "valid": 0.95,
+          "tanimoto": 0.67
+        }
+      }
+    }
+  }
+}

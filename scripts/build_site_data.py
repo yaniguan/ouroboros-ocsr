@@ -174,6 +174,38 @@ def build_data() -> dict:
         {"view": "V3 · Superatom layout", "visual": 0.0, "bayesian": 4.0, "ci": [1.0, 8.0]},
     ]
 
+    rot_real_raw = json.loads(
+        (ROOT / "benchmarks/rotated-real-uob/summary.json").read_text(encoding="utf-8")
+    )
+    rot_real_angles = [int(a) for a in rot_real_raw["angles"]]
+
+    def _real_rot_series(arm_key: str) -> dict:
+        by_ang = rot_real_raw["arms"][arm_key]["by_angle"]
+        return {
+            "exact": [round(by_ang[str(a)]["exact"] * 100, 2) for a in rot_real_angles],
+            "exact_ci": [
+                [
+                    round(by_ang[str(a)]["exact_ci95"][0] * 100, 2),
+                    round(by_ang[str(a)]["exact_ci95"][1] * 100, 2),
+                ]
+                for a in rot_real_angles
+            ],
+            "tanimoto": [round(by_ang[str(a)]["tanimoto"] * 100, 2) for a in rot_real_angles],
+        }
+
+    c_real_rot = _real_rot_series("C_pure")
+    b_real_rot = _real_rot_series("B")
+    a_real_rot = _real_rot_series("A")
+
+    ms_parity = json.loads(
+        (ROOT / "benchmarks/frozen-test-v2/molscribe_parity_report.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    op_modes = json.loads(
+        (ROOT / "benchmarks/cpu-api/operating_modes.json").read_text(encoding="utf-8")
+    )
+
     return {
         "rotation_sweep": {
             "angles": arm_c["angles"],
@@ -321,6 +353,44 @@ def build_data() -> dict:
                 "recovery_mace": 66.7,
             },
         },
+        "rotated_real_uob": {
+            "angles": rot_real_angles,
+            "models": [
+                {
+                    "id": "C",
+                    "name": "Arm C-pure · Pure-PyTorch C8 steerable (0 rotated train imgs)",
+                    "color": "#b5d88e",
+                    "width": 3.4,
+                    "dash": [],
+                    **c_real_rot,
+                },
+                {
+                    "id": "B",
+                    "name": "Arm B · CNN + 360° rotation aug (2.5x enc params)",
+                    "color": "#91b6df",
+                    "width": 2.3,
+                    "dash": [7, 5],
+                    **b_real_rot,
+                },
+                {
+                    "id": "A",
+                    "name": "Arm A · Plain CNN baseline (0 rotated train imgs)",
+                    "color": "#d97757",
+                    "width": 2.3,
+                    "dash": [],
+                    **a_real_rot,
+                },
+            ],
+        },
+        "molscribe_parity": {
+            g["subset"]: {
+                "n": g["n"],
+                "exact": round(g["exact"] * 100, 2),
+                "ci": [round(g["exact_ci95"][0] * 100, 2), round(g["exact_ci95"][1] * 100, 2)],
+            }
+            for g in ms_parity["molscribe_groups"]
+        },
+        "operating_modes": op_modes["modes"],
     }
 
 
