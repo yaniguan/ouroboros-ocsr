@@ -1,0 +1,9 @@
+{
+  "arm": "C",
+  "filename": "ouroboros-C-pure.pt",
+  "bytes": 159994395,
+  "sha256": "eddc1a38dde4e53df21b162a7ff5a313ff60544d258867a47eaa501cb611bc2d",
+  "step": 10000,
+  "pure_torch": true,
+  "source_checkpoint_sha256": "c889aea292756bf57fe2023089c53b9ec9fa4b37c080b291c7b7acdb96390a08"
+}

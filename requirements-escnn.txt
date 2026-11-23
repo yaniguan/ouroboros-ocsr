@@ -1,0 +1,6 @@
+# Optional steerable-basis training dependencies (needed only when training/fine-tuning escnn arms C/D).
+# Inference and demos do NOT need this file; use requirements-inference.txt + ouroboros-C-pure.pt.
+escnn==1.0.11
+py3nj==0.2.1; sys_platform != "win32"
+lie-learn==0.0.2; sys_platform == "linux"
+lie-learn @ git+https://github.com/AMLab-Amsterdam/lie_learn.git@edf012f5f60af320175d2e6269db78b984b5bfc3 ; sys_platform == "darwin"

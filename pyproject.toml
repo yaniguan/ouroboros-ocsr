@@ -5,31 +5,30 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ouroboros-ocsr"
 version = "0.1.0a1"
-description = "Rotation-equivariant OCSR with stereochemistry, followed by a 3D MACE energy stage"
+description = "Rotation-equivariant OCSR with stereochemistry, pure-PyTorch inference, and 3D physics verification"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 license = { text = "MIT" }
-# Exact pins live in requirements.txt; these are the direct dependencies only.
+# Core inference & evaluation dependencies are 100% prebuilt wheels (no gfortran or escnn needed).
 dependencies = [
     "torch",
-    "escnn",
     "rdkit",
     "ase",
-    "mace-torch",
-    "webdataset",
     "pyyaml",
     "numpy",
     "pillow",
-    "matplotlib",
 ]
 
 [project.optional-dependencies]
+train = ["escnn", "webdataset", "matplotlib"]
+mace = ["mace-torch"]
 api = ["fastapi", "uvicorn"]
-data = ["pyarrow"]
-dev = ["pytest", "ruff", "nbformat", "fastapi", "httpx", "pyarrow"]
-demo = ["jupyterlab>=4,<5"]
+data = ["pyarrow", "webdataset", "matplotlib"]
+dev = ["pytest", "ruff", "nbformat", "fastapi", "httpx", "pyarrow", "matplotlib", "webdataset"]
+demo = ["jupyterlab>=4,<5", "matplotlib"]
 # Hugging Face export/upload (scripts/export_hf_release.py falls back to .bin without safetensors)
 hf = ["safetensors", "huggingface_hub"]
+full = ["escnn", "mace-torch", "webdataset", "matplotlib", "fastapi", "uvicorn", "pyarrow"]
 
 [tool.setuptools.package-data]
 "ouroboros" = ["weights.json"]

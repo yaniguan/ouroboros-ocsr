@@ -43,14 +43,14 @@ def relative_error(actual: torch.Tensor, expected: torch.Tensor) -> float:
     return float((actual - expected).abs().max() / expected.abs().max().clamp_min(1e-12))
 
 
-def tiny_config(order: int = 4) -> dict:
+def tiny_config(order: int = 4, *, pure_torch: bool = False) -> dict:
     if order not in (4, 8, 16):
         raise ValueError("Choose C4, C8 or C16.")
     return {
         "data": {"image_size": 128},
         "model": {
             "encoder": {
-                "type": "steerable",
+                "type": "exported_steerable" if pure_torch else "steerable",
                 "N": order,
                 "fields": [4, 4, 8, 8],
                 "blocks": [1, 1, 1, 1],
@@ -69,6 +69,37 @@ def tiny_config(order: int = 4) -> dict:
             },
         },
     }
+
+
+def _impose_c4_regular_kernels_(trunk: torch.nn.Module, generator: torch.Generator) -> None:
+    """Populate a pure-PyTorch C4 trunk with exact 90-degree regular-representation kernels."""
+    with torch.no_grad():
+        for m in trunk.modules():
+            if isinstance(m, torch.nn.Conv2d):
+                c_out, c_in, kh, kw = m.weight.shape
+                f_out = c_out // 4
+                if c_in == 1:
+                    base = torch.randn(f_out, 1, kh, kw, generator=generator) * 0.2
+                    for h in range(4):
+                        m.weight[h::4] = torch.rot90(base, h, dims=(-2, -1))
+                else:
+                    f_in = c_in // 4
+                    base = torch.randn(f_out, f_in, 4, kh, kw, generator=generator) * 0.2
+                    w = m.weight.view(f_out, 4, f_in, 4, kh, kw)
+                    for h_out in range(4):
+                        for h_in in range(4):
+                            src = base[:, :, (h_in - h_out) % 4]
+                            w[:, h_out, :, h_in] = torch.rot90(src, h_out, dims=(-2, -1))
+            elif isinstance(m, torch.nn.BatchNorm2d):
+                f = m.num_features // 4
+                scale = torch.rand(f, 1, generator=generator).add(0.5).expand(f, 4).reshape(-1)
+                shift = torch.randn(f, 1, generator=generator).mul(0.1).expand(f, 4).reshape(-1)
+                mean = torch.randn(f, 1, generator=generator).mul(0.1).expand(f, 4).reshape(-1)
+                var = torch.rand(f, 1, generator=generator).add(0.5).expand(f, 4).reshape(-1)
+                m.weight.copy_(scale)
+                m.bias.copy_(shift)
+                m.running_mean.copy_(mean)
+                m.running_var.copy_(var)
 
 
 def _heatmap(values: torch.Tensor, scale: float) -> str:
@@ -102,9 +133,11 @@ class RotationLab:
         device: str = "cpu",
     ):
         if model is None:
+            from ouroboros.weights import resolve_checkpoint_path
+
             if ckpt_path is None:
                 root_dir = Path(__file__).resolve().parents[2]
-                default_ckpt = root_dir / "checkpoints" / "ouroboros-C.pt"
+                default_ckpt = resolve_checkpoint_path(root_dir / "checkpoints" / "ouroboros-C.pt")
                 loaded = (
                     self.from_checkpoint(default_ckpt, device=device)
                     if default_ckpt.is_file()
@@ -128,16 +161,29 @@ class RotationLab:
 
     @classmethod
     def random(cls, order: int = 4) -> RotationLab:
-        cfg = tiny_config(order)
+        from ouroboros.weights import has_escnn
+
+        use_pure = not has_escnn()
+        if use_pure and order != 4:
+            raise ImportError(
+                f"Random C{order} basis synthesis requires escnn; use order=4 or load "
+                "checkpoints/ouroboros-C-pure.pt."
+            )
+        cfg = tiny_config(order, pure_torch=use_pure)
         # Preserve the notebook's random state. No training or labels are used to set weights.
         with torch.random.fork_rng(devices=[]):
             torch.manual_seed(0)
             model = build_model(cfg, SmilesTokenizer.build(EXAMPLES.values()))
+            if use_pure:
+                gen = torch.Generator().manual_seed(0)
+                _impose_c4_regular_kernels_(model.encoder.trunk, gen)
         return cls(model, cfg, f"Random C{order} · seed 0 · CPU", False)
 
     @classmethod
     def from_checkpoint(cls, path: str | Path, device: str = "cpu") -> RotationLab:
-        path = Path(path).expanduser().resolve()
+        from ouroboros.weights import resolve_checkpoint_path
+
+        path = resolve_checkpoint_path(Path(path).expanduser()).resolve()
         if device not in ("cpu", "cuda"):
             raise ValueError("Device must be cpu or cuda.")
         if device == "cuda" and not torch.cuda.is_available():

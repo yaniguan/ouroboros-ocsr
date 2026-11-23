@@ -1,8 +1,12 @@
-"""Shared fixtures: a tiny synthetic dataset built with the real pipeline."""
+"""Shared fixtures: a tiny synthetic dataset built with the real pipeline.
+
+Importing ``torch`` here before ``pyarrow`` avoids Windows ``c10.dll`` initialization errors.
+"""
 
 import random
 
 import pytest
+import torch  # noqa: F401
 
 from ouroboros.data import build
 

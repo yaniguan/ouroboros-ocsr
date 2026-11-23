@@ -1,26 +1,41 @@
 {
   "version": "0.1.0-alpha",
+  "training_domain": "synthetic-pilot-200k (ZINC250k + MOSES RDKit renderings, no real journal/patent figures)",
+  "license": "MIT",
+  "real_benchmark_note": "v0.1.0-alpha weights are synthetic-pilot checkpoints (65.8% across 24 synthetic angles; 16.8%-18.8% zero-shot on real subset100). Real-figure fine-tune v2 weights (46.7% frozen-test-v2 / 54.0% subset100) train on VERDICT-PMC (CC-BY-NC-4.0 non-commercial) via colab/finetune_v2.ipynb.",
   "weights": {
     "A": {
       "filename": "ouroboros-A.pt",
       "url": "https://github.com/yaniguan/ouroboros-ocsr/releases/download/v0.1.0-alpha/ouroboros-A.pt",
       "bytes": 172824785,
       "sha256": "34961cab27b1f9f8b9487c0a03d4f3ddb3c601356217a81e6b35817d78bb837b",
-      "step": 10000
+      "step": 10000,
+      "requires_escnn": false
     },
     "B": {
       "filename": "ouroboros-B.pt",
       "url": "https://github.com/yaniguan/ouroboros-ocsr/releases/download/v0.1.0-alpha/ouroboros-B.pt",
       "bytes": 172824785,
       "sha256": "2d60bf1d07030e9f9f6d25bcf566dec2112010ed62564e9f8f28587aa4e1e939",
-      "step": 10000
+      "step": 10000,
+      "requires_escnn": false
     },
     "C": {
       "filename": "ouroboros-C.pt",
       "url": "https://github.com/yaniguan/ouroboros-ocsr/releases/download/v0.1.0-alpha/ouroboros-C.pt",
       "bytes": 129796507,
       "sha256": "c889aea292756bf57fe2023089c53b9ec9fa4b37c080b291c7b7acdb96390a08",
-      "step": 10000
+      "step": 10000,
+      "requires_escnn": true,
+      "pure_torch": {
+        "filename": "ouroboros-C-pure.pt",
+        "url": "https://github.com/yaniguan/ouroboros-ocsr/releases/download/v0.1.0-alpha/ouroboros-C-pure.pt",
+        "bytes": 159994395,
+        "sha256": "eddc1a38dde4e53df21b162a7ff5a313ff60544d258867a47eaa501cb611bc2d",
+        "step": 10000,
+        "requires_escnn": false,
+        "source_checkpoint_sha256": "c889aea292756bf57fe2023089c53b9ec9fa4b37c080b291c7b7acdb96390a08"
+      }
     }
   }
 }

@@ -33,33 +33,39 @@
 
 Ouroboros turns an image of a molecule into a SMILES string with stereochemistry. On synthetic rotated drawings, its C8 steerable CNN (arm C) matches rotation augmentation without rotating training images ([65.8% vs 65.7%](docs/v0-results.md) across 24 angles). On real figures from papers and patents, the fine-tuned A + C ensemble scores [**46.7%**](benchmarks/frozen-test-v2/AC-ensemble-beam5-ttapad-report.md) (`85.0%` on UOB) on the untouched 300-image `frozen-test-v2` holdout with validation-locked decoding, and [**54.0%**](benchmarks/finetune-v2-oct30/AC-ensemble-beam5-ttapad-report.md) on the 298-image `subset100` dev-test set (where plain CNN arm A is the stronger single model: [51.0%](benchmarks/finetune-v2-oct30/A-selected-report.md) vs [37.6%](benchmarks/finetune-v2-oct30/C-selected-report.md) for C).
 
-## Quickstart
+## Quickstart (zero Fortran, pure-PyTorch wheels)
 
-Python 3.11 and a Fortran compiler (`gfortran`) are needed for `escnn`. No GPU or dataset needed.
+Inference and demos run on standard Python 3.11–3.12 wheels (`torch`, `rdkit`, `pillow`, `pyyaml`, `ase`) — **no `gfortran`, C compiler, `escnn`, or GPU required.** (`escnn` is only needed when training steerable basis weights from scratch; see [`requirements-escnn.txt`](requirements-escnn.txt).)
 
 ```bash
 git clone https://github.com/yaniguan/ouroboros-ocsr.git && cd ouroboros-ocsr
-python3.11 -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements-inference.txt
-python scripts/prepare_inference.py
 pip install --no-deps -e .
-python -m ouroboros.weights fetch --arm C          # downloads + SHA256-checks checkpoints/ouroboros-C.pt
+python -m ouroboros.weights fetch --arm C --pure-torch   # downloads SHA256-verified checkpoints/ouroboros-C-pure.pt
 ```
 
 ```python
 from ouroboros.demo.rotation import RotationLab
 
-lab = RotationLab.from_checkpoint("checkpoints/ouroboros-C.pt")    # C8 steerable encoder
+lab = RotationLab.from_checkpoint("checkpoints/ouroboros-C-pure.pt")  # pure-PyTorch C8 encoder
 for angle in (0, 90, 180):
-    r = lab.evaluate("CC(=O)Oc1ccccc1C(=O)O", angle=angle)         # draw aspirin, rotate it
+    r = lab.evaluate("CC(=O)Oc1ccccc1C(=O)O", angle=angle)            # draw aspirin, rotate it
     print(angle, r["rotated_prediction"]["smiles"], "feature error:", r["feature_error"])
 ```
 
 ```text
-0 CC(=O)Oc1ccccc1C(=O)O feature error: 3.1e-16
-90 CC(=O)Oc1ccccc1C(=O)O feature error: 8.1e-07
-180 CC(=O)Oc1ccccc1C(=O)O feature error: 8.1e-07
+0 CC(=O)Oc1ccccc1C(=O)O feature error: 0.0
+90 CC(=O)Oc1ccccc1C(=O)O feature error: 5.3e-07
+180 CC(=O)Oc1ccccc1C(=O)O feature error: 6.6e-07
 ```
+
+### Weights & licensing at a glance
+
+| Weight set | Training data | License | Benchmark role | Availability |
+|---|---|---|---|---|
+| **`v0.1.0-alpha` (`ouroboros-{A,B,C,C-pure}.pt`)** | 200k synthetic ZINC250k + MOSES RDKit renderings | **MIT** | `65.8%` 24-angle synthetic sweep; `16.8%–18.8%` zero-shot on real `subset100` | `python -m ouroboros.weights fetch` ([GitHub Release](https://github.com/yaniguan/ouroboros-ocsr/releases/tag/v0.1.0-alpha)) |
+| **`finetune-v2` (`A-selected`, `C-selected`)** | `VERDICT-PMC` real figures + 50k R-group synthetic | **CC-BY-NC-4.0** (non-commercial, inherited from `VERDICT-PMC`) | `46.7%` `frozen-test-v2` (`85.0%` UOB); `54.0%` `subset100` dev-test | Reproducible via [`colab/finetune_v2.ipynb`](colab/finetune_v2.ipynb); not bundled under MIT |
 
 Want a UI?
 - **No install (GitHub Pages):** open [https://yaniguan.github.io/ouroboros-ocsr/lab/](https://yaniguan.github.io/ouroboros-ocsr/lab/) directly in any browser to explore 500 built-in bio & electrolyte 3D molecules, fetch live 3D conformers from PubChem or ChEMBL, and run 10 physics & symmetry checks.

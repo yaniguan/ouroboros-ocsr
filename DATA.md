@@ -120,11 +120,11 @@ training set (synthetic and real), prints the overlap table and exits nonzero on
 Shards rendered earlier can instead be filtered at load time
 (`ShardDataset(..., exclude_key14=...)`).
 
-## Model weights
+## Model weights and license boundaries
 
-MACE-OFF23 weights (downloaded by `mace-torch` from `ACEsuit/mace-off` on first use) are
-distributed under the Academic Software License (ASL, https://github.com/gabor1/ASL): academic,
-non-commercial use. They are cached in `~/.cache/mace/` and never committed.
+- **Published `v0.1.0-alpha` synthetic pilot weights (`MIT`):** `ouroboros-A.pt`, `ouroboros-B.pt`, `ouroboros-C.pt` (`escnn` steerable basis for training), and `ouroboros-C-pure.pt` (`exported_steerable` pure-PyTorch inference weights, `SHA256: eddc1a38dde4e53df21b162a7ff5a313ff60544d258867a47eaa501cb611bc2d`) are trained solely on RDKit renderings of public ZINC250k + MOSES molecules and released under `MIT`.
+- **Real-data `finetune-v2` weights (`CC-BY-NC-4.0`):** checkpoints trained with `VERDICT-PMC` (`colab/finetune_v2.ipynb`) inherit `VERDICT-PMC`'s **CC-BY-NC-4.0 (non-commercial)** restriction and must be published separately from `MIT` artifacts (e.g. via `scripts/export_hf_release.py`, which stamps `license: cc-by-nc-4.0` in the model card).
+- **MACE-OFF23 weights (`ASL`):** downloaded by `mace-torch` from `ACEsuit/mace-off` on first use under the Academic Software License (ASL, https://github.com/gabor1/ASL): academic, non-commercial use. Cached in `~/.cache/mace/` and never committed.
 
 Download identities (pinned in `ouroboros/data/sources.py`): ZINC250k revision
 `37b9f96470d4471c0593cffefa448e0a8a184ef6`, Git blob

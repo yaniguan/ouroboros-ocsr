@@ -1,7 +1,9 @@
 """Export trusted training checkpoints, or fetch checksum-verified release weights.
 
 python -m ouroboros.weights fetch --arm C
-python -m ouroboros.weights export --checkpoint RUN/ckpt/best-step-00010000.pt --arm C
+python -m ouroboros.weights fetch --arm C --pure-torch
+python -m ouroboros.weights info
+python -m ouroboros.weights export --checkpoint RUN/ckpt/best-step-00010000.pt --arm C --pure-torch
 """
 
 from __future__ import annotations
@@ -9,11 +11,30 @@ from __future__ import annotations
 import argparse
 import copy
 import hashlib
+import importlib.util
 import json
 import os
+import sys
 import tempfile
 import urllib.request
 from pathlib import Path
+
+
+def has_escnn() -> bool:
+    """Return True when escnn is importable in the current Python environment."""
+    if "escnn" in sys.modules:
+        return sys.modules["escnn"] is not None
+    return importlib.util.find_spec("escnn") is not None
+
+
+def resolve_checkpoint_path(path: str | Path) -> Path:
+    """Prefer ``ouroboros-C-pure.pt`` when ``ouroboros-C.pt`` is requested without ``escnn``."""
+    p = Path(path)
+    if p.name == "ouroboros-C.pt" and (not p.is_file() or not has_escnn()):
+        pure = p.with_name("ouroboros-C-pure.pt")
+        if pure.is_file() and (not p.is_file() or not has_escnn()):
+            return pure
+    return p
 
 
 def digest(path: Path) -> str:
@@ -83,6 +104,19 @@ def export_checkpoint(
     }
 
 
+def resolve_weight_entry(manifest: dict, arm: str, *, mode: str = "auto") -> dict:
+    """Select the manifest entry for ``arm`` under ``mode`` ('auto', 'pure-torch', 'escnn')."""
+    if arm == "C-pure":
+        return manifest["weights"]["C"]["pure_torch"]
+    entry = manifest["weights"][arm]
+    if arm == "C" and "pure_torch" in entry:
+        if mode == "pure-torch":
+            return entry["pure_torch"]
+        if mode == "auto" and not has_escnn():
+            return entry["pure_torch"]
+    return entry
+
+
 def fetch(entry: dict, directory: Path) -> Path:
     filename = entry["filename"]
     if Path(filename).name != filename or filename in ("", ".", ".."):
@@ -116,12 +150,28 @@ def fetch(entry: dict, directory: Path) -> Path:
         temporary.unlink(missing_ok=True)
 
 
+def load_manifest() -> dict:
+    return json.loads(Path(__file__).with_name("weights.json").read_text(encoding="utf-8"))
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="command", required=True)
     download = sub.add_parser("fetch", help="download published weights and verify SHA256")
-    download.add_argument("--arm", choices=("A", "B", "C", "all"), default="C")
+    download.add_argument("--arm", choices=("A", "B", "C", "C-pure", "all"), default="C")
     download.add_argument("--out", type=Path, default=Path("checkpoints"))
+    fmt = download.add_mutually_exclusive_group()
+    fmt.add_argument(
+        "--pure-torch",
+        action="store_true",
+        help="prefer zero-escnn pure-PyTorch inference weights when available",
+    )
+    fmt.add_argument(
+        "--escnn",
+        action="store_true",
+        help="require raw escnn steerable basis weights (for fine-tuning)",
+    )
+    sub.add_parser("info", help="show published release weight domain, licenses, and checksums")
     export = sub.add_parser("export", help="export a TRUSTED training checkpoint for inference")
     export.add_argument("--checkpoint", type=Path, required=True)
     export.add_argument("--arm", choices=("A", "B", "C", "D"), required=True)
@@ -133,19 +183,62 @@ def main(argv=None):
     )
     args = ap.parse_args(argv)
     if args.command == "export":
+        suffix = "-pure" if args.pure_torch and args.arm in ("C", "D") else ""
+        out_file = args.out / f"ouroboros-{args.arm}{suffix}.pt"
+        if args.pure_torch and (args.out / f"ouroboros-{args.arm}.pt") != out_file:
+            # Keep backward compatibility with callers checking ouroboros-<arm>.pt when requested
+            pass
         result = export_checkpoint(
             args.checkpoint,
             args.out / f"ouroboros-{args.arm}.pt",
             args.arm,
             pure_torch=args.pure_torch,
         )
-        (args.out / f"{args.arm}-receipt.json").write_text(json.dumps(result, indent=2) + "\n")
+        (args.out / f"{args.arm}-receipt.json").write_text(
+            json.dumps(result, indent=2) + "\n", encoding="utf-8"
+        )
         print(json.dumps(result, indent=2))
+    elif args.command == "info":
+        manifest = load_manifest()
+        info = {
+            "version": manifest["version"],
+            "training_domain": manifest.get("training_domain"),
+            "license": manifest.get("license"),
+            "escnn_installed": has_escnn(),
+            "note": manifest.get("real_benchmark_note"),
+            "arms": {
+                arm: {
+                    "filename": e["filename"],
+                    "bytes": e["bytes"],
+                    "sha256": e["sha256"],
+                    "requires_escnn": e.get("requires_escnn", False),
+                    "pure_torch_filename": e.get("pure_torch", {}).get("filename"),
+                }
+                for arm, e in manifest["weights"].items()
+            },
+        }
+        print(json.dumps(info, indent=2))
     else:
-        manifest = json.loads(Path(__file__).with_name("weights.json").read_text())
+        manifest = load_manifest()
+        mode = "pure-torch" if args.pure_torch else ("escnn" if args.escnn else "auto")
         arms = ("A", "B", "C") if args.arm == "all" else (args.arm,)
+        print(
+            f"[ouroboros.weights] Release {manifest['version']} · "
+            f"{manifest.get('training_domain', 'synthetic pilot')} · "
+            f"License: {manifest.get('license', 'MIT')}",
+            file=sys.stderr,
+        )
+        if note := manifest.get("real_benchmark_note"):
+            print(f"[ouroboros.weights] Note: {note}", file=sys.stderr)
         for arm in arms:
-            print(fetch(manifest["weights"][arm], args.out))
+            entry = resolve_weight_entry(manifest, arm, mode=mode)
+            if arm == "C" and mode == "auto" and not has_escnn():
+                print(
+                    "[ouroboros.weights] escnn not installed -> fetching pure-PyTorch "
+                    f"{entry['filename']} (zero gfortran/escnn needed).",
+                    file=sys.stderr,
+                )
+            print(fetch(entry, args.out))
 
 
 if __name__ == "__main__":

@@ -42,7 +42,13 @@ from ouroboros.model import build_model, load_model_state
 
 
 def load_checkpoint(path: str | Path, device: torch.device):
-    state = torch.load(path, map_location="cpu", weights_only=False)
+    from ouroboros.weights import resolve_checkpoint_path
+
+    resolved = resolve_checkpoint_path(path)
+    try:
+        state = torch.load(resolved, map_location="cpu", weights_only=True)
+    except Exception:  # noqa: BLE001 - training checkpoints carry RNG objects
+        state = torch.load(resolved, map_location="cpu", weights_only=False)
     tok = SmilesTokenizer(state["vocab"])
     model = build_model(state["config"], tok)
     load_model_state(model, state["model"])
