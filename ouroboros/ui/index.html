@@ -662,28 +662,38 @@
     </div>
 
     <div class="card composer">
+      <div class="composer-row" style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line);">
+        <select id="c3dCatDomain" class="compact" aria-label="Filter molecule domain">
+          <option value="all">All 500 Molecules</option>
+          <option value="bio">Bio &amp; Drugs (260)</option>
+          <option value="electrolyte">Electrolytes (240)</option>
+        </select>
+        <input type="text" id="c3dCatalogFilter" placeholder="Filter 500 (e.g. FEC, DME, GABA, ibuprofen)…" style="width:auto;flex:1 1 180px;max-width:260px;" aria-label="Filter 500-molecule catalog">
+        <select id="c3dExample" style="width:auto;flex:1 1 240px;max-width:360px;" aria-label="500-molecule library">
+          <optgroup label="Bio &amp; Therapeutics">
+            <option value="N[C@@H](C)C(=O)O">L-Alanine (C3H7NO2)</option>
+            <option value="CC(C)Cc1ccc([C@@H](C)C(=O)O)cc1">(S)-Ibuprofen (C13H18O2)</option>
+            <option value="Oc1ccc(/C=C/c2cc(O)cc(O)c2)cc1">(E)-Resveratrol (C14H12O3)</option>
+            <option value="Cn1cnc2c1c(=O)n(C)c(=O)n2C">Caffeine (C8H10N4O2)</option>
+          </optgroup>
+          <optgroup label="Battery Electrolytes">
+            <option value="O=C1OCCO1">Ethylene carbonate · EC (C3H4O3)</option>
+            <option value="O=C1OC[C@H](F)O1">(R)-Fluoroethylene carbonate · FEC (C3H3FO3)</option>
+            <option value="O=c1occo1">Vinylene carbonate · VC (C3H2O3)</option>
+            <option value="COCCOC">1,2-Dimethoxyethane · DME (C4H10O2)</option>
+            <option value="FC(F)C(F)(F)OCC(F)(F)F">TTE fluorinated ether (C4H3F7O)</option>
+          </optgroup>
+          <optgroup label="3D Ring Cages &amp; Shorthands">
+            <option value="CNC(=O)C12CC(C1)C2">BCP cage (C7H11NO)</option>
+            <option value="NC(=O)C12C3C4C1C5C2C3C45">Cubane amide (C9H9NO)</option>
+            <option value="[Boc]NCc1ccc([Ph])cc1">[Boc] &amp; [Ph] shorthand</option>
+          </optgroup>
+        </select>
+      </div>
       <div class="composer-row">
         <div class="grow">
           <input type="text" id="c3dSmiles" class="mono" value="N[C@@H](C)C(=O)O" placeholder="Enter SMILES, e.g. N[C@@H](C)C(=O)O" spellcheck="false">
         </div>
-        <select id="c3dExample" class="compact" aria-label="Quick example">
-          <option value="">Examples…</option>
-          <optgroup label="Chiral &amp; Cage Molecules">
-            <option value="N[C@@H](C)C(=O)O">L-Alanine</option>
-            <option value="CC(C)Cc1ccc([C@@H](C)C(=O)O)cc1">(S)-Ibuprofen</option>
-            <option value="Oc1ccc(/C=C/c2cc(O)cc(O)c2)cc1">(E)-Resveratrol</option>
-            <option value="CNC(=O)C12CC(C1)C2">BCP cage</option>
-            <option value="NC(=O)C12C3C4C1C5C2C3C45">Cubane amide</option>
-            <option value="[Boc]NCc1ccc([Ph])cc1">[Boc] &amp; [Ph] shorthand</option>
-          </optgroup>
-          <optgroup label="Rule Edge Cases">
-            <option value="CC(O)C(=O)O">Unlabeled stereo (warn)</option>
-            <option value="CC(=O)[O-].[Na+]">Salt ions (fail)</option>
-            <option value="[CH2]c1ccccc1">Radical electron (fail)</option>
-            <option value="BORON_MACE">Boron on MACE (fail)</option>
-            <option value="CLASH_TEST">0.45 Å atom clash (fail)</option>
-          </optgroup>
-        </select>
         <select id="c3dPotential" class="compact" aria-label="3D Force Model">
           <option value="mmff94s">MMFF94s</option>
           <option value="mace-small">MACE-OFF23-small</option>
@@ -691,6 +701,17 @@
           <option value="ani2x">ANI-2x</option>
         </select>
         <button class="btn primary" id="btnRunC3d">Check 3D</button>
+      </div>
+      <div class="composer-row" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);">
+        <select id="c3dPubDb" class="compact" aria-label="Public chemical database">
+          <option value="pubchem">PubChem (118M+)</option>
+          <option value="chembl">ChEMBL Drugs (2.4M+)</option>
+        </select>
+        <div class="grow">
+          <input type="text" id="c3dPubQuery" placeholder="Search public DB by name, CAS, CID, or ChEMBL ID (e.g. paclitaxel, 96-49-1, CHEMBL521)…" spellcheck="false">
+        </div>
+        <button type="button" class="btn" id="btnFetchPubDb">Fetch Public DB</button>
+        <a id="c3dPubLink" class="meta-link" href="https://pubchem.ncbi.nlm.nih.gov" target="_blank" rel="noopener" style="display:none;">PubChem ↗</a>
       </div>
 
       <details class="drawer">
@@ -1619,6 +1640,49 @@ function draw3D() {
 })();
 
 /* Tab 1: 3D Molecule & Physics */
+let C3D_CATALOG = [];
+function renderC3dCatalog() {
+  if (!C3D_CATALOG.length) return;
+  const dom = document.getElementById("c3dCatDomain").value;
+  const q = (document.getElementById("c3dCatalogFilter").value || "").trim().toLowerCase();
+  const sel = document.getElementById("c3dExample");
+  const groups = new Map();
+  for (const m of C3D_CATALOG) {
+    if (dom !== "all" && m.domain !== dom) continue;
+    if (q && !(m.name.toLowerCase().includes(q) || m.sub.toLowerCase().includes(q) || m.formula.toLowerCase().includes(q) || m.smiles.toLowerCase().includes(q))) continue;
+    const g = `${m.domain === "bio" ? "Bio" : "Electrolyte"} · ${m.sub}`;
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(m);
+  }
+  const out = [];
+  for (const [g, list] of groups.entries()) {
+    out.push(`<optgroup label="${esc(g)}">`);
+    for (const m of list) out.push(`<option value="${esc(m.smiles)}">${esc(m.name)} (${esc(m.formula)})</option>`);
+    out.push("</optgroup>");
+  }
+  sel.innerHTML = out.length ? out.join("") : '<option value="">No match in 500-catalog</option>';
+}
+
+fetch("api/catalog500").then(r => r.ok ? r.json() : null).then(d => {
+  if (d && Array.isArray(d.molecules) && d.molecules.length) {
+    C3D_CATALOG = d.molecules;
+    renderC3dCatalog();
+  }
+}).catch(() => {});
+
+document.getElementById("c3dCatDomain").addEventListener("change", () => {
+  renderC3dCatalog();
+  const v = document.getElementById("c3dExample").value;
+  if (v) { document.getElementById("c3dSmiles").value = v; runCompliance3D(); }
+});
+document.getElementById("c3dCatalogFilter").addEventListener("input", renderC3dCatalog);
+document.getElementById("c3dCatalogFilter").addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    const v = document.getElementById("c3dExample").value;
+    if (v) { document.getElementById("c3dSmiles").value = v; runCompliance3D(); }
+  }
+});
+
 document.getElementById("c3dPerturb").addEventListener("input", e => {
   document.getElementById("c3dPerturbVal").textContent = `${Number(e.target.value).toFixed(2)} Å`;
 });
@@ -1626,16 +1690,62 @@ document.getElementById("c3dExample").addEventListener("change", e => {
   const val = e.target.value;
   if (!val) return;
   document.getElementById("c3dClash").checked = false;
-  if (val === "BORON_MACE") {
-    document.getElementById("c3dSmiles").value = "CC1(C)OB(c2ccc(F)cc2)OC1(C)C";
-    document.getElementById("c3dPotential").value = "mace-small";
-  } else if (val === "CLASH_TEST") {
-    document.getElementById("c3dSmiles").value = "N[C@@H](C)C(=O)O";
-    document.getElementById("c3dClash").checked = true;
-  } else {
-    document.getElementById("c3dSmiles").value = val;
-  }
+  document.getElementById("c3dSmiles").value = val;
   runCompliance3D();
+});
+
+async function fetchPublicDbIntoWorkbench() {
+  const q = document.getElementById("c3dPubQuery").value.trim();
+  const db = document.getElementById("c3dPubDb").value;
+  const btn = document.getElementById("btnFetchPubDb");
+  const link = document.getElementById("c3dPubLink");
+  if (!q) return;
+  setError("");
+  btn.disabled = true;
+  try {
+    let smi = "", extUrl = "", extLabel = "";
+    if (db === "chembl") {
+      const isId = /^CHEMBL\d+$/i.test(q);
+      const url = isId
+        ? `https://www.ebi.ac.uk/chembl/api/data/molecule/${encodeURIComponent(q.toUpperCase())}.json`
+        : `https://www.ebi.ac.uk/chembl/api/data/molecule/search.json?q=${encodeURIComponent(q)}&limit=5`;
+      const r = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!r.ok) throw new Error(`ChEMBL HTTP ${r.status}`);
+      const j = await r.json();
+      const mol = isId ? j : (j.molecules || []).find(m => m.molecule_structures?.canonical_smiles);
+      if (!mol) throw new Error(`No ChEMBL compound with SMILES found for "${q}"`);
+      smi = mol.molecule_structures.canonical_smiles;
+      extUrl = `https://www.ebi.ac.uk/chembl/compound_report_card/${mol.molecule_chembl_id}/`;
+      extLabel = `${mol.molecule_chembl_id} ↗`;
+    } else {
+      const cidMatch = q.match(/^(?:cid[:\s#]*)?(\d+)$/i);
+      const path = cidMatch ? `cid/${cidMatch[1]}` : `name/${encodeURIComponent(q)}`;
+      const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/${path}/property/SMILES,IsomericSMILES,ConnectivitySMILES/JSON`);
+      if (!r.ok) throw new Error(`Compound "${q}" not found on PubChem`);
+      const j = await r.json();
+      const prop = j?.PropertyTable?.Properties?.[0];
+      smi = prop?.SMILES || prop?.IsomericSMILES || prop?.ConnectivitySMILES || "";
+      if (!smi) throw new Error(`No SMILES returned for "${q}"`);
+      extUrl = `https://pubchem.ncbi.nlm.nih.gov/compound/${prop.CID}`;
+      extLabel = `PubChem CID #${prop.CID} ↗`;
+    }
+    document.getElementById("c3dSmiles").value = smi;
+    document.getElementById("c3dClash").checked = false;
+    if (extUrl) {
+      link.href = extUrl;
+      link.textContent = extLabel;
+      link.style.display = "inline-flex";
+    }
+    await runCompliance3D();
+  } catch (err) {
+    setError(err.message || String(err));
+  } finally {
+    btn.disabled = false;
+  }
+}
+document.getElementById("btnFetchPubDb").addEventListener("click", fetchPublicDbIntoWorkbench);
+document.getElementById("c3dPubQuery").addEventListener("keydown", e => {
+  if (e.key === "Enter") fetchPublicDbIntoWorkbench();
 });
 
 function iconChar(status) {

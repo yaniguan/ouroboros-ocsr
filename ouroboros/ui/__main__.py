@@ -127,6 +127,14 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             with eng.lock:
                 self._send_json(200, eng.status())
             return
+        if route == "api/catalog500":
+            root_dir = Path(__file__).resolve().parents[2]
+            cat_path = root_dir / "site" / "assets" / "molecule-catalog-500.json"
+            if cat_path.is_file():
+                self._send(200, cat_path.read_bytes(), "application/json; charset=utf-8")
+            else:
+                self._send_json(200, {"molecules": []})
+            return
         self._send_json(404, {"error": f"Unknown GET route: {route}"})
 
     def do_POST(self) -> None:

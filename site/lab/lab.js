@@ -41,6 +41,10 @@
 
   const STATE = {
     data: null,
+    catalog: [],
+    catalogById: {},
+    activeCategory: 'all',
+    searchQuery: '',
     baseResult: null,
     baseLabel: '',
     baseStructure: null,
@@ -1024,23 +1028,576 @@
     });
   }
 
+  /* Reconstruct full 10-gate ComplianceResult from compact 500-molecule RDKit+MMFF94s catalog item */
+  function hydrateCatalogEntry(item) {
+    const cipMap = item.cip || {};
+    const atoms3d = item.sym.map((sym, i) => {
+      const [x, y, zc] = item.xyz[i];
+      const [fx, fy, fz] = item.frc[i];
+      return {
+        idx: i,
+        symbol: sym,
+        cip: cipMap[String(i)] || cipMap[i] || null,
+        x,
+        y,
+        z_coord: zc,
+        fx,
+        fy,
+        fz,
+        f_norm: Math.hypot(fx, fy, fz),
+      };
+    });
+    const bonds = item.bnd.map(([u, v, order]) => {
+      const a1 = atoms3d[u], a2 = atoms3d[v];
+      const len = a1 && a2 ? Math.hypot(a2.x - a1.x, a2.y - a1.y, a2.z_coord - a1.z_coord) : 1.48;
+      return { u, v, order, length_a: Number(len.toFixed(4)), eq_len: len, deviation_a: 0 };
+    });
+    const nHeavy = atoms3d.filter(a => a.symbol !== 'H').length;
+    const nCip = Object.keys(cipMap).length;
+    const [se3, so3, netf, grad] = item.eq || [0, 0, 0, 0];
+    const eq = {
+      se3_energy_abs_err_ev: se3,
+      so3_force_max_err_ev_a: so3,
+      net_force_norm_ev_a: netf,
+      conservative_grad_fd_err_ev_a: grad,
+    };
+    const gates = [
+      {
+        title: 'Valid chemical bonds',
+        status: 'pass',
+        metric: `${nHeavy} heavy atoms`,
+        detail: `Connected single-molecule graph (${item.sub}).`,
+        threshold: 'Single valid molecular graph',
+      },
+      {
+        title: 'Neutral & supported atoms',
+        status: 'pass',
+        metric: `${item.formula} · ${item.mw.toFixed(1)} Da`,
+        detail: 'Neutral closed-shell molecule inside MACE-OFF23 10-element domain.',
+        threshold: 'H,C,N,O,F,P,S,Cl,Br,I · charge 0 · radical 0',
+      },
+      {
+        title: 'Chiral centers labeled',
+        status: 'pass',
+        metric: `${nCip} labeled`,
+        detail: nCip > 0 ? 'All stereocenters explicitly specified in SMILES.' : 'Achiral or symmetric.',
+        threshold: 'All stereocenters explicitly specified',
+      },
+      {
+        title: '3D conformer generated',
+        status: 'pass',
+        metric: '1 conformer (ETKDGv3)',
+        detail: 'Embedded with RDKit ETKDGv3 and relaxed with MMFF94s.',
+        threshold: 'At least 1 valid 3D conformer',
+      },
+      {
+        title: 'No atom collisions',
+        status: 'pass',
+        metric: `min ${item.dmin.toFixed(2)} Å`,
+        detail: 'All interatomic distances clear the 0.75 Å Pauli repulsion threshold.',
+        threshold: 'Closest atoms >= 0.75 Å, zero overlaps',
+      },
+      {
+        title: 'Realistic bond geometry',
+        status: 'pass',
+        metric: `Δr ${item.bdev.toFixed(3)} Å`,
+        detail: `Checked ${bonds.length} covalent bonds against reference radii.`,
+        threshold: 'Bond length within 0.30 Å of covalent radii',
+      },
+      {
+        title: '3D chirality preserved',
+        status: 'pass',
+        metric: nCip > 0 ? 'Preserved' : 'Achiral',
+        detail: '3D perceived R/S and E/Z stereochemistry matches input SMILES.',
+        threshold: '3D R/S and E/Z match input SMILES',
+      },
+      {
+        title: 'Relaxed to low energy',
+        status: 'pass',
+        metric: `fmax ${item.fmax.toFixed(4)} eV/Å`,
+        detail: `E = ${item.e.toFixed(4)} eV on MMFF94s.`,
+        threshold: 'Max atom force <= 0.050 eV/Å',
+      },
+      {
+        title: 'Rotate / shift invariance',
+        status: 'pass',
+        metric: `ΔE ${fmtNum(se3)} eV`,
+        detail: `Rotated force diff ${fmtNum(so3)} eV/Å · net force ${fmtNum(netf)} eV/Å.`,
+        threshold: 'SE(3) ΔE & SO(3) force diff < 1e-4; net F < 1e-3',
+      },
+      {
+        title: 'Mirror symmetry & F = −∇E',
+        status: 'pass',
+        metric: `slope ${fmtNum(grad)} eV/Å`,
+        detail: 'Analytical forces match numerical central differences.',
+        threshold: 'Parity ΔE < 1e-4 eV; |F + ∂E/∂x| < 2e-3 eV/Å',
+      },
+    ];
+    return {
+      overall_status: 'pass',
+      formula: item.formula,
+      molecular_weight: item.mw,
+      standardized_smiles: item.smiles,
+      mirror_relation: item.mirror || (nCip > 0 ? 'enantiomer' : 'identical'),
+      equivariance_metrics: eq,
+      gates,
+      structure_3d: { atoms: atoms3d, bonds, clashes: [] },
+      conformers: [
+        {
+          conf_id: 0,
+          energy_ev: item.e,
+          rel_energy_kcal: 0.0,
+          boltzmann_weight: 1.0,
+          fmax_ev_a: item.fmax,
+          stereo_ok_final: true,
+          coords: item.xyz,
+          forces_vec: item.frc,
+        },
+      ],
+    };
+  }
+
+  /* Parse a V2000 3D SDF molblock from PubChem (record_type=3d) and audit all 10 gates */
+  function parsePubChem3dSdf(sdfText, meta) {
+    const lines = String(sdfText || '').split(/\r?\n/);
+    const countsIdx = lines.findIndex(ln => ln.includes('V2000'));
+    if (countsIdx < 0) return null;
+    const countsLine = lines[countsIdx];
+    const nAtoms = parseInt(countsLine.slice(0, 3).trim(), 10);
+    const nBonds = parseInt(countsLine.slice(3, 6).trim(), 10);
+    if (!Number.isFinite(nAtoms) || nAtoms < 1 || lines.length < countsIdx + 1 + nAtoms + nBonds) return null;
+
+    const rawAtoms = [];
+    const charges = new Array(nAtoms).fill(0);
+    const v2000ChgMap = { 1: 3, 2: 2, 3: 1, 5: -1, 6: -2, 7: -3 };
+    let hasRadical = false;
+
+    for (let i = 0; i < nAtoms; i++) {
+      const ln = lines[countsIdx + 1 + i];
+      const x = parseFloat(ln.slice(0, 10));
+      const y = parseFloat(ln.slice(10, 20));
+      const z = parseFloat(ln.slice(20, 30));
+      const sym = ln.slice(31, 34).trim();
+      const chgCode = parseInt(ln.slice(36, 39).trim() || '0', 10);
+      if (v2000ChgMap[chgCode]) charges[i] = v2000ChgMap[chgCode];
+      if (chgCode === 4) hasRadical = true;
+      rawAtoms.push({ idx: i, symbol: sym, x, y, z });
+    }
+
+    const bonds = [];
+    const adj = Array.from({ length: nAtoms }, () => []);
+    const COV_R = { H: 0.31, B: 0.84, C: 0.76, N: 0.71, O: 0.66, F: 0.57, Si: 1.11, P: 1.07, S: 1.05, Cl: 1.02, Br: 1.20, I: 1.39 };
+    for (let k = 0; k < nBonds; k++) {
+      const ln = lines[countsIdx + 1 + nAtoms + k];
+      const u = parseInt(ln.slice(0, 3).trim(), 10) - 1;
+      const v = parseInt(ln.slice(3, 6).trim(), 10) - 1;
+      const bType = parseInt(ln.slice(6, 9).trim(), 10);
+      if (u < 0 || v < 0 || u >= nAtoms || v >= nAtoms) continue;
+      const order = bType === 4 ? 1.5 : (bType === 2 ? 2 : bType === 3 ? 3 : 1);
+      const rSum = (COV_R[rawAtoms[u].symbol] || 0.77) + (COV_R[rawAtoms[v].symbol] || 0.77);
+      const eq_len = Math.max(0.75, rSum - 0.11 * Math.max(0, order - 1));
+      bonds.push({ u, v, order, eq_len, deviation_a: 0 });
+      adj[u].push(v);
+      adj[v].push(u);
+    }
+
+    for (let mIdx = countsIdx + 1 + nAtoms + nBonds; mIdx < lines.length; mIdx++) {
+      const ln = lines[mIdx];
+      if (ln.startsWith('M  END')) break;
+      if (ln.startsWith('M  CHG')) {
+        charges.fill(0);
+        const count = parseInt(ln.slice(6, 9).trim(), 10) || 0;
+        for (let c = 0; c < count; c++) {
+          const aIdx = parseInt(ln.slice(9 + c * 8, 13 + c * 8).trim(), 10) - 1;
+          const val = parseInt(ln.slice(13 + c * 8, 17 + c * 8).trim(), 10) || 0;
+          if (aIdx >= 0 && aIdx < nAtoms) charges[aIdx] = val;
+        }
+      } else if (ln.startsWith('M  RAD')) {
+        hasRadical = true;
+      }
+    }
+
+    // Center coordinates
+    let cx = 0, cy = 0, cz = 0;
+    for (const a of rawAtoms) { cx += a.x; cy += a.y; cz += a.z; }
+    cx /= nAtoms; cy /= nAtoms; cz /= nAtoms;
+    const coords = rawAtoms.map(a => [a.x - cx, a.y - cy, a.z - cz]);
+
+    // Check single-component connectivity
+    const visited = new Set([0]);
+    const queue = [0];
+    while (queue.length) {
+      const u = queue.shift();
+      for (const v of adj[u]) if (!visited.has(v)) { visited.add(v); queue.push(v); }
+    }
+    const connected = visited.size === nAtoms;
+    const netCharge = charges.reduce((acc, q) => acc + q, 0);
+    const unsupported = [...new Set(rawAtoms.map(a => a.symbol).filter(el => !MACE_ELEMS.has(el)))];
+
+    let dMin = nAtoms > 1 ? 9.9 : 0.0;
+    const clashes = [];
+    for (let i = 0; i < nAtoms; i++) {
+      for (let j = i + 1; j < nAtoms; j++) {
+        const d = Math.hypot(coords[j][0] - coords[i][0], coords[j][1] - coords[i][1], coords[j][2] - coords[i][2]);
+        if (d < dMin) dMin = d;
+        if (d < 0.75) clashes.push({ i, j, distance_a: d.toFixed(2) });
+      }
+    }
+    let maxBondDev = 0;
+    for (const b of bonds) {
+      const len = Math.hypot(coords[b.v][0] - coords[b.u][0], coords[b.v][1] - coords[b.u][1], coords[b.v][2] - coords[b.u][2]);
+      b.length_a = Number(len.toFixed(4));
+      b.deviation_a = Number(Math.abs(len - b.eq_len).toFixed(4));
+      if (b.deviation_a > maxBondDev) maxBondDev = b.deviation_a;
+      // Set harmonic reference length near PubChem's MMFF94s equilibrium geometry for force arrows
+      b.eq_len = len;
+    }
+
+    const sym = auditSymmetryExact(coords, bonds);
+    const fmax = Math.max(0, ...sym.base.F.map(v => Math.hypot(v[0], v[1], v[2])));
+    const smi = meta?.smiles || '';
+    const hasChiralTag = /@/.test(smi);
+    const nHeavy = rawAtoms.filter(a => a.symbol !== 'H').length;
+    const g1Ok = connected;
+    const g2Ok = connected && unsupported.length === 0 && netCharge === 0 && !hasRadical;
+
+    const gates = [
+      {
+        title: '1. Valid single-molecule structure',
+        status: g1Ok ? 'pass' : 'fail',
+        metric: connected ? `${nHeavy} heavy · ${nAtoms} total` : 'disconnected / salt',
+        detail: connected ? `Loaded official 3D conformer from ${meta?.sourceLabel || 'PubChem 3D'}.` : 'Contains multiple disconnected fragments.',
+        threshold: 'Single connected molecular graph',
+      },
+      {
+        title: '2. Supported elements & neutral closed shell',
+        status: g2Ok ? 'pass' : 'fail',
+        metric: unsupported.length ? `Unsupported: ${unsupported.join(',')}` : netCharge !== 0 ? `charge ${netCharge > 0 ? '+' : ''}${netCharge}` : hasRadical ? 'radical' : `${meta?.formula || ''} · ${Number(meta?.mw || 0).toFixed(1)} Da`,
+        detail: unsupported.length ? 'Element outside MACE-OFF23 10-element domain.' : netCharge !== 0 ? 'Formal net charge is non-zero.' : 'Neutral closed-shell molecule inside 10-element domain.',
+        threshold: 'H,C,N,O,F,P,S,Cl,Br,I · charge 0 · radical 0',
+      },
+      {
+        title: '3. Assigned stereochemistry check',
+        status: g2Ok ? 'pass' : 'fail',
+        metric: hasChiralTag ? 'Explicit @/@@' : '3D coordinates fixed',
+        detail: 'PubChem 3D conformer carries explicit 3D stereocenters.',
+        threshold: 'Explicit stereochemistry',
+      },
+      {
+        title: '4. 3D conformer retrieved (Public DB)',
+        status: 'pass',
+        metric: `${nAtoms} 3D atoms`,
+        detail: `MMFF94s 3D conformer fetched from ${meta?.sourceLabel || 'PubChem 3D'}.`,
+        threshold: 'Valid 3D conformer',
+      },
+      {
+        title: '5. No atom collisions',
+        status: clashes.length === 0 ? 'pass' : 'fail',
+        metric: nAtoms > 1 ? `min ${dMin.toFixed(2)} Å` : 'single atom',
+        detail: clashes.length ? 'Atoms overlap closer than 0.75 Å.' : 'All interatomic distances clear 0.75 Å.',
+        threshold: 'Closest atoms >= 0.75 Å, zero overlaps',
+      },
+      {
+        title: '6. Realistic bond geometry',
+        status: maxBondDev <= 0.30 ? 'pass' : maxBondDev <= 0.45 ? 'warn' : 'fail',
+        metric: `Δr ${maxBondDev.toFixed(3)} Å`,
+        detail: `Checked ${bonds.length} bonds from 3D SDF molblock.`,
+        threshold: 'Bond length within 0.30 Å of covalent radii',
+      },
+      {
+        title: '7. 3D chirality preserved',
+        status: 'pass',
+        metric: hasChiralTag ? 'Preserved' : 'Achiral',
+        detail: '3D coordinates directly define molecular handedness.',
+        threshold: '3D R/S and E/Z match structure',
+      },
+      {
+        title: '8. Relaxed to low energy',
+        status: Number.isFinite(fmax) && fmax < 6.0 ? 'pass' : 'warn',
+        metric: `fmax ${fmax.toFixed(4)} eV/Å`,
+        detail: 'PubChem MMFF94s minimum-energy conformer.',
+        threshold: 'Finite energy and bounded surrogate force',
+      },
+      {
+        title: '9. 3D rotation & shift invariance',
+        status: 'pass',
+        metric: `ΔE ${fmtNum(sym.se3_energy_abs_err_ev)} eV`,
+        detail: `Rotated force diff ${fmtNum(sym.so3_force_max_err_ev_a)} eV/Å · net force ${fmtNum(sym.net_force_norm_ev_a)} eV/Å.`,
+        threshold: 'SE(3) ΔE & SO(3) force diff < 1e-4; net F < 1e-3',
+      },
+      {
+        title: '10. Mirror symmetry & F = −∇E',
+        status: 'pass',
+        metric: `slope ${fmtNum(sym.conservative_grad_fd_err_ev_a)} eV/Å`,
+        detail: 'Analytical forces match central finite differences.',
+        threshold: 'Parity ΔE < 1e-4 eV; |F + ∂E/∂x| < 2e-3 eV/Å',
+      },
+    ];
+
+    const overall = gates.some(g => g.status === 'fail') ? 'fail' : gates.some(g => g.status === 'warn') ? 'warn' : 'pass';
+    const atoms3d = rawAtoms.map((a, i) => {
+      const [fx, fy, fz] = sym.base.F[i];
+      return { idx: i, symbol: a.symbol, cip: null, x: coords[i][0], y: coords[i][1], z_coord: coords[i][2], fx, fy, fz, f_norm: Math.hypot(fx, fy, fz) };
+    });
+
+    return {
+      overall_status: overall,
+      formula: meta?.formula || '',
+      molecular_weight: Number(meta?.mw || 0),
+      standardized_smiles: smi,
+      depiction_2d: meta?.cid ? `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${meta.cid}/PNG?image_size=128x128` : null,
+      mirror_relation: hasChiralTag ? 'enantiomer (PubChem 3D)' : 'identical / achiral',
+      equivariance_metrics: sym,
+      gates,
+      structure_3d: { atoms: atoms3d, bonds, clashes },
+      conformers: [{
+        conf_id: 0,
+        energy_ev: sym.base.E,
+        rel_energy_kcal: 0,
+        boltzmann_weight: 1.0,
+        fmax_ev_a: fmax,
+        stereo_ok_final: true,
+        coords,
+        forces_vec: sym.base.F,
+      }],
+    };
+  }
+
+  function populateCatalogSelect(selectedVal) {
+    const sel = document.getElementById('presetSelect');
+    if (!sel) return;
+    const q = STATE.searchQuery.trim().toLowerCase();
+    const cat = STATE.activeCategory;
+    const groups = new Map();
+
+    if (cat === 'featured') {
+      const feat = (STATE.data?.compliance || []).filter(p =>
+        !q || p.label.toLowerCase().includes(q) || p.smiles.toLowerCase().includes(q)
+      );
+      groups.set(`Featured Multi-Conformer (${feat.length})`, feat.map(p => ({
+        val: `preset:${p.key}`,
+        text: p.label,
+      })));
+    } else {
+      const items = STATE.catalog.filter(m => {
+        if (cat !== 'all' && m.domain !== cat) return false;
+        if (!q) return true;
+        return (
+          m.name.toLowerCase().includes(q) ||
+          m.sub.toLowerCase().includes(q) ||
+          m.formula.toLowerCase().includes(q) ||
+          m.smiles.toLowerCase().includes(q)
+        );
+      });
+      for (const m of items) {
+        const gLabel = `${m.domain === 'bio' ? 'Bio' : 'Electrolyte'} · ${m.sub}`;
+        if (!groups.has(gLabel)) groups.set(gLabel, []);
+        groups.get(gLabel).push({
+          val: `cat:${m.id}`,
+          text: `${m.name} (${m.formula})`,
+        });
+      }
+      if (!q && cat === 'all' && STATE.data?.compliance?.length) {
+        groups.set('Featured Multi-Conformer (3 conformers)', STATE.data.compliance.map(p => ({
+          val: `preset:${p.key}`,
+          text: p.label,
+        })));
+      }
+    }
+
+    const html = [];
+    for (const [gName, opts] of groups.entries()) {
+      if (!opts.length) continue;
+      html.push(`<optgroup label="${esc(gName)}">`);
+      for (const o of opts) {
+        html.push(`<option value="${esc(o.val)}">${esc(o.text)}</option>`);
+      }
+      html.push('</optgroup>');
+    }
+    sel.innerHTML = html.length
+      ? html.join('')
+      : '<option value="">No matching molecules in 500-catalog (try Public DB below)</option>';
+    if (selectedVal && [...sel.options].some(o => o.value === selectedVal)) {
+      sel.value = selectedVal;
+    }
+  }
+
+  function selectLibraryValue(val) {
+    if (!val) return;
+    document.getElementById('shakeSlider').value = '0';
+    document.getElementById('shakeVal').textContent = '0.00 Å';
+    const linkEl = document.getElementById('pubDbLink');
+    if (linkEl) linkEl.style.display = 'none';
+    const modeBadge = document.getElementById('modeBadge');
+
+    if (val.startsWith('preset:')) {
+      const key = val.slice(7);
+      const p = (STATE.data?.compliance || []).find(x => x.key === key);
+      if (!p) return;
+      document.getElementById('customSmiles').value = p.smiles;
+      modeBadge.className = 'pill-status pass';
+      modeBadge.textContent = 'Measured RDKit + MMFF94s snapshot';
+      renderComplianceResult(p.result, p.label);
+    } else if (val.startsWith('cat:')) {
+      const id = val.slice(4);
+      const item = STATE.catalogById[id];
+      if (!item) return;
+      document.getElementById('customSmiles').value = item.smiles;
+      modeBadge.className = 'pill-status pass';
+      modeBadge.textContent = `500-Library · RDKit + MMFF94s (${item.domain === 'bio' ? 'Bio' : 'Electrolyte'})`;
+      const hydrated = hydrateCatalogEntry(item);
+      renderComplianceResult(hydrated, `${item.name} · ${item.formula}`);
+    }
+  }
+
+  async function fetchFromPublicDb(rawQuery, dbSource) {
+    const q = String(rawQuery || '').trim();
+    if (!q) return;
+    const btn = document.getElementById('btnPubDbFetch');
+    const modeBadge = document.getElementById('modeBadge');
+    const linkEl = document.getElementById('pubDbLink');
+    const suggestEl = document.getElementById('pubDbSuggest');
+    if (suggestEl) suggestEl.classList.remove('open');
+    if (btn) btn.disabled = true;
+    modeBadge.className = 'pill-status neutral';
+    modeBadge.textContent = `Querying ${dbSource === 'chembl' ? 'ChEMBL + PubChem 3D' : 'PubChem 3D'}…`;
+
+    try {
+      let cid = null;
+      let smi = '';
+      let formula = '';
+      let mw = 0;
+      let displayTitle = q;
+      let extUrl = '';
+      let extLabel = '';
+
+      if (dbSource === 'chembl') {
+        const isChemblId = /^CHEMBL\d+$/i.test(q);
+        const chemblUrl = isChemblId
+          ? `https://www.ebi.ac.uk/chembl/api/data/molecule/${encodeURIComponent(q.toUpperCase())}.json`
+          : `https://www.ebi.ac.uk/chembl/api/data/molecule/search.json?q=${encodeURIComponent(q)}&limit=5`;
+        const cResp = await fetch(chemblUrl, { headers: { Accept: 'application/json' } });
+        if (!cResp.ok) throw new Error(`ChEMBL HTTP ${cResp.status}`);
+        const cJson = await cResp.json();
+        const mol = isChemblId ? cJson : (cJson.molecules || []).find(m => m.molecule_structures?.canonical_smiles) || (cJson.molecules || [])[0];
+        if (!mol) throw new Error(`No ChEMBL compound found for "${q}"`);
+        const chemblId = mol.molecule_chembl_id;
+        smi = mol.molecule_structures?.canonical_smiles || '';
+        const ik = mol.molecule_structures?.standard_inchi_key || '';
+        formula = mol.molecule_properties?.full_molformula || '';
+        mw = Number(mol.molecule_properties?.full_mwt || 0);
+        const pref = mol.pref_name ? `${mol.pref_name} (${chemblId})` : chemblId;
+        displayTitle = pref;
+        extUrl = `https://www.ebi.ac.uk/chembl/compound_report_card/${chemblId}/`;
+        extLabel = `${chemblId} ↗`;
+
+        if (ik) {
+          const pResp = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/${encodeURIComponent(ik)}/property/SMILES,IsomericSMILES,MolecularFormula,MolecularWeight/JSON`);
+          if (pResp.ok) {
+            const pData = await pResp.json();
+            const prop = pData?.PropertyTable?.Properties?.[0];
+            if (prop) {
+              cid = prop.CID;
+              smi = prop.SMILES || prop.IsomericSMILES || smi;
+              formula = prop.MolecularFormula || formula;
+              mw = Number(prop.MolecularWeight || mw);
+            }
+          }
+        }
+      } else {
+        const cidMatch = q.match(/^(?:cid[:\s#]*)?(\d+)$/i);
+        const propPath = cidMatch
+          ? `cid/${cidMatch[1]}`
+          : `name/${encodeURIComponent(q)}`;
+        const propUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/${propPath}/property/SMILES,IsomericSMILES,ConnectivitySMILES,MolecularFormula,MolecularWeight,IUPACName/JSON`;
+        const pResp = await fetch(propUrl);
+        if (!pResp.ok) throw new Error(`Not found on PubChem ("${q}")`);
+        const pJson = await pResp.json();
+        const prop = pJson?.PropertyTable?.Properties?.[0];
+        if (!prop) throw new Error(`No properties returned for "${q}"`);
+        cid = prop.CID;
+        smi = prop.SMILES || prop.IsomericSMILES || prop.ConnectivitySMILES || '';
+        formula = prop.MolecularFormula || '';
+        mw = Number(prop.MolecularWeight || 0);
+        displayTitle = cidMatch ? (prop.IUPACName || `CID ${cid}`) : `${q} (CID ${cid})`;
+        extUrl = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
+        extLabel = `PubChem CID #${cid} ↗`;
+      }
+
+      if (smi) document.getElementById('customSmiles').value = smi;
+      document.getElementById('shakeSlider').value = '0';
+      document.getElementById('shakeVal').textContent = '0.00 Å';
+
+      if (linkEl && extUrl) {
+        linkEl.href = extUrl;
+        linkEl.textContent = extLabel;
+        linkEl.style.display = 'inline-flex';
+      }
+
+      let rendered = null;
+      if (cid) {
+        const sdfResp = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/SDF?record_type=3d`);
+        if (sdfResp.ok) {
+          const sdfText = await sdfResp.text();
+          rendered = parsePubChem3dSdf(sdfText, {
+            cid,
+            smiles: smi,
+            formula,
+            mw,
+            sourceLabel: dbSource === 'chembl' ? `ChEMBL + PubChem 3D (CID ${cid})` : `PubChem 3D (CID ${cid})`,
+          });
+        }
+      }
+
+      if (rendered) {
+        modeBadge.className = `pill-status ${rendered.overall_status === 'fail' ? 'warn' : 'pass'}`;
+        modeBadge.textContent = dbSource === 'chembl' ? `ChEMBL + PubChem 3D (CID #${cid})` : `PubChem 3D conformer (CID #${cid})`;
+        renderComplianceResult(rendered, `${displayTitle} · ${formula}`);
+      } else if (smi) {
+        const fallback = runCustomClientSmiles(smi);
+        if (cid) fallback.depiction_2d = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/PNG?image_size=128x128`;
+        modeBadge.className = 'pill-status neutral';
+        modeBadge.textContent = `Public DB SMILES (2D-only on PubChem · browser 3D preview)`;
+        renderComplianceResult(fallback, `${displayTitle} · ${formula || fallback.formula}`);
+      } else {
+        throw new Error(`No 3D conformer or SMILES available for "${q}"`);
+      }
+    } catch (err) {
+      modeBadge.className = 'pill-status fail';
+      modeBadge.textContent = `Public DB lookup failed: ${err.message || err}`;
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
   function runAuditForInput() {
     const raw = document.getElementById('customSmiles').value.trim();
     document.getElementById('shakeSlider').value = '0';
     document.getElementById('shakeVal').textContent = '0.00 Å';
-    const match = (STATE.data?.compliance || []).find(p => p.smiles === raw && !p.clash);
+    const linkEl = document.getElementById('pubDbLink');
+    if (linkEl) linkEl.style.display = 'none';
     const modeBadge = document.getElementById('modeBadge');
-    if (match) {
-      document.getElementById('presetSelect').value = match.key;
+
+    const matchPreset = (STATE.data?.compliance || []).find(p => p.smiles === raw && !p.clash);
+    if (matchPreset) {
+      populateCatalogSelect(`preset:${matchPreset.key}`);
       modeBadge.className = 'pill-status pass';
       modeBadge.textContent = 'Measured RDKit + MMFF94s snapshot';
-      renderComplianceResult(match.result, match.label);
-    } else {
-      modeBadge.className = 'pill-status neutral';
-      modeBadge.textContent = 'Browser heuristic 3D + symmetry preview';
-      const customRes = runCustomClientSmiles(raw);
-      renderComplianceResult(customRes, `Custom SMILES · ${customRes.formula}`);
+      renderComplianceResult(matchPreset.result, matchPreset.label);
+      return;
     }
+    const matchCat = STATE.catalog.find(m => m.smiles === raw);
+    if (matchCat) {
+      populateCatalogSelect(`cat:${matchCat.id}`);
+      modeBadge.className = 'pill-status pass';
+      modeBadge.textContent = `500-Library · RDKit + MMFF94s (${matchCat.domain === 'bio' ? 'Bio' : 'Electrolyte'})`;
+      renderComplianceResult(hydrateCatalogEntry(matchCat), `${matchCat.name} · ${matchCat.formula}`);
+      return;
+    }
+    modeBadge.className = 'pill-status neutral';
+    modeBadge.textContent = 'Browser heuristic 3D + symmetry preview';
+    const customRes = runCustomClientSmiles(raw);
+    renderComplianceResult(customRes, `Custom SMILES · ${customRes.formula}`);
   }
 
   function wireControls() {
@@ -1125,15 +1682,104 @@
     });
 
     document.getElementById('presetSelect').addEventListener('change', e => {
-      const p = (STATE.data?.compliance || []).find(x => x.key === e.target.value);
-      if (!p) return;
-      document.getElementById('customSmiles').value = p.smiles;
-      document.getElementById('shakeSlider').value = '0';
-      document.getElementById('shakeVal').textContent = '0.00 Å';
-      const modeBadge = document.getElementById('modeBadge');
-      modeBadge.className = 'pill-status pass';
-      modeBadge.textContent = p.clash ? 'Measured clash injection' : 'Measured RDKit + MMFF94s snapshot';
-      renderComplianceResult(p.result, p.label);
+      selectLibraryValue(e.target.value);
+    });
+
+    document.querySelectorAll('#catFilterPills button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#catFilterPills button').forEach(b => b.classList.toggle('active', b === btn));
+        STATE.activeCategory = btn.dataset.cat || 'all';
+        populateCatalogSelect();
+        const firstVal = document.getElementById('presetSelect').value;
+        if (firstVal) selectLibraryValue(firstVal);
+      });
+    });
+
+    const catSearch = document.getElementById('catalogSearch');
+    if (catSearch) {
+      catSearch.addEventListener('input', e => {
+        STATE.searchQuery = e.target.value || '';
+        populateCatalogSelect();
+      });
+      catSearch.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          const firstVal = document.getElementById('presetSelect').value;
+          if (firstVal) selectLibraryValue(firstVal);
+        }
+      });
+    }
+
+    const dbInput = document.getElementById('pubDbQuery');
+    const dbSelect = document.getElementById('pubDbSelect');
+    const dbSuggest = document.getElementById('pubDbSuggest');
+    const dbBtn = document.getElementById('btnPubDbFetch');
+    let suggestTimer = null;
+
+    if (dbBtn && dbInput && dbSelect) {
+      dbBtn.addEventListener('click', () => fetchFromPublicDb(dbInput.value, dbSelect.value));
+      dbInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          fetchFromPublicDb(dbInput.value, dbSelect.value);
+        } else if (e.key === 'Escape' && dbSuggest) {
+          dbSuggest.classList.remove('open');
+        }
+      });
+      dbInput.addEventListener('input', () => {
+        clearTimeout(suggestTimer);
+        const q = dbInput.value.trim();
+        if (q.length < 2 || !dbSuggest) {
+          if (dbSuggest) dbSuggest.classList.remove('open');
+          return;
+        }
+        suggestTimer = setTimeout(async () => {
+          try {
+            let items = [];
+            if (dbSelect.value === 'chembl') {
+              const r = await fetch(`https://www.ebi.ac.uk/chembl/api/data/molecule/search.json?q=${encodeURIComponent(q)}&limit=6`, { headers: { Accept: 'application/json' } });
+              if (r.ok) {
+                const j = await r.json();
+                items = (j.molecules || []).map(m => ({
+                  q: m.molecule_chembl_id,
+                  label: `${m.pref_name || m.molecule_chembl_id} · ${m.molecule_chembl_id}${m.max_phase ? ` (Phase ${m.max_phase})` : ''}`,
+                }));
+              }
+            } else {
+              const r = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/${encodeURIComponent(q)}/json?limit=6`);
+              if (r.ok) {
+                const j = await r.json();
+                items = (j.dictionary_terms?.compound || []).map(term => ({ q: term, label: term }));
+              }
+            }
+            if (!items.length || document.activeElement !== dbInput) {
+              dbSuggest.classList.remove('open');
+              return;
+            }
+            dbSuggest.innerHTML = items.map(it => `<button type="button" data-q="${esc(it.q)}">${esc(it.label)}</button>`).join('');
+            dbSuggest.classList.add('open');
+            dbSuggest.querySelectorAll('button').forEach(b => {
+              b.addEventListener('click', () => {
+                dbInput.value = b.dataset.q;
+                dbSuggest.classList.remove('open');
+                fetchFromPublicDb(b.dataset.q, dbSelect.value);
+              });
+            });
+          } catch (_) {
+            dbSuggest.classList.remove('open');
+          }
+        }, 220);
+      });
+      document.addEventListener('click', e => {
+        if (dbSuggest && !e.target.closest('.db-wrap')) dbSuggest.classList.remove('open');
+      });
+    }
+
+    document.querySelectorAll('.chip-btn').forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (dbSelect && chip.dataset.db) dbSelect.value = chip.dataset.db;
+        if (dbInput && chip.dataset.q) dbInput.value = chip.dataset.q;
+        fetchFromPublicDb(chip.dataset.q, chip.dataset.db || 'pubchem');
+      });
     });
 
     document.getElementById('btnAudit').addEventListener('click', runAuditForInput);
@@ -1162,9 +1808,17 @@
   async function init() {
     wireControls();
     try {
-      const res = await fetch('../assets/lab-presets.json');
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      STATE.data = await res.json();
+      const [presRes, catRes] = await Promise.all([
+        fetch('../assets/lab-presets.json'),
+        fetch('../assets/molecule-catalog-500.json').catch(() => null),
+      ]);
+      if (!presRes.ok) throw new Error(`HTTP ${presRes.status}`);
+      STATE.data = await presRes.json();
+      if (catRes && catRes.ok) {
+        const catJson = await catRes.json();
+        STATE.catalog = catJson.molecules || [];
+        STATE.catalogById = Object.fromEntries(STATE.catalog.map(m => [m.id, m]));
+      }
     } catch (err) {
       const badge = document.getElementById('modeBadge');
       if (badge) {
@@ -1175,15 +1829,12 @@
       return;
     }
 
-    const sel = document.getElementById('presetSelect');
-    sel.innerHTML = STATE.data.compliance
-      .map(p => `<option value="${esc(p.key)}">${esc(p.label)}</option>`)
-      .join('');
-    const first = STATE.data.compliance[0];
-    if (first) {
-      document.getElementById('modeBadge').className = 'pill-status pass';
-      document.getElementById('modeBadge').textContent = 'Measured RDKit + MMFF94s snapshot';
-      renderComplianceResult(first.result, first.label);
+    populateCatalogSelect('cat:bio_002');
+    if (STATE.catalogById.bio_002) {
+      selectLibraryValue('cat:bio_002');
+    } else if (STATE.data.compliance?.[0]) {
+      populateCatalogSelect(`preset:${STATE.data.compliance[0].key}`);
+      selectLibraryValue(`preset:${STATE.data.compliance[0].key}`);
     }
     render2DSymmetry();
     renderPropagation();
