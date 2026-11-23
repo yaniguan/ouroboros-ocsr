@@ -44,6 +44,7 @@ from ouroboros.encoder.pure_torch import (
 from ouroboros.encoder.pure_torch import (
     ExportedSteerableEncoder,
     MaxPoolChannels,
+    OrbitStatsPool,
     PureGPoolRelPosHead,
     SteerableConfig,
     _blurpool,
@@ -160,21 +161,38 @@ class GPoolRelPosHead(nn.Module):
     """Option (a): group pooling -> invariant per-location features -> 1x1 projection ->
     distance-biased token mixer. Output: an invariant token SET (see module docstring)."""
 
-    def __init__(self, in_type: enn.FieldType, d_model: int, layers, heads, ff, dropout):
+    def __init__(
+        self,
+        in_type: enn.FieldType,
+        d_model: int,
+        layers,
+        heads,
+        ff,
+        dropout,
+        pool: str = "max",
+        order: int | None = None,
+    ):
         super().__init__()
-        self.gpool = enn.GroupPooling(in_type)  # C_N-invariant from here on (per location)
-        n_inv = self.gpool.out_type.size
+        self.pool_mode = pool
+        if pool == "max":
+            self.gpool = enn.GroupPooling(in_type)  # C_N-invariant from here on (per location)
+            n_inv = self.gpool.out_type.size
+        else:
+            n_group = order or len(in_type.fibergroup.elements)
+            self.gpool = OrbitStatsPool(n_group, mode=pool)
+            n_inv = (in_type.size // n_group) * self.gpool.multiplier
         self.proj = nn.Conv2d(n_inv, d_model, 1)  # acts on invariant scalars: still invariant
         self.mixer = RelDistMixer(d_model, layers, heads, ff, dropout)
 
     def forward(self, feat: enn.GeometricTensor) -> EncoderOutput:
-        return self.tokens(self.gpool(feat).tensor)
+        inv = self.gpool(feat).tensor if self.pool_mode == "max" else self.gpool(feat.tensor)
+        return self.tokens(inv)
 
     def tokens(self, inv: torch.Tensor) -> EncoderOutput:
         f = self.proj(inv)  # [B, D, h, w]
         B, D, h, w = f.shape
         tok = f.flatten(2).transpose(1, 2)
-        return EncoderOutput(tokens=self.mixer(tok, grid_coords(h, w, tok.device)))
+        return EncoderOutput(tokens=self.mixer(tok, grid_coords(h, w, tok.device)), spatial=f)
 
 
 # ------------------------------------------------------------------------------- encoder
@@ -215,7 +233,14 @@ class SteerableEncoder(ImageEncoder):
         if c.head != "gpool_relpos":
             raise KeyError(f"unknown head {c.head!r} (equivariant attention lives in arm D)")
         self.head = GPoolRelPosHead(
-            cur, c.d_model, c.mixer_layers, c.mixer_heads, c.mixer_ff, c.dropout
+            cur,
+            c.d_model,
+            c.mixer_layers,
+            c.mixer_heads,
+            c.mixer_ff,
+            c.dropout,
+            pool=c.pool,
+            order=c.N,
         )
 
     def features(self, images: torch.Tensor) -> enn.GeometricTensor:
@@ -231,9 +256,14 @@ class SteerableEncoder(ImageEncoder):
         pure_head = PureGPoolRelPosHead(
             copy.deepcopy(self.head.proj), copy.deepcopy(self.head.mixer)
         )
+        pure_pool = (
+            MaxPoolChannels(self.c.N)
+            if self.c.pool == "max"
+            else OrbitStatsPool(self.c.N, mode=self.c.pool)
+        )
         return ExportedSteerableEncoder(
             self.trunk.export(),
-            MaxPoolChannels(self.c.N),
+            pure_pool,
             pure_head,
             config=copy.deepcopy(self.c),
         ).eval()

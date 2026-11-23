@@ -24,6 +24,7 @@ from torch import nn
 class EncoderOutput:
     tokens: torch.Tensor  # [B, T, d_model]
     padding_mask: torch.Tensor | None = None  # [B, T] bool, True = padded (ignored)
+    spatial: torch.Tensor | None = None  # [B, d_model, H_g, W_g] pre-mixer spatial map
 
 
 class ImageEncoder(nn.Module):

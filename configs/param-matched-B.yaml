@@ -1,0 +1,4 @@
+# Parameter-matched arm B (17.81M baseline CNN + 360-deg rotation augmentation).
+base: param-matched-A.yaml
+train:
+  rotation_aug: true

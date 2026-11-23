@@ -1,0 +1,12 @@
+# Parameter-matched arm C (18.02M C8 steerable encoder, +1.18% vs A; 288-ch max_mean_l2 orbit pool).
+base: param-matched-A.yaml
+model:
+  encoder:
+    type: steerable
+    N: 8
+    fields: [12, 24, 48, 96]
+    pool: max_mean_l2
+    mixer_layers: 5
+    mixer_ff: 2048
+train:
+  rotation_aug: false

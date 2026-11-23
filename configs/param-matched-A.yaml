@@ -1,0 +1,14 @@
+# Parameter-matched arm A (17.81M encoder) with 2D spatial stereo head and 384-token USPTO decoder.
+base: pilot-validation.yaml
+model:
+  encoder:
+    type: baseline
+  decoder:
+    max_len: 384
+  stereo_head:
+    enabled: true
+    hidden: 128
+    loss_weight: 0.5
+train:
+  rotation_aug: false
+  stereo_token_weight: 2.5

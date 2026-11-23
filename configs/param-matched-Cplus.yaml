@@ -1,0 +1,4 @@
+# Parameter-matched arm C+ (18.02M C8 steerable encoder + continuous off-grid rotation augmentation).
+base: param-matched-C.yaml
+train:
+  rotation_aug: true
