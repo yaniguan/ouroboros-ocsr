@@ -47,19 +47,31 @@ class InputError(ValueError):
     """Bad request: the caller should fix the input."""
 
 
-def load_checkpoint(path, device="cpu", *, allow_unsafe_pickle: bool = True):
-    """Load an inference or training checkpoint -> (eval model, config).
+def load_checkpoint(
+    path,
+    device="cpu",
+    *,
+    allow_unsafe_pickle: bool = True,
+    apply_int8: bool = True,
+):
+    """Load an inference/training checkpoint or exported HF folder -> (eval model, config).
 
     Tries safe ``weights_only=True`` loading first and falls back to ``weights_only=False``
     only when ``allow_unsafe_pickle=True`` (for training checkpoints with RNG state).
     Steerable encoders are swapped for their pure-PyTorch export.
     """
+    p = Path(path)
+    if p.is_dir():
+        from ouroboros.hf import CONFIG_FILE, load_pretrained
+
+        cfg = json.loads((p / CONFIG_FILE).read_text(encoding="utf-8"))
+        return load_pretrained(p, device=device), cfg
     try:
-        state = torch.load(path, map_location="cpu", weights_only=True)
+        state = torch.load(p, map_location="cpu", weights_only=True)
     except (pickle.UnpicklingError, RuntimeError):
         if not allow_unsafe_pickle:
             raise
-        state = torch.load(path, map_location="cpu", weights_only=False)
+        state = torch.load(p, map_location="cpu", weights_only=False)
     model = build_model(state["config"], SmilesTokenizer(state["vocab"]))
     quant = state.get("quantization", {})
     weights = state["model"]
@@ -79,7 +91,12 @@ def load_checkpoint(path, device="cpu", *, allow_unsafe_pickle: bool = True):
         if has_fp16_weights:
             exported = exported.half()
         model.encoder = exported.to(device)
-    if quant.get("apply_on_load") and torch.device(device).type == "cpu" and not has_fp16_weights:
+    if (
+        apply_int8
+        and quant.get("apply_on_load")
+        and torch.device(device).type == "cpu"
+        and not has_fp16_weights
+    ):
         model.decoder = torch.ao.quantization.quantize_dynamic(
             model.decoder, {torch.nn.Linear}, dtype=torch.qint8
         )
@@ -118,7 +135,7 @@ class OCSRPredictor:
         if threads:
             torch.set_num_threads(threads)
         if model is None:
-            model, cfg = load_checkpoint(ckpt)
+            model, cfg = load_checkpoint(ckpt, apply_int8=int8)
             image_size = cfg.get("data", {}).get("image_size", 384)
         elif int8:
             model = copy.deepcopy(model).eval()
@@ -134,9 +151,10 @@ class OCSRPredictor:
         if int8 and can_int8 and not is_already_int8:
             self.model.decoder = torch.ao.quantization.quantize_dynamic(
                 self.model.decoder, {torch.nn.Linear}, dtype=torch.qint8)
+            is_already_int8 = True
         self.image_size = image_size or 384
         self.threshold = threshold
-        self.name = Path(ckpt).name + ("+int8" if int8 else "")
+        self.name = Path(ckpt).name + ("+int8" if is_already_int8 else "")
         self.predict(Image.new("L", (64, 64), 255))  # warm up
 
     def to_tensor(self, img: Image.Image, ink_crop: bool = False) -> torch.Tensor:

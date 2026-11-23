@@ -63,15 +63,21 @@ class OCSRVerifier:
             device if device is not None else ("cuda" if torch.cuda.is_available() else "cpu")
         )
         if model is None:
-            model, cfg = load_checkpoint(ckpt, device=self.device)
+            model, cfg = load_checkpoint(ckpt, device=self.device, apply_int8=False)
             image_size = cfg.get("data", {}).get("image_size", 384)
         else:
             model = copy.deepcopy(model).to(self.device).eval()
             if hasattr(model.encoder, "export"):
                 model.encoder = model.encoder.export().to(self.device)
 
+        model_is_fp16 = next(model.parameters()).dtype == torch.float16
+        is_already_int8 = any(
+            isinstance(m, torch.ao.nn.quantized.dynamic.Linear) for m in model.decoder.modules()
+        )
         if dtype == "auto":
-            use_fp16 = self.device.type == "cuda"
+            use_fp16 = self.device.type == "cuda" or (
+                model_is_fp16 and not (int8_cpu and self.device.type == "cpu")
+            )
         elif dtype in ("fp16", "float16"):
             use_fp16 = True
         elif dtype in ("fp32", "float32"):
@@ -79,12 +85,16 @@ class OCSRVerifier:
         else:
             raise ValueError(f"unknown dtype {dtype!r}; choose auto, fp16, or fp32")
 
-        if int8_cpu and self.device.type == "cpu" and not use_fp16:
-            model.decoder = torch.ao.quantization.quantize_dynamic(
-                model.decoder, {torch.nn.Linear}, dtype=torch.qint8
-            )
-        elif use_fp16:
-            model = model.half()
+        if use_fp16:
+            if not model_is_fp16:
+                model = model.half()
+        else:
+            if model_is_fp16:
+                model = model.float()
+            if int8_cpu and self.device.type == "cpu" and not is_already_int8:
+                model.decoder = torch.ao.quantization.quantize_dynamic(
+                    model.decoder, {torch.nn.Linear}, dtype=torch.qint8
+                )
 
         self.model = model
         self.input_dtype = torch.float16 if use_fp16 else torch.float32
