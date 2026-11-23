@@ -106,9 +106,11 @@ class BaselineEncoder(ImageEncoder):
         tokens = f.flatten(2).transpose(1, 2)
         if self.pos is None:
             h, w = f.shape[-2:]
-            return EncoderOutput(tokens=self.mixer(tokens, grid_coords(h, w, tokens.device)))
+            return EncoderOutput(
+                tokens=self.mixer(tokens, grid_coords(h, w, tokens.device)), spatial=f
+            )
         if tokens.shape[1] != self.pos.shape[1]:
             raise ValueError(
                 f"image size gives {tokens.shape[1]} tokens, pos-embedding has {self.pos.shape[1]}"
             )
-        return EncoderOutput(tokens=self.mixer(tokens + self.pos))
+        return EncoderOutput(tokens=self.mixer(tokens + self.pos), spatial=f)

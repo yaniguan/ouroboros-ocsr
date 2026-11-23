@@ -34,6 +34,7 @@ class SteerableConfig:
     stem_kernel: int = 7
     d_model: int = 512
     head: str = "gpool_relpos"
+    pool: str = "max"  # "max" (default) | "max_mean_l2" (3x richer C_N-invariant orbit stats)
     mixer_layers: int = 2
     mixer_heads: int = 8
     mixer_ff: int = 2048
@@ -127,6 +128,41 @@ class MaxPoolChannels(nn.Module):
         return x.view(b, c // self.kernel_size, self.kernel_size, *x.shape[2:]).max(2)[0]
 
 
+class OrbitStatsPool(nn.Module):
+    """Exact ``C_N``-invariant orbit pooling over regular fields ``[B, F*N, H, W]``.
+
+    ``mode='max'`` reproduces ``MaxPoolChannels`` (1 scalar/orbit). ``mode='max_mean_l2'``
+    concatenates ``(max, mean, rms)`` per orbit (3 scalars/orbit), relieving the narrow
+    channel bottleneck of plain max group-pooling while staying strictly invariant under
+    cyclic orientation permutations.
+    """
+
+    MODES = ("max", "max_mean_l2")
+
+    def __init__(self, kernel_size: int, mode: str = "max"):
+        super().__init__()
+        if kernel_size < 1:
+            raise ValueError(f"kernel_size must be >= 1, got {kernel_size}")
+        if mode not in self.MODES:
+            raise ValueError(f"pool mode must be one of {self.MODES}, got {mode!r}")
+        self.kernel_size = kernel_size
+        self.mode = mode
+
+    @property
+    def multiplier(self) -> int:
+        return 1 if self.mode == "max" else 3
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        b, c = x.shape[:2]
+        orbits = x.view(b, c // self.kernel_size, self.kernel_size, *x.shape[2:])
+        p_max = orbits.max(dim=2)[0]
+        if self.mode == "max":
+            return p_max
+        p_mean = orbits.mean(dim=2)
+        p_rms = orbits.square().mean(dim=2).add(1e-8).sqrt()
+        return torch.cat([p_max, p_mean, p_rms], dim=1)
+
+
 def build_exported_steerable_trunk(
     N: int,
     fields: list[int],
@@ -181,7 +217,7 @@ class PureGPoolRelPosHead(nn.Module):
         f = self.proj(inv)
         _, _, h, w = f.shape
         tok = f.flatten(2).transpose(1, 2)
-        return EncoderOutput(tokens=self.mixer(tok, grid_coords(h, w, tok.device)))
+        return EncoderOutput(tokens=self.mixer(tok, grid_coords(h, w, tok.device)), spatial=f)
 
     def forward(self, inv: torch.Tensor) -> EncoderOutput:
         return self.tokens(inv)
@@ -325,10 +361,12 @@ class ExportedSteerableEncoder(ImageEncoder):
         trunk, out_fields = build_exported_steerable_trunk(
             c.N, c.fields, c.blocks, c.stem_fields, c.stem_kernel
         )
+        gpool = MaxPoolChannels(c.N) if c.pool == "max" else OrbitStatsPool(c.N, c.pool)
+        mult = 1 if c.pool == "max" else gpool.multiplier
         head = PureGPoolRelPosHead.from_dims(
-            out_fields, c.d_model, c.mixer_layers, c.mixer_heads, c.mixer_ff, c.dropout
+            out_fields * mult, c.d_model, c.mixer_layers, c.mixer_heads, c.mixer_ff, c.dropout
         )
-        return cls(trunk, MaxPoolChannels(c.N), head, config=c)
+        return cls(trunk, gpool, head, config=c)
 
     def forward(self, images: torch.Tensor) -> EncoderOutput:
         return self.head.tokens(self.gpool(self.trunk(images)))
@@ -394,6 +432,7 @@ __all__ = [
     "GroupAttentionLayer",
     "GroupRelPosBias",
     "MaxPoolChannels",
+    "OrbitStatsPool",
     "PureGPoolRelPosHead",
     "ResBlockTorch",
     "SteerableConfig",

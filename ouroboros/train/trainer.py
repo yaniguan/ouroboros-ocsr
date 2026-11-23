@@ -474,7 +474,12 @@ class Trainer:
     def _loss_step(
         self, images: torch.Tensor, ids: torch.Tensor, angles: torch.Tensor | None
     ) -> torch.Tensor:
-        loss = self.model.loss(images, ids, self.cfg["train"].get("label_smoothing", 0.0))
+        loss = self.model.loss(
+            images,
+            ids,
+            self.cfg["train"].get("label_smoothing", 0.0),
+            stereo_token_weight=float(self.cfg["train"].get("stereo_token_weight", 1.0)),
+        )
         if hasattr(self.model.encoder, "prior_loss"):  # arm E: canonicalization prior
             loss = loss + self.model.encoder.prior_loss(angles)
         return loss

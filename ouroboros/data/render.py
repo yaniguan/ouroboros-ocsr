@@ -226,3 +226,102 @@ def encode_png(img: Image.Image) -> bytes:
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=False, compress_level=6)
     return buf.getvalue()
+
+
+def extract_stereo_keypoints(
+    drawn: Chem.Mol, style: RenderStyle | None = None, size: int = 384
+) -> dict[str, list[tuple[float, float]]]:
+    """Return normalized ``(x, y)`` canvas coordinates in ``[0, 1]`` for 2D stereo supervision.
+
+    Channels match ``ouroboros.encoder.stereo_head.STEREO_CHANNELS``:
+      * ``chiral_R``: CIP ``(R)`` tetrahedral centers
+      * ``chiral_S``: CIP ``(S)`` tetrahedral centers
+      * ``wedge_dash_bond``: midpoints of solid-wedge or dashed-hash bonds
+      * ``ez_double_bond``: midpoints of stereogenic ``(E)/(Z)`` double bonds
+    """
+    from rdkit.Chem import rdCIPLabeler
+
+    style = style or RenderStyle()
+    inner = int(math.floor(size / math.sqrt(2)))
+    inner -= inner % 2
+    off = (size - inner) // 2
+
+    d = rdMolDraw2D.MolDraw2DCairo(inner, inner)
+    o = d.drawOptions()
+    o.prepareMolsBeforeDrawing = False
+    o.useMolBlockWedging = True
+    o.bondLineWidth = style.bond_line_width
+    o.scaleBondWidth = False
+    o.fixedBondLength = style.bond_length
+    o.baseFontSize = style.font_scale
+    o.explicitMethyl = style.explicit_methyl
+    o.comicMode = style.comic
+    o.multipleBondOffset = style.multiple_bond_offset
+    o.additionalAtomLabelPadding = style.label_padding
+    o.padding = 0.03
+    o.addStereoAnnotation = False
+    o.includeChiralFlagLabel = False
+    mol_draw = Chem.Mol(drawn)
+    Chem.Kekulize(mol_draw, clearAromaticFlags=True)
+    d.DrawMolecule(mol_draw)
+    d.FinishDrawing()
+
+    def _norm_xy(atom_idx: int) -> tuple[float, float]:
+        pt = d.GetDrawCoords(atom_idx)
+        return (
+            min(max((off + float(pt.x)) / size, 0.0), 1.0),
+            min(max((off + float(pt.y)) / size, 0.0), 1.0),
+        )
+
+    cip_mol = Chem.Mol(drawn)
+    rdCIPLabeler.AssignCIPLabels(cip_mol)
+
+    out: dict[str, list[tuple[float, float]]] = {
+        "chiral_R": [],
+        "chiral_S": [],
+        "wedge_dash_bond": [],
+        "ez_double_bond": [],
+    }
+    for atom in cip_mol.GetAtoms():
+        if atom.HasProp("_CIPCode"):
+            code = atom.GetProp("_CIPCode").upper()
+            if code == "R":
+                out["chiral_R"].append(_norm_xy(atom.GetIdx()))
+            elif code == "S":
+                out["chiral_S"].append(_norm_xy(atom.GetIdx()))
+
+    wedge_dirs = (Chem.BondDir.BEGINWEDGE, Chem.BondDir.BEGINDASH)
+    ez_types = (
+        Chem.BondStereo.STEREOCIS,
+        Chem.BondStereo.STEREOTRANS,
+        Chem.BondStereo.STEREOE,
+        Chem.BondStereo.STEREOZ,
+    )
+    for bond in cip_mol.GetBonds():
+        x0, y0 = _norm_xy(bond.GetBeginAtomIdx())
+        x1, y1 = _norm_xy(bond.GetEndAtomIdx())
+        mid = (0.5 * (x0 + x1), 0.5 * (y0 + y1))
+        mb_stereo = bond.GetProp("_MolFileBondStereo") if bond.HasProp("_MolFileBondStereo") else ""
+        if bond.GetBondDir() in wedge_dirs or mb_stereo in ("1", "6"):
+            out["wedge_dash_bond"].append(mid)
+        if bond.GetBondType() == Chem.BondType.DOUBLE and bond.GetStereo() in ez_types:
+            out["ez_double_bond"].append(mid)
+    return out
+
+
+def build_stereo_heatmap(
+    keypoints: dict[str, list[tuple[float, float]]],
+    grid_size: int = 12,
+    sigma: float = 0.85,
+) -> np.ndarray:
+    """Render normalized ``keypoints`` into a ``[4, grid_size, grid_size]`` float32 heatmap."""
+    channels = ("chiral_R", "chiral_S", "wedge_dash_bond", "ez_double_bond")
+    heatmap = np.zeros((len(channels), grid_size, grid_size), dtype=np.float32)
+    centers = (np.arange(grid_size, dtype=np.float32) + 0.5) / float(grid_size)
+    yy, xx = np.meshgrid(centers, centers, indexing="ij")
+    inv_2s2 = 1.0 / (2.0 * (sigma / float(grid_size)) ** 2)
+    for ch_idx, name in enumerate(channels):
+        for ux, uy in keypoints.get(name, ()):
+            gauss = np.exp(-((xx - ux) ** 2 + (yy - uy) ** 2) * inv_2s2).astype(np.float32)
+            np.maximum(heatmap[ch_idx], gauss, out=heatmap[ch_idx])
+    return heatmap

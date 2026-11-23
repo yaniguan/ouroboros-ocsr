@@ -879,6 +879,17 @@ def audit_3d_physical_compliance(
     slope_force = float(-np.sum(f_orig * step_dir))
     grad_err = abs(slope_num - slope_force)
 
+    enantiomer_blind_spot_note = (
+        "Achiral 3D potentials (MMFF94s / MACE-OFF23 / ANI-2x) are parity-invariant "
+        "(ΔE = 0 between (R) and (S) enantiomers); absolute handedness requires 2D wedge/hash "
+        "confidence or chiral/NMR evidence."
+        if mir_rel == "enantiomer"
+        else None
+    )
+    g10_detail = f"Mirror ΔE = {parity_e_err:.2e} eV · mirror relation: {mir_rel} ({smi_mir})."
+    if enantiomer_blind_spot_note:
+        g10_detail += " Note: ΔE = 0 means 3D energy alone cannot distinguish (R) vs (S)."
+
     g10_ok = (parity_e_err < 1e-4) and (parity_f_err < 1e-4) and (grad_err < 2e-3)
     gates.append(
         _gate(
@@ -887,7 +898,7 @@ def audit_3d_physical_compliance(
             "pass" if g10_ok else "fail",
             f"slope {grad_err:.1e} eV/Å",
             "Mirror energy diff < 1e-4 eV & force-slope diff < 2e-3 eV/Å",
-            f"Mirror ΔE = {parity_e_err:.2e} eV · mirror relation: {mir_rel} ({smi_mir}).",
+            g10_detail,
         )
     )
 
@@ -925,6 +936,7 @@ def audit_3d_physical_compliance(
         "smiles_from_3d": best["smiles_from_3d"],
         "mirror_3d_smiles": smi_mir,
         "mirror_relation": mir_rel,
+        "enantiomer_blind_spot_note": enantiomer_blind_spot_note,
         "inchikey": standard_inchikey(std),
         "formula": formula,
         "molecular_weight": round(mw, 3),

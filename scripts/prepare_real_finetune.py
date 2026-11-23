@@ -20,6 +20,7 @@ Writes ``<out-dir>/vocab.json`` and ``<out-dir>/finetune.yaml`` and prints a JSO
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 from collections import Counter
 from pathlib import Path
@@ -57,6 +58,12 @@ def main(argv=None) -> None:
     )
     ap.add_argument("--exclude-keys", default=None)
     ap.add_argument("--out-dir", required=True)
+    ap.add_argument(
+        "--max-len",
+        type=int,
+        default=None,
+        help="grow decoder max_len (e.g. 384 for long USPTO molecules) preserving learned prefix",
+    )
     ap.add_argument("--set", nargs="*", default=[], help="dotted overrides, e.g. train.lr=1e-5")
     a = ap.parse_args(argv)
 
@@ -78,8 +85,7 @@ def main(argv=None) -> None:
     tok.save(vocab_path)
 
     cfg = load_config(a.config)
-    cfg["model"] = state["config"]["model"]
-    max_len = cfg["model"]["decoder"]["max_len"]
+    cfg["model"] = copy.deepcopy(state["config"]["model"])
     cfg["data"].update(
         vocab=str(vocab_path),
         synthetic_root=str(a.synthetic_root),
@@ -93,9 +99,16 @@ def main(argv=None) -> None:
         "bf16" if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else "none"
     )
     cfg["validation"]["root"] = str(a.real_root)
+    if a.max_len is not None:
+        if a.max_len < int(cfg["model"]["decoder"]["max_len"]):
+            raise SystemExit(
+                f"--max-len {a.max_len} < checkpoint max_len {cfg['model']['decoder']['max_len']}"
+            )
+        cfg["model"]["decoder"]["max_len"] = int(a.max_len)
     for ov in a.set:
         k, v = ov.split("=", 1)
         set_dotted(cfg, k, _scalar(v))
+    max_len = int(cfg["model"]["decoder"]["max_len"])
     with ShardDataset(cfg["validation"]["root"], "val") as val_ds:
         n_val = len(val_ds)
     cfg["validation"]["samples"] = min(int(cfg["validation"]["samples"]), n_val)

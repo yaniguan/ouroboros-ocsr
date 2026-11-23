@@ -119,6 +119,21 @@ class SmilesDecoder(nn.Module):
         nn.init.normal_(self.tok.weight, std=0.02)  # tied with the output head: keep logits O(1)
         nn.init.normal_(self.pos.weight, std=0.02)
 
+    def extend_max_len(self, new_max_len: int) -> None:
+        """Grow learned 1D sequence positions to ``new_max_len`` while preserving ``0..old-1``."""
+        if new_max_len < self.c.max_len:
+            raise ValueError(f"new_max_len={new_max_len} < current max_len={self.c.max_len}")
+        if new_max_len == self.c.max_len:
+            return
+        old_w = self.pos.weight.data
+        old_len, d_model = old_w.shape
+        new_emb = nn.Embedding(new_max_len, d_model, device=old_w.device, dtype=old_w.dtype)
+        with torch.no_grad():
+            nn.init.normal_(new_emb.weight, std=0.02)
+            new_emb.weight[:old_len].copy_(old_w)
+        self.pos = new_emb
+        self.c.max_len = new_max_len
+
     @staticmethod
     def _mem_mask(padding_mask: torch.Tensor | None, dtype) -> torch.Tensor | None:
         """[B, M] bool (True = pad) -> additive mask broadcastable to [B, H, T, M]."""
