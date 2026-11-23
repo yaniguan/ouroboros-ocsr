@@ -22,7 +22,22 @@
     'Kr', 'Rb', 'Sr', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'Pt', 'Au', 'Hg', 'Pb', 'Bi',
   ]);
   const ATOM_MASS = { H: 1.008, B: 10.81, C: 12.011, N: 14.007, O: 15.999, F: 18.998, Si: 28.085, P: 30.974, S: 32.06, Cl: 35.45, Se: 78.97, Br: 79.904, I: 126.904 };
-  const STD_VALENCE = { B: 3, C: 4, N: 3, O: 2, F: 1, P: 5, S: 6, Cl: 1, Br: 1, I: 1 };
+  const STD_VALENCE = { B: 3, C: 4, N: 3, O: 2, F: 1, Si: 4, P: 5, S: 6, Cl: 1, Br: 1, I: 1 };
+  const ALIAS_SMILES = {
+    Ph: 'c1ccccc1', OMe: 'OC', OEt: 'OCC', CO2Et: 'C(=O)OCC', CO2Me: 'C(=O)OC',
+    Boc: 'C(=O)OC(C)(C)C', Me: 'C', Et: 'CC', Pr: 'CCC', iPr: 'C(C)C',
+    Bu: 'CCCC', tBu: 'C(C)(C)C', Cbz: 'C(=O)OCc1ccccc1', Fmoc: 'C(=O)OCC1c2ccccc2-c2ccccc21',
+    Ac: 'C(=O)C', Bn: 'Cc1ccccc1', Bz: 'C(=O)c1ccccc1', Ts: 'S(=O)(=O)c1ccc(C)cc1',
+    Ms: 'S(=O)(=O)C', TBS: '[Si](C)(C)C(C)(C)C', TBDMS: '[Si](C)(C)C(C)(C)C', TMS: '[Si](C)(C)C',
+    PMP: 'c1ccc(OC)cc1', CF3: 'C(F)(F)F', CCl3: 'C(Cl)(Cl)Cl', CO2H: 'C(=O)O',
+    COOH: 'C(=O)O', CHO: 'C=O', OPh: 'Oc1ccccc1', OBn: 'OCc1ccccc1', OAc: 'OC(=O)C',
+    OTs: 'OS(=O)(=O)c1ccc(C)cc1', OMs: 'OS(=O)(=O)C', OTBS: 'O[Si](C)(C)C(C)(C)C',
+    OTMS: 'O[Si](C)(C)C', SMe: 'SC', SEt: 'SCC', SPh: 'Sc1ccccc1',
+    NHBoc: 'NC(=O)OC(C)(C)C', NHAc: 'NC(=O)C', NHCbz: 'NC(=O)OCc1ccccc1',
+    NHFmoc: 'NC(=O)OCC1c2ccccc2-c2ccccc21', NMe2: 'N(C)C', NEt2: 'N(CC)CC',
+    SO2Me: 'S(=O)(=O)C', SO2Ph: 'S(=O)(=O)c1ccccc1', SF5: 'S(F)(F)(F)(F)F',
+  };
+  const GENERIC_ALIASES = new Set(['R', 'R1', 'R2', 'R3', 'R4', 'R5', 'X', 'Ar', 'PG', 'Het', '*']);
 
   const STATE = {
     data: null,
@@ -162,24 +177,19 @@
     };
   }
 
-  /* Strict client-side SMILES grammar + heuristic 3D spring preview for custom user inputs */
-  function runCustomClientSmiles(rawSmiles) {
-    let smi = String(rawSmiles || '').trim();
-    const aliases = { '[Boc]': 'C(=O)OC(C)(C)C', '[Ph]': 'c1ccccc1', '[OMe]': 'OC', '[Me]': 'C', '[Et]': 'CC', '[SF5]': 'S(F)(F)(F)(F)F' };
-    for (const [k, v] of Object.entries(aliases)) smi = smi.split(k).join(v);
-
-    const hasSalt = smi.includes('.');
+  /* Parse SMILES into a molecular graph, optionally retaining [Alias] nodes for graph-level splicing */
+  function parseSmilesGraph(smi, allowAliases) {
     const atoms = [];
     const bonds = [];
     const ringOpen = {};
     const branchStack = [];
     let prev = null;
-    let pendingOrder = null;
+    let pendingBond = null;
     let syntaxError = smi.length === 0 ? 'Empty SMILES string.' : null;
     let netCharge = 0;
-    let hasRadical = false;
+    let hasSalt = false;
 
-    const strictTokenRe = /\[([^\]]+)\]|%[0-9]{2}|Br|Cl|[BCNOFPSIbcnopsi]|[0-9]|=|\#|\-|:|\/|\\|\(|\)|\./gy;
+    const strictTokenRe = /\[([^\]]+)\]|%[0-9]{2}|Br|Cl|[BCNOFPSIbcnopsi\*]|[0-9]|=|\#|\-|:|\/|\\|\(|\)|\./gy;
     let pos = 0;
     while (pos < smi.length && !syntaxError) {
       strictTokenRe.lastIndex = pos;
@@ -191,23 +201,24 @@
       pos = strictTokenRe.lastIndex;
       const tok = m[0];
       if (tok === '(') {
-        if (prev === null || pendingOrder !== null) { syntaxError = 'Misplaced branch "(" in SMILES.'; break; }
+        if (prev === null || pendingBond !== null) { syntaxError = 'Misplaced branch "(" in SMILES.'; break; }
         branchStack.push(prev);
         continue;
       }
       if (tok === ')') {
-        if (!branchStack.length || pendingOrder !== null) { syntaxError = 'Unbalanced ")" in SMILES.'; break; }
+        if (!branchStack.length || pendingBond !== null) { syntaxError = 'Unbalanced ")" in SMILES.'; break; }
         prev = branchStack.pop();
         continue;
       }
       if (tok === '.') {
-        if (prev === null || pendingOrder !== null) { syntaxError = 'Invalid "." fragment separator.'; break; }
+        if (prev === null || pendingBond !== null) { syntaxError = 'Invalid "." fragment separator.'; break; }
+        hasSalt = true;
         prev = null;
         continue;
       }
       if (tok === '=' || tok === '#' || tok === '-' || tok === ':' || tok === '/' || tok === '\\') {
-        if (prev === null || pendingOrder !== null) { syntaxError = `Dangling bond "${tok}" in SMILES.`; break; }
-        pendingOrder = tok === '=' ? 2 : tok === '#' ? 3 : tok === ':' ? 1.5 : 1;
+        if (prev === null || pendingBond !== null) { syntaxError = `Dangling bond "${tok}" in SMILES.`; break; }
+        pendingBond = tok;
         continue;
       }
       if (/^([0-9]|%[0-9]{2})$/.test(tok)) {
@@ -218,15 +229,21 @@
             syntaxError = `Invalid ring closure "${tok}".`;
             break;
           }
-          const defaultRingOrd = atoms[u].isAromatic && atoms[prev].isAromatic ? 1.5 : 1;
-          const ord = pendingOrder ?? ringOpen[tok].order ?? defaultRingOrd;
-          bonds.push({ u, v: prev, order: ord, eq_len: ord >= 2 ? 1.34 : ord === 1.5 ? 1.40 : 1.44, deviation_a: 0 });
+          const bTok = pendingBond ?? ringOpen[tok].bond;
+          const isArom = bTok === ':' || (bTok === null && atoms[u].isAromatic && atoms[prev].isAromatic);
+          const ord = bTok === '=' ? 2 : bTok === '#' ? 3 : isArom ? 1.5 : 1;
+          bonds.push({ u, v: prev, order: ord, isAromaticBond: isArom, eq_len: ord >= 2 ? 1.34 : isArom ? 1.40 : 1.44, deviation_a: 0 });
           delete ringOpen[tok];
         } else {
-          ringOpen[tok] = { atom: prev, order: pendingOrder };
+          ringOpen[tok] = { atom: prev, bond: pendingBond };
         }
-        pendingOrder = null;
+        pendingBond = null;
         continue;
+      }
+
+      if (tok === '*') {
+        syntaxError = 'Unsupported dummy/Markush atom "*".';
+        break;
       }
 
       let sym = tok;
@@ -234,20 +251,31 @@
       let explicitH = null;
       let charge = 0;
       let isAromatic = false;
+      let alias = null;
       if (m[1] !== undefined) {
-        const bm = m[1].match(/^(\d+)?(Br|Cl|Si|Se|Na|Mg|Al|Ca|Fe|Cu|Zn|Sn|Sb|Te|Ag|Au|Hg|Pb|Bi|Li|Be|Ne|Ar|Kr|Xe|[A-Z][a-z]?|[bcnops])(@@|@)?(H\d*)?([+-]+\d*)?$/);
-        if (!bm) { syntaxError = `Invalid bracket atom "[${m[1]}]".`; break; }
-        const rawSym = bm[2];
-        isAromatic = rawSym === rawSym.toLowerCase();
-        sym = rawSym.length === 1 ? rawSym.toUpperCase() : rawSym;
-        if (!KNOWN_ELEMS.has(sym)) { syntaxError = `Unknown chemical element "${sym}".`; break; }
-        chiral = Boolean(bm[3]);
-        explicitH = bm[4] ? (bm[4] === 'H' ? 1 : Number(bm[4].slice(1))) : 0;
-        if (bm[5]) {
-          const sign = bm[5][0] === '+' ? 1 : -1;
-          const mag = bm[5].length === 1 ? 1 : (/^[+-]+$/.test(bm[5]) ? bm[5].length : Number(bm[5].slice(1)));
-          charge = sign * (Number.isFinite(mag) ? mag : 1);
-          netCharge += charge;
+        const inner = m[1];
+        if (allowAliases && Object.prototype.hasOwnProperty.call(ALIAS_SMILES, inner)) {
+          sym = '*';
+          alias = inner;
+          explicitH = 0;
+        } else if (GENERIC_ALIASES.has(inner) || /^R[0-9]*$/.test(inner)) {
+          syntaxError = `Unsupported generic/Markush group "[${inner}]".`;
+          break;
+        } else {
+          const bm = inner.match(/^(\d+)?(Br|Cl|Si|Se|Na|Mg|Al|Ca|Fe|Cu|Zn|Sn|Sb|Te|Ag|Au|Hg|Pb|Bi|Li|Be|Ne|Ar|Kr|Xe|[A-Z][a-z]?|[bcnops])(@@|@)?(H\d*)?([+-]+\d*)?$/);
+          if (!bm) { syntaxError = `Invalid bracket atom "[${inner}]".`; break; }
+          const rawSym = bm[2];
+          isAromatic = rawSym === rawSym.toLowerCase();
+          sym = rawSym.length === 1 ? rawSym.toUpperCase() : rawSym;
+          if (!KNOWN_ELEMS.has(sym)) { syntaxError = `Unknown chemical element "${sym}".`; break; }
+          chiral = Boolean(bm[3]);
+          explicitH = bm[4] ? (bm[4] === 'H' ? 1 : Number(bm[4].slice(1))) : 0;
+          if (bm[5]) {
+            const sign = bm[5][0] === '+' ? 1 : -1;
+            const mag = bm[5].length === 1 ? 1 : (/^[+-]+$/.test(bm[5]) ? bm[5].length : Number(bm[5].slice(1)));
+            charge = sign * (Number.isFinite(mag) ? mag : 1);
+            netCharge += charge;
+          }
         }
       } else if (sym === sym.toLowerCase()) {
         isAromatic = true;
@@ -255,40 +283,177 @@
       }
 
       const idx = atoms.length;
-      atoms.push({ idx, symbol: sym, chiral, explicitH, charge, isAromatic, cip: chiral ? 'specified' : null });
+      atoms.push({ idx, symbol: sym, alias, chiral, explicitH, charge, isAromatic, cip: chiral ? 'specified' : null });
       if (prev !== null) {
-        const ord = pendingOrder ?? (isAromatic && atoms[prev].isAromatic ? 1.5 : 1);
-        bonds.push({ u: prev, v: idx, order: ord, eq_len: ord >= 2 ? 1.34 : ord === 1.5 ? 1.40 : 1.50, deviation_a: 0 });
+        const isArom = pendingBond === ':' || (pendingBond === null && isAromatic && atoms[prev].isAromatic);
+        const ord = pendingBond === '=' ? 2 : pendingBond === '#' ? 3 : isArom ? 1.5 : 1;
+        bonds.push({ u: prev, v: idx, order: ord, isAromaticBond: isArom, eq_len: ord >= 2 ? 1.34 : isArom ? 1.40 : 1.50, deviation_a: 0 });
       }
       prev = idx;
-      pendingOrder = null;
+      pendingBond = null;
     }
 
     if (!syntaxError) {
-      if (pendingOrder !== null) syntaxError = 'Trailing bond symbol at end of SMILES.';
+      if (pendingBond !== null) syntaxError = 'Trailing bond symbol at end of SMILES.';
       else if (branchStack.length > 0) syntaxError = 'Unclosed "(" branch in SMILES.';
       else if (Object.keys(ringOpen).length > 0) syntaxError = `Unclosed ring digit(s): ${Object.keys(ringOpen).join(', ')}.`;
     }
+    return { atoms, bonds, netCharge, hasSalt, syntaxError };
+  }
 
-    // Valence & radical checks
+  function canKekulize(piSet, aromAdj) {
+    if (piSet.size === 0) return true;
+    if (piSet.size % 2 !== 0) return false;
+    const unmatched = new Set(piSet);
+    function step() {
+      if (unmatched.size === 0) return true;
+      let bestU = null;
+      let bestChoices = null;
+      for (const u of unmatched) {
+        const choices = aromAdj[u].filter(v => unmatched.has(v));
+        if (choices.length === 0) return false;
+        if (bestChoices === null || choices.length < bestChoices.length) {
+          bestU = u;
+          bestChoices = choices;
+          if (choices.length === 1) break;
+        }
+      }
+      unmatched.delete(bestU);
+      for (const v of bestChoices) {
+        unmatched.delete(v);
+        if (step()) return true;
+        unmatched.add(v);
+      }
+      unmatched.add(bestU);
+      return false;
+    }
+    return step();
+  }
+
+  /* Strict client-side SMILES grammar + heuristic 3D spring preview for custom user inputs */
+  function runCustomClientSmiles(rawSmiles) {
+    const smi = String(rawSmiles || '').trim();
+    const parsed = parseSmilesGraph(smi, true);
+    const { atoms, bonds } = parsed;
+    const hasSalt = parsed.hasSalt;
+    let netCharge = parsed.netCharge;
+    let syntaxError = parsed.syntaxError;
+    let hasRadical = false;
+
+    // Expand chemical shorthand groups ([OMe], [Boc], [Ph], etc.) at the molecular graph level
+    if (!syntaxError) {
+      const aliasIndices = atoms.filter(a => a.alias !== null).map(a => a.idx);
+      for (const aIdx of aliasIndices) {
+        const aliasName = atoms[aIdx].alias;
+        const inc = bonds.filter(b => b.u === aIdx || b.v === aIdx);
+        if (inc.length !== 1 || inc[0].isAromaticBond || inc[0].order !== 1) {
+          syntaxError = `Shorthand "[${aliasName}]" must attach by a single bond to one atom.`;
+          break;
+        }
+        const sub = parseSmilesGraph(ALIAS_SMILES[aliasName], false);
+        if (sub.syntaxError || sub.atoms.length === 0) {
+          syntaxError = `Failed to expand "[${aliasName}]".`;
+          break;
+        }
+        netCharge += sub.netCharge;
+        const baseOffset = atoms.length;
+        const mapIdx = k => (k === 0 ? aIdx : baseOffset + k - 1);
+        const rootAtom = sub.atoms[0];
+        atoms[aIdx] = { ...rootAtom, idx: aIdx, alias: null };
+        for (let k = 1; k < sub.atoms.length; k++) {
+          const sa = sub.atoms[k];
+          atoms.push({ ...sa, idx: mapIdx(k), alias: null });
+        }
+        for (const sb of sub.bonds) {
+          bonds.push({ ...sb, u: mapIdx(sb.u), v: mapIdx(sb.v) });
+        }
+      }
+    }
+
+    // Valence, aromatic Kekule matching, & radical checks
     const bondSum = new Array(atoms.length).fill(0);
+    const nonAromSum = new Array(atoms.length).fill(0);
+    const hasExocyclicDouble = new Array(atoms.length).fill(false);
     const nbrs = atoms.map(() => []);
+    const aromAdj = atoms.map(() => []);
     for (const b of bonds) {
       bondSum[b.u] += b.order;
       bondSum[b.v] += b.order;
       nbrs[b.u].push(b.v);
       nbrs[b.v].push(b.u);
+      if (b.isAromaticBond) {
+        aromAdj[b.u].push(b.v);
+        aromAdj[b.v].push(b.u);
+      } else {
+        nonAromSum[b.u] += b.order;
+        nonAromSum[b.v] += b.order;
+        if (b.order === 2) {
+          hasExocyclicDouble[b.u] = true;
+          hasExocyclicDouble[b.v] = true;
+        }
+      }
     }
+
+    const implicitH = new Array(atoms.length).fill(0);
+    const piSet = new Set();
     if (!syntaxError) {
       for (let i = 0; i < atoms.length; i++) {
         const a = atoms[i];
-        if (a.isAromatic && (a.symbol === 'O' || a.symbol === 'S' || (a.symbol === 'N' && a.explicitH))) {
-          if (nbrs[i].length > 3) {
+        if (a.isAromatic) {
+          const nArom = aromAdj[i].length;
+          if (nArom < 2) {
+            syntaxError = `Aromatic atom ${a.symbol}${i} is not in an aromatic ring.`;
+            break;
+          }
+          const sigma = nonAromSum[i] + nArom;
+          if (a.symbol === 'C' && a.charge === 0) {
+            if (a.explicitH === null) {
+              if (sigma === 2) { piSet.add(i); implicitH[i] = 1; }
+              else if (sigma === 3) { piSet.add(i); implicitH[i] = 0; }
+              else if (sigma === 4 && hasExocyclicDouble[i]) { implicitH[i] = 0; }
+              else { syntaxError = `Valence exceeded on aromatic C${i}.`; break; }
+            } else if (sigma + a.explicitH === 3) {
+              piSet.add(i);
+              implicitH[i] = a.explicitH;
+            } else {
+              hasRadical = sigma + a.explicitH < 3;
+              if (!hasRadical) { syntaxError = `Valence exceeded on aromatic C${i}.`; break; }
+            }
+          } else if (a.symbol === 'N') {
+            if (a.charge === 0) {
+              if (a.explicitH === null) {
+                if (sigma === 2) { piSet.add(i); implicitH[i] = 0; }
+                else if (sigma === 3) { implicitH[i] = 0; }
+                else { syntaxError = `Valence exceeded on aromatic N${i}.`; break; }
+              } else if (sigma + a.explicitH === 3 && a.explicitH === 1) {
+                implicitH[i] = 1;
+              } else {
+                syntaxError = `Valence exceeded on aromatic N${i}.`;
+                break;
+              }
+            } else if (a.charge === 1 && sigma + (a.explicitH ?? 0) === 3) {
+              piSet.add(i);
+              implicitH[i] = a.explicitH ?? 0;
+            } else {
+              syntaxError = `Invalid charge/valence on aromatic N${i}.`;
+              break;
+            }
+          } else if (a.symbol === 'O' && a.charge === 0 && (a.explicitH ?? 0) === 0 && sigma === 2) {
+            implicitH[i] = 0;
+          } else if (a.symbol === 'S' && a.charge === 0 && (a.explicitH ?? 0) === 0 && (sigma === 2 || sigma === 4 || sigma === 6)) {
+            implicitH[i] = 0;
+          } else if (a.symbol === 'P' && a.charge === 0 && sigma + (a.explicitH ?? 0) <= 3) {
+            if (sigma + (a.explicitH ?? 0) === 2) piSet.add(i);
+            implicitH[i] = a.explicitH ?? 0;
+          } else if (a.symbol === 'B' && a.charge === 0 && sigma + (a.explicitH ?? 0) <= 3) {
+            implicitH[i] = a.explicitH !== null ? a.explicitH : Math.max(0, 3 - sigma);
+          } else {
             syntaxError = `Valence exceeded on aromatic ${a.symbol}${i}.`;
             break;
           }
           continue;
         }
+
         const maxV = STD_VALENCE[a.symbol];
         const used = bondSum[i] + (a.explicitH ?? 0) - Math.abs(a.charge);
         if (maxV !== undefined && used > maxV + 0.01) {
@@ -299,6 +464,23 @@
           const targetV = a.symbol === 'C' ? 4 : a.symbol === 'N' ? 3 : 2;
           if (Math.round(bondSum[i] + a.explicitH) < targetV) hasRadical = true;
         }
+        if (a.explicitH !== null) {
+          implicitH[i] = a.explicitH;
+        } else {
+          const baseV = a.symbol === 'C' ? 4
+            : a.symbol === 'N' ? 3
+            : a.symbol === 'O' ? 2
+            : a.symbol === 'B' ? 3
+            : a.symbol === 'Si' ? 4
+            : a.symbol === 'S' ? (bondSum[i] <= 2 ? 2 : bondSum[i] <= 4 ? 4 : 6)
+            : a.symbol === 'P' ? (bondSum[i] <= 3 ? 3 : 5)
+            : ['F', 'Cl', 'Br', 'I'].includes(a.symbol) ? 1
+            : 0;
+          implicitH[i] = Math.max(0, Math.round(baseV + a.charge - bondSum[i]));
+        }
+      }
+      if (!syntaxError && !canKekulize(piSet, aromAdj)) {
+        syntaxError = 'Invalid non-Kekulizable aromatic ring system.';
       }
     }
 
@@ -321,19 +503,13 @@
       }
     }
 
-    // Estimate formula & molecular weight
+    // Compute formula & molecular weight
     let totalH = 0;
     const counts = {};
     for (let i = 0; i < atoms.length; i++) {
       const a = atoms[i];
       counts[a.symbol] = (counts[a.symbol] || 0) + 1;
-      const baseV = a.symbol === 'C' ? 4 : a.symbol === 'N' ? 3 : a.symbol === 'O' ? 2 : ['F', 'Cl', 'Br', 'I'].includes(a.symbol) ? 1 : 0;
-      const hCount = a.explicitH !== null
-        ? a.explicitH
-        : (a.isAromatic && (a.symbol === 'O' || a.symbol === 'S'))
-        ? 0
-        : Math.max(0, Math.round(baseV + a.charge - bondSum[i]));
-      totalH += hCount;
+      totalH += implicitH[i];
     }
     if (totalH > 0) counts.H = (counts.H || 0) + totalH;
     let mw = 0;
@@ -349,7 +525,7 @@
       const t = i * 1.15;
       return [Math.cos(t) * (1.2 + i * 0.28), Math.sin(t) * (1.2 + i * 0.24), Math.sin(i * 1.7) * 0.65];
     }) : [];
-    for (let step = 0; step < (canEmbed ? 120 : 0); step++) {
+    for (let step = 0; step < (canEmbed ? 450 : 0); step++) {
       const { F } = evalHarmonicEnergyAndForces(coords, bonds);
       for (let i = 0; i < coords.length; i++) {
         coords[i][0] += Math.max(-0.12, Math.min(0.12, F[i][0] * 0.015));
