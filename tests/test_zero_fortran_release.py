@@ -118,3 +118,14 @@ def test_exported_pure_c_checkpoint_if_present_locally(monkeypatch):
     r90 = lab.evaluate("CC(=O)Oc1ccccc1C(=O)O", angle=90)
     assert r90["rotated_prediction"]["smiles"] == "CC(=O)Oc1ccccc1C(=O)O"
     assert r90["feature_error"] < 1e-5
+
+
+def test_ui_engine_finds_pure_c_checkpoint_when_only_pure_is_downloaded(tmp_path, monkeypatch):
+    from ouroboros.ui import backend
+
+    monkeypatch.setattr(backend, "CKPT_DIR", tmp_path)
+    (tmp_path / "ouroboros-A.pt").write_bytes(b"stub")
+    pure_file = tmp_path / "ouroboros-C-pure.pt"
+    pure_file.write_bytes(b"stub")
+    found = backend.WorkbenchEngine(device="cpu").available_checkpoints()
+    assert found == {"A": str(tmp_path / "ouroboros-A.pt"), "C": str(pure_file)}

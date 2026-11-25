@@ -157,9 +157,12 @@ class WorkbenchEngine:
         self._probes: dict[tuple[str, int], tuple[OCSRModel, dict]] = {}
 
     def available_checkpoints(self) -> dict[str, str]:
+        from ouroboros.weights import resolve_checkpoint_path
+
         out: dict[str, str] = {}
         for name in ("A", "B", "C"):
-            p = CKPT_DIR / f"ouroboros-{name}.pt"
+            # use ouroboros-C-pure.pt when ouroboros-C.pt is missing or escnn is not installed
+            p = resolve_checkpoint_path(CKPT_DIR / f"ouroboros-{name}.pt")
             if p.is_file():
                 out[name] = str(p)
         return out
