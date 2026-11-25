@@ -18,7 +18,7 @@ Useful flags:
 - `--threads` (CPU thread count, default `4`)
 - `--token` (adds a random URL prefix if you share the machine)
 
-If `checkpoints/ouroboros-{A,B,C}.pt` are in `checkpoints/`, the app uses them automatically. If not, it uses small built-in test networks so all 2D rotation and 3D physics checks still work offline.
+If `checkpoints/ouroboros-{A,B,C}.pt` are in `checkpoints/`, the app uses them automatically. For arm C it uses `checkpoints/ouroboros-C-pure.pt` when `ouroboros-C.pt` is missing or `escnn` is not installed. If not, it uses small built-in test networks so all 2D rotation and 3D physics checks still work offline.
 
 ## 10 Chemistry & Physics Checks (`ouroboros/ui/compliance.py`)
 
