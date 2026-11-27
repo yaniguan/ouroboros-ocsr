@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import platform
 import time
 from pathlib import Path
@@ -134,7 +135,7 @@ def main(argv=None) -> int:
 
     out_obj = {
         "cpu": platform.processor() or platform.machine(),
-        "logical_cpus": int(torch.get_num_interop_threads() or 1),
+        "logical_cpus": os.cpu_count() or 1,
         "threads": args.threads,
         "n_images": len(samples),
         "dataset": "Keylab/OCSR-Benchmarks UOB prefix (seed=0 dev-test)",

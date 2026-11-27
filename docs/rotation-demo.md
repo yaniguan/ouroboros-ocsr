@@ -7,7 +7,7 @@ there are no external UI assets, datasets, hosted APIs, or automatically downloa
 
 ## How to run
 
-Use Python 3.11 (3.13 is incompatible with the escnn dependency stack). From the repository root:
+Use Python 3.11 or 3.12. From the repository root:
 
 ```bash
 python3.11 -m venv .venv
@@ -18,9 +18,11 @@ python -m ouroboros.weights fetch --arm all
 python -m jupyterlab notebooks/05_rotation_demo.ipynb
 ```
 
-`py3nj`, an escnn dependency, may need a Fortran compiler: `brew install gcc` on macOS,
-or `sudo apt-get install gfortran` on Debian/Ubuntu. The demo requirements avoid the full
-training environment's CUDA and MACE dependencies. An existing project environment works too;
+The demo requirements do not include `escnn`, so no Fortran compiler is needed. Without `escnn`,
+`fetch --arm all` downloads the pure-PyTorch `ouroboros-C-pure.pt` for arm C, and the demo uses it
+when `ouroboros-C.pt` is requested. `escnn` ([`requirements-escnn.txt`](../requirements-escnn.txt))
+is only needed to train steerable weights; its `py3nj` dependency may need a Fortran compiler.
+The demo requirements also avoid the full training environment's CUDA and MACE dependencies. An existing project environment works too;
 install JupyterLab there, or point the notebook's `MODEL_PYTHON` at that environment's Python.
 The notebook kernel and model interpreter can be different.
 

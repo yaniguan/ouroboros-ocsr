@@ -46,7 +46,7 @@ MolScribe 12.70% (DECIMER.ai paper, Table 6).
 
 Caveat: our numbers come from a seeded 100-per-source sample of Keylab/OCSR-Benchmarks (`subset100`
 and `frozen-test-v2`, 95% CIs ± ~9 pts per source). For direct scoring alignment with MolScribe /
-MolNexTR (`arXiv:2205.14311`), `ouroboros/eval/molscribe_parity.py` (`scripts/eval_predictions.py
+MolNexTR (`arXiv:2205.14311`, `arXiv:2403.03691`), `ouroboros/eval/molscribe_parity.py` (`scripts/eval_predictions.py
 --protocol both`) scores `frozen-test-v2` at **48.0% overall** (`ACS 33.0%`, `UOB 86.0%`, `USPTO
 25.0%`, `has_stereo 8.8%`) vs **46.7% strict Ouroboros** (`ACS 30.0%`, `UOB 85.0%`, `USPTO 25.0%`,
 `has_stereo 1.8%`); see `benchmarks/frozen-test-v2/molscribe_parity_report.json`. A full-dataset
